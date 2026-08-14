@@ -1,0 +1,1 @@
+var e=`/jikeoro-web-proto`;function t(t){return typeof window<`u`&&window.location.hostname.toLowerCase().endsWith(`github.io`)?`${e}${t.startsWith(`/`)?t:`/${t}`}`:t}export{t};

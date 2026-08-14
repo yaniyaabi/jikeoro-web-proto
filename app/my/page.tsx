@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { sitePath } from "../lib/site-path";
 
 type ReportStatus = "received" | "review" | "action" | "completed";
 type ActivityFilter = "all" | "active" | "completed";
@@ -75,11 +76,11 @@ export default function MyJikeoroPage() {
         const sessionResponse = await fetch("/api/auth/session");
         const session = await sessionResponse.json();
         if (!session.authenticated) {
-          window.location.replace("/");
+          window.location.replace(sitePath("/"));
           return;
         }
         if (session.user?.role !== "member") {
-          window.location.replace("/admin");
+          window.location.replace(sitePath("/admin"));
           return;
         }
 
@@ -126,7 +127,7 @@ export default function MyJikeoroPage() {
         }
         setAuthReady(true);
       } catch {
-        window.location.replace("/");
+        window.location.replace(sitePath("/"));
       }
     };
     loadMemberData();
@@ -134,7 +135,7 @@ export default function MyJikeoroPage() {
 
   const logout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
-    window.location.href = "/";
+    window.location.href = sitePath("/");
   };
 
   if (!authReady) {

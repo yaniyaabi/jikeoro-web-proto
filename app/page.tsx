@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { sitePath } from "./lib/site-path";
 
 type Hazard = {
   id: number;
@@ -145,7 +146,7 @@ export default function Home() {
       .catch(() => setIsLoggedIn(false));
     if (new URLSearchParams(window.location.search).get("report") === "1") {
       setReportOpen(true);
-      window.history.replaceState({}, "", "/");
+      window.history.replaceState({}, "", sitePath("/"));
     }
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") setReportOpen(false);
@@ -160,7 +161,7 @@ export default function Home() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ role: "member" }),
     });
-    if (response.ok) window.location.href = "/my";
+    if (response.ok) window.location.href = sitePath("/my");
   };
 
   const chooseFilter = (nextFilter: (typeof filters)[number]) => {
@@ -540,7 +541,7 @@ export default function Home() {
                 <p className="modal-step">기록 완료</p>
                 <h2 id="report-title">소중한 기록을<br />남겨주셔서 고맙습니다.</h2>
                 <p>{isLoggedIn ? "내 활동에서 접수 상태와 이후 대응 과정을 확인할 수 있어요." : "로그인 없이 접수됐어요. 로그인하면 기록의 처리 과정과 담당 기관의 답변을 이어서 볼 수 있어요."}</p>
-                <button className="modal-primary" onClick={isLoggedIn ? () => { window.location.href = "/my"; } : enterMyJikeoro}>{isLoggedIn ? "내 기록 확인하기" : "로그인하고 진행상황 보기"} <span>→</span></button>
+                <button className="modal-primary" onClick={isLoggedIn ? () => { window.location.href = sitePath("/my"); } : enterMyJikeoro}>{isLoggedIn ? "내 기록 확인하기" : "로그인하고 진행상황 보기"} <span>→</span></button>
               </div>
             )}
           </section>

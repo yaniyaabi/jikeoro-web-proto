@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { sitePath } from "../../lib/site-path";
 
 type AdminRole = "research_admin" | "agency_staff";
 
@@ -21,7 +22,7 @@ export default function AdminLoginPage() {
       setError("로그인하지 못했어요. 잠시 후 다시 시도해주세요.");
       return;
     }
-    window.location.href = "/admin";
+    window.location.href = sitePath("/admin");
   };
 
   return (

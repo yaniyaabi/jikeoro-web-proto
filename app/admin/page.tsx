@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { sitePath } from "../lib/site-path";
 
 type ReportStatus = "received" | "review" | "action" | "completed";
 type AdminUser = { name: string; role: "research_admin" | "agency_staff"; agency: string | null };
@@ -37,7 +38,7 @@ export default function AdminPage() {
   const loadReports = async () => {
     const apiResponse = await fetch("/api/admin/reports");
     if (!apiResponse.ok) {
-      window.location.replace("/admin/login");
+      window.location.replace(sitePath("/admin/login"));
       return;
     }
     const data = await apiResponse.json();
@@ -47,7 +48,7 @@ export default function AdminPage() {
     setReady(true);
   };
 
-  useEffect(() => { loadReports().catch(() => window.location.replace("/admin/login")); }, []);
+  useEffect(() => { loadReports().catch(() => window.location.replace(sitePath("/admin/login"))); }, []);
 
   const filteredReports = useMemo(() => filter === "all" ? reports : reports.filter((report) => report.status === filter), [filter, reports]);
   const selected = reports.find((report) => report.id === selectedId) ?? filteredReports[0] ?? null;
@@ -81,7 +82,7 @@ export default function AdminPage() {
 
   const logout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
-    window.location.href = "/";
+    window.location.href = sitePath("/");
   };
 
   if (!ready) return <main className="member-page auth-loading">관리자 기록을 불러오고 있어요.</main>;
