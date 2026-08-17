@@ -92,7 +92,7 @@ export default function AdminPage() {
   return (
     <main className="admin-page">
       <header className="site-header member-header admin-header">
-        <a className="brand" href="/" aria-label="지켜로 홈"><span className="brand-mark">路</span><span><strong>지켜路</strong><small>보행안전 운영센터</small></span></a>
+        <a className="brand" href={sitePath("/")} aria-label="지켜로 홈"><span className="brand-mark">路</span><span><strong>지켜路</strong><small>보행안전 운영센터</small></span></a>
         <span className="admin-console-label">관리자 콘솔</span>
         <div className="admin-account"><span>{user?.role === "research_admin" ? "研" : "官"}</span><div><b>{user?.name}</b><small>{user?.role === "research_admin" ? "연구진·관리자" : user?.agency}</small></div><button onClick={logout}>로그아웃</button></div>
       </header>

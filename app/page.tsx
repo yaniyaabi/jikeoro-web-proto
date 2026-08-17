@@ -275,15 +275,15 @@ export default function Home() {
           </span>
         </a>
         <nav className="desktop-nav" aria-label="주요 메뉴">
-          <a href="/map">위험지도</a>
+          <a href={sitePath("/map")}>위험지도</a>
           <a href="#map">참여방법</a>
-          {isLoggedIn && <a href="/my">내 활동</a>}
+          {isLoggedIn && <a href={sitePath("/my")}>내 활동</a>}
           <a href="#project">프로젝트</a>
         </nav>
         <div className="header-actions">
           <button className="header-cta" onClick={openReport}>위험요소 기록하기</button>
           {isLoggedIn ? (
-            <a className="account-button" href="/my" aria-label="내 지켜로 활동 보기"><span>김</span><b>김지킴</b></a>
+            <a className="account-button" href={sitePath("/my")} aria-label="내 지켜로 활동 보기"><span>김</span><b>김지킴</b></a>
           ) : (
             <button className="login-button" onClick={enterMyJikeoro}>로그인</button>
           )}
@@ -307,7 +307,7 @@ export default function Home() {
               <span className="button-icon" aria-hidden="true">＋</span>
               지금 기록하기
             </button>
-            <a className="text-link" href="/map">
+            <a className="text-link" href={sitePath("/map")}>
               위험지도 둘러보기 <span aria-hidden="true">↗</span>
             </a>
           </div>
@@ -435,7 +435,7 @@ export default function Home() {
       <footer>
         <a className="brand footer-brand" href="#top"><span className="brand-mark">路</span><span><strong>지켜路</strong><small>우리동네 보행안전 지도</small></span></a>
         <p>KAIST Health Design Lab · 1차년도 연구 프로토타입</p>
-        <p><a className="admin-entry-link" href="/admin/login">관리자·기관 로그인</a><br />© 2026 JIKEORO. Prototype for research.</p>
+        <p><a className="admin-entry-link" href={sitePath("/admin/login")}>관리자·기관 로그인</a><br />© 2026 JIKEORO. Prototype for research.</p>
       </footer>
 
       <button className="mobile-report-button" onClick={openReport}><span>＋</span> 위험요소 기록하기</button>

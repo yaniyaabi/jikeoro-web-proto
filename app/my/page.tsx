@@ -145,18 +145,18 @@ export default function MyJikeoroPage() {
   return (
     <main className="member-page">
       <header className="site-header member-header">
-        <a className="brand" href="/" aria-label="지켜로 홈으로 이동">
+        <a className="brand" href={sitePath("/")} aria-label="지켜로 홈으로 이동">
           <span className="brand-mark" aria-hidden="true">路</span>
           <span><strong>지켜路</strong><small>우리동네 보행안전 지도</small></span>
         </a>
         <nav className="desktop-nav" aria-label="주요 메뉴">
-          <a href="/">홈</a>
-          <a href="/#map">위험지도</a>
-          <a href="/#how">참여방법</a>
+          <a href={sitePath("/")}>홈</a>
+          <a href={sitePath("/#map")}>위험지도</a>
+          <a href={sitePath("/#how")}>참여방법</a>
         </nav>
         <div className="header-actions">
-          <a className="header-cta" href="/?report=1">위험요소 기록하기</a>
-          <a className="account-button" href="/my" aria-current="page" aria-label="내 지켜로 활동">
+          <a className="header-cta" href={sitePath("/?report=1")}>위험요소 기록하기</a>
+          <a className="account-button" href={sitePath("/my")} aria-current="page" aria-label="내 지켜로 활동">
             <span>김</span><b>김지킴</b>
           </a>
         </div>
@@ -190,7 +190,7 @@ export default function MyJikeoroPage() {
             <h2>우리 동네 밤길을<br />한 번 더 살펴봐요</h2>
             <p>조명이 부족한 길 3곳 기록하기</p>
             <div className="mission-progress"><i style={{ width: "66%" }} /></div>
-            <div className="mission-bottom"><strong>2 / 3곳 완료</strong><a href="/?report=1">한 곳 더 기록하기 →</a></div>
+            <div className="mission-bottom"><strong>2 / 3곳 완료</strong><a href={sitePath("/?report=1")}>한 곳 더 기록하기 →</a></div>
           </article>
           <article className="badge-card">
             <p>내가 모은 배지</p>

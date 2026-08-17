@@ -27,7 +27,7 @@ export default function AdminLoginPage() {
 
   return (
     <main className="admin-login-page">
-      <a className="brand admin-login-brand" href="/" aria-label="지켜로 홈">
+      <a className="brand admin-login-brand" href={sitePath("/")} aria-label="지켜로 홈">
         <span className="brand-mark" aria-hidden="true">路</span>
         <span><strong>지켜路</strong><small>우리동네 보행안전 지도</small></span>
       </a>
@@ -50,7 +50,7 @@ export default function AdminLoginPage() {
         {error && <p className="admin-login-error" role="alert">{error}</p>}
         <small className="demo-login-note">현재는 운영 흐름을 확인하기 위한 역할별 체험 로그인입니다.</small>
       </section>
-      <a className="back-home-link" href="/">← 주민용 화면으로 돌아가기</a>
+      <a className="back-home-link" href={sitePath("/")}>← 주민용 화면으로 돌아가기</a>
     </main>
   );
 }

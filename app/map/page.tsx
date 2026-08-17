@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Map as MapLibreMap, Marker as MapLibreMarker } from "maplibre-gl";
+import { sitePath } from "../lib/site-path";
 
 type MapReport = {
   id: string;
@@ -146,13 +147,13 @@ export default function RiskMapPage() {
   return (
     <main className="risk-map-page">
       <header className="risk-map-header">
-        <a className="brand" href="/" aria-label="지켜로 첫 화면으로 이동">
+        <a className="brand" href={sitePath("/")} aria-label="지켜로 첫 화면으로 이동">
           <span className="brand-mark" aria-hidden="true">路</span>
           <span><strong>지켜路</strong><small>우리동네 보행안전 지도</small></span>
         </a>
         <div className="risk-map-header-actions">
           <span>GPS 기록 현황</span>
-          <a href="/?report=1">위험요소 기록하기</a>
+          <a href={sitePath("/?report=1")}>위험요소 기록하기</a>
         </div>
       </header>
 
