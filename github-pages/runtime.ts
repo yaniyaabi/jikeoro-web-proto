@@ -127,13 +127,39 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   }
 
   if (url.pathname === "/api/reports" && method === "GET") {
-    return json({ reports: readReports() });
+    return json({
+      reports: readReports().map((report) => ({
+        id: report.id,
+        type: report.category,
+        title: report.title,
+        place: report.place_description ?? report.address ?? "성수동 위치 기록",
+        status: report.status,
+        response: report.response ?? "접수 내용을 확인하고 있습니다.",
+        department: report.assigned_agency ?? "지켜路 운영팀",
+        createdAt: report.created_at,
+      })),
+    });
   }
 
   if (url.pathname === "/api/reports/claim") return json({ ok: true });
 
   if (url.pathname === "/api/map/reports") {
-    return json({ reports: readReports().filter((report) => report.latitude && report.longitude) });
+    return json({
+      reports: readReports()
+        .filter((report) => report.latitude != null && report.longitude != null)
+        .map((report) => ({
+          id: report.id,
+          type: report.category,
+          title: report.title,
+          description: report.description,
+          latitude: report.latitude,
+          longitude: report.longitude,
+          accuracy: null,
+          place: report.place_description ?? report.address ?? "성수동 위치 기록",
+          status: report.status,
+          createdAt: report.created_at,
+        })),
+    });
   }
 
   if (url.pathname === "/api/admin/reports" && method === "PATCH") {
