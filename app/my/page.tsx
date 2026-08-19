@@ -6,7 +6,7 @@ import { sitePath } from "../lib/site-path";
 type ReportStatus = "received" | "review" | "action" | "completed";
 type ActivityFilter = "all" | "active" | "completed";
 type UserReport = {
-  id: number;
+  id: number | string;
   type: string;
   title: string;
   place: string;
@@ -15,6 +15,7 @@ type UserReport = {
   stage: number;
   response: string;
   department: string;
+  mediaCount?: number;
 };
 
 const statusLabels: Record<ReportStatus, string> = {
@@ -219,6 +220,7 @@ export default function MyJikeoroPage() {
                   <div className="report-meta"><span className={`status-chip status-${report.status}`}>{statusLabels[report.status]}</span><small>{report.submitted} · {report.type}</small></div>
                   <h3>{report.title}</h3>
                   <p>⌖ {report.place}</p>
+                  {Boolean(report.mediaCount) && <span className="report-media-count">사진·영상·음성 {report.mediaCount}개 첨부</span>}
                 </div>
                 <div className="response-box"><small>{report.department} 답변</small><p>{report.response}</p></div>
                 <ol className="status-track" aria-label={`${report.title} 처리 단계`}>

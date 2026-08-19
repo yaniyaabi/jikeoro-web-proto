@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { sitePath } from "./lib/site-path";
 
 type Hazard = {
@@ -76,6 +76,42 @@ const filters = ["전체", "단차", "포트홀", "조도", "적치물"] as cons
 type LocationChoice = "gps" | "manual" | null;
 type GpsStatus = "idle" | "loading" | "success" | "error";
 type GpsPoint = { latitude: number; longitude: number; accuracy: number };
+type MediaKind = "image" | "video" | "audio";
+type MediaAttachment = {
+  id: string;
+  kind: MediaKind;
+  file: File;
+  previewUrl: string;
+};
+
+async function storeReportMedia(reportId: string, attachments: MediaAttachment[]) {
+  if (!("indexedDB" in window) || attachments.length === 0) return;
+  await new Promise<void>((resolve, reject) => {
+    const request = window.indexedDB.open("jikeoro-media", 1);
+    request.onupgradeneeded = () => {
+      const database = request.result;
+      if (!database.objectStoreNames.contains("media")) database.createObjectStore("media", { keyPath: "id" });
+    };
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => {
+      const database = request.result;
+      const transaction = database.transaction("media", "readwrite");
+      const store = transaction.objectStore("media");
+      attachments.forEach((attachment) => store.put({
+        id: `${reportId}-${attachment.id}`,
+        reportId,
+        kind: attachment.kind,
+        name: attachment.file.name,
+        type: attachment.file.type,
+        size: attachment.file.size,
+        blob: attachment.file,
+        createdAt: new Date().toISOString(),
+      }));
+      transaction.oncomplete = () => { database.close(); resolve(); };
+      transaction.onerror = () => { database.close(); reject(transaction.error); };
+    };
+  });
+}
 
 function SeongsuIllustrationMap({ items, selectedId, onSelect }: { items: Hazard[]; selectedId?: number; onSelect?: (id: number) => void }) {
   return (
@@ -125,6 +161,14 @@ export default function Home() {
   const [reportDescription, setReportDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const [attachments, setAttachments] = useState<MediaAttachment[]>([]);
+  const [mediaError, setMediaError] = useState("");
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const attachmentsRef = useRef<MediaAttachment[]>([]);
 
   const filteredHazards = useMemo(
     () =>
@@ -149,10 +193,29 @@ export default function Home() {
       window.history.replaceState({}, "", sitePath("/"));
     }
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setReportOpen(false);
+      if (event.key === "Escape") {
+        if (mediaRecorderRef.current?.state === "recording") mediaRecorderRef.current.stop();
+        mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
+        setIsRecording(false);
+        setReportOpen(false);
+      }
     };
     window.addEventListener("keydown", closeOnEscape);
     return () => window.removeEventListener("keydown", closeOnEscape);
+  }, []);
+
+  useEffect(() => {
+    if (!isRecording) return;
+    const timer = window.setInterval(() => setRecordingSeconds((seconds) => seconds + 1), 1000);
+    return () => window.clearInterval(timer);
+  }, [isRecording]);
+
+  useEffect(() => { attachmentsRef.current = attachments; }, [attachments]);
+
+  useEffect(() => () => {
+    mediaRecorderRef.current?.stop();
+    mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
+    attachmentsRef.current.forEach((attachment) => URL.revokeObjectURL(attachment.previewUrl));
   }, []);
 
   const enterMyJikeoro = async () => {
@@ -174,6 +237,15 @@ export default function Home() {
   };
 
   const openReport = () => {
+    attachments.forEach((attachment) => URL.revokeObjectURL(attachment.previewUrl));
+    mediaRecorderRef.current?.stop();
+    mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
+    mediaRecorderRef.current = null;
+    mediaStreamRef.current = null;
+    setAttachments([]);
+    setMediaError("");
+    setIsRecording(false);
+    setRecordingSeconds(0);
     setReportStep(1);
     setLocationChoice(null);
     setGpsStatus("idle");
@@ -187,6 +259,85 @@ export default function Home() {
     setSubmitError("");
     setIsSubmitting(false);
     setReportOpen(true);
+  };
+
+  const closeReport = () => {
+    if (mediaRecorderRef.current?.state === "recording") mediaRecorderRef.current.stop();
+    mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
+    setIsRecording(false);
+    setReportOpen(false);
+  };
+
+  const addFiles = (event: ChangeEvent<HTMLInputElement>, kind: MediaKind) => {
+    const selectedFiles = Array.from(event.target.files ?? []);
+    event.target.value = "";
+    if (selectedFiles.length === 0) return;
+    const oversized = selectedFiles.find((file) => file.size > 80 * 1024 * 1024);
+    if (oversized) {
+      setMediaError("파일 한 개의 크기는 80MB 이하로 선택해주세요.");
+      return;
+    }
+    setMediaError("");
+    setAttachments((current) => {
+      const available = Math.max(0, 5 - current.length);
+      const next = selectedFiles.slice(0, available).map((file) => ({
+        id: crypto.randomUUID(),
+        kind,
+        file,
+        previewUrl: URL.createObjectURL(file),
+      }));
+      if (selectedFiles.length > available) setMediaError("사진·영상·음성은 모두 합쳐 5개까지 넣을 수 있어요.");
+      return [...current, ...next];
+    });
+  };
+
+  const removeAttachment = (id: string) => {
+    setAttachments((current) => {
+      const target = current.find((attachment) => attachment.id === id);
+      if (target) URL.revokeObjectURL(target.previewUrl);
+      return current.filter((attachment) => attachment.id !== id);
+    });
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current?.state === "recording") mediaRecorderRef.current.stop();
+  };
+
+  const startRecording = async () => {
+    if (!navigator.mediaDevices?.getUserMedia || !("MediaRecorder" in window)) {
+      setMediaError("이 브라우저에서는 음성 녹음을 사용할 수 없어요. 녹음 파일을 선택해주세요.");
+      return;
+    }
+    if (attachments.length >= 5) {
+      setMediaError("사진·영상·음성은 모두 합쳐 5개까지 넣을 수 있어요.");
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      mediaStreamRef.current = stream;
+      mediaRecorderRef.current = recorder;
+      audioChunksRef.current = [];
+      recorder.ondataavailable = (event) => { if (event.data.size > 0) audioChunksRef.current.push(event.data); };
+      recorder.onstop = () => {
+        const mimeType = recorder.mimeType || "audio/webm";
+        const blob = new Blob(audioChunksRef.current, { type: mimeType });
+        const extension = mimeType.includes("mp4") ? "m4a" : "webm";
+        const file = new File([blob], `현장음성-${Date.now()}.${extension}`, { type: mimeType });
+        const attachment: MediaAttachment = { id: crypto.randomUUID(), kind: "audio", file, previewUrl: URL.createObjectURL(file) };
+        setAttachments((current) => [...current, attachment].slice(0, 5));
+        stream.getTracks().forEach((track) => track.stop());
+        mediaStreamRef.current = null;
+        mediaRecorderRef.current = null;
+        setIsRecording(false);
+      };
+      setMediaError("");
+      setRecordingSeconds(0);
+      setIsRecording(true);
+      recorder.start();
+    } catch {
+      setMediaError("마이크 권한이 필요해요. 권한을 허용하거나 녹음 파일을 선택해주세요.");
+    }
   };
 
   const requestCurrentLocation = () => {
@@ -250,6 +401,12 @@ export default function Home() {
         accuracy: gpsPoint?.accuracy ?? null,
         address: manualAddress,
         placeDescription,
+        media: attachments.map((attachment) => ({
+          kind: attachment.kind,
+          name: attachment.file.name,
+          type: attachment.file.type,
+          size: attachment.file.size,
+        })),
       }),
     }).catch(() => null);
     setIsSubmitting(false);
@@ -258,6 +415,11 @@ export default function Home() {
       return;
     }
     const saved = await response.json();
+    if (saved.id && attachments.length > 0) {
+      await storeReportMedia(saved.id, attachments).catch(() => {
+        setMediaError("기록은 접수됐지만 이 기기의 미디어 보관에 실패했어요.");
+      });
+    }
     if (!isLoggedIn && saved.id) window.sessionStorage.setItem("jikeoro-pending-report-id", saved.id);
     setReportStep(3);
   };
@@ -441,22 +603,58 @@ export default function Home() {
       <button className="mobile-report-button" onClick={openReport}><span>＋</span> 위험요소 기록하기</button>
 
       {reportOpen && (
-        <div className="modal-backdrop" role="presentation" onMouseDown={(e) => e.target === e.currentTarget && setReportOpen(false)}>
+        <div className="modal-backdrop" role="presentation" onMouseDown={(e) => e.target === e.currentTarget && closeReport()}>
           <section className="report-modal" role="dialog" aria-modal="true" aria-labelledby="report-title">
-            <button className="modal-close" onClick={() => setReportOpen(false)} aria-label="닫기">×</button>
+            <button className="modal-close" onClick={closeReport} aria-label="닫기">×</button>
             {reportStep < 3 && <div className="modal-progress"><span style={{ width: reportStep === 1 ? "50%" : "100%" }} /></div>}
             {reportStep === 1 && (
               <>
                 <p className="modal-step">1 / 2</p>
                 <h2 id="report-title">어떤 위험을<br />발견하셨나요?</h2>
-                <p className="modal-help">사진을 촬영하거나 기기에 저장된 사진을 선택해주세요.</p>
-                <label className="upload-box">
-                  <input type="file" accept="image/*" capture="environment" />
-                  <span className="upload-icon">＋</span>
-                  <strong>사진 촬영·선택</strong>
-                  <small>얼굴과 차량번호는 제출 전 확인해주세요.</small>
-                </label>
-                <button className="modal-primary" onClick={() => setReportStep(2)}>사진 없이 계속하기 <span>→</span></button>
+                <p className="modal-help">사진이나 영상을 넣고, 필요하면 현장의 소리도 직접 녹음해주세요.</p>
+                <div className="media-picker-grid">
+                  <label className="media-picker-card">
+                    <input type="file" accept="image/*" capture="environment" multiple onChange={(event) => addFiles(event, "image")} />
+                    <span className="upload-icon" aria-hidden="true">＋</span>
+                    <strong>사진 촬영·선택</strong>
+                    <small>카메라 또는 사진첩</small>
+                  </label>
+                  <label className="media-picker-card">
+                    <input type="file" accept="video/*" capture="environment" multiple onChange={(event) => addFiles(event, "video")} />
+                    <span className="upload-icon video-icon" aria-hidden="true">▶</span>
+                    <strong>영상 촬영·선택</strong>
+                    <small>카메라 또는 보관함</small>
+                  </label>
+                </div>
+                <div className="voice-recorder">
+                  <div>
+                    <strong>현장 음성</strong>
+                    <small>{isRecording ? `${Math.floor(recordingSeconds / 60)}:${String(recordingSeconds % 60).padStart(2, "0")} 녹음 중` : "버튼을 누르면 바로 녹음돼요."}</small>
+                  </div>
+                  <button className={isRecording ? "recording" : ""} type="button" onClick={isRecording ? stopRecording : startRecording}>
+                    <span aria-hidden="true">{isRecording ? "■" : "●"}</span>{isRecording ? "녹음 끝내기" : "음성 녹음"}
+                  </button>
+                  <label className="audio-file-button">
+                    <input type="file" accept="audio/*" onChange={(event) => addFiles(event, "audio")} />
+                    녹음 파일 선택
+                  </label>
+                </div>
+                {attachments.length > 0 && (
+                  <div className="media-preview-list" aria-label="선택한 사진, 영상, 음성">
+                    {attachments.map((attachment) => (
+                      <article className={`media-preview ${attachment.kind}`} key={attachment.id}>
+                        {attachment.kind === "image" && <img src={attachment.previewUrl} alt="선택한 현장 사진 미리보기" />}
+                        {attachment.kind === "video" && <video src={attachment.previewUrl} controls preload="metadata" aria-label="선택한 현장 영상 미리보기" />}
+                        {attachment.kind === "audio" && <><span className="audio-preview-icon" aria-hidden="true">♪</span><audio src={attachment.previewUrl} controls aria-label="녹음한 현장 음성 미리듣기" /></>}
+                        <div><strong>{attachment.kind === "image" ? "사진" : attachment.kind === "video" ? "영상" : "음성"}</strong><small>{attachment.file.name}</small></div>
+                        <button type="button" onClick={() => removeAttachment(attachment.id)} aria-label={`${attachment.file.name} 삭제`}>×</button>
+                      </article>
+                    ))}
+                  </div>
+                )}
+                <p className="media-privacy">얼굴과 차량번호가 보이면 제출 전에 확인해주세요. 파일은 이 기기에 안전하게 보관됩니다.</p>
+                {mediaError && <p className="media-error" role="alert">{mediaError}</p>}
+                <button className="modal-primary" onClick={() => setReportStep(2)}>{attachments.length > 0 ? "선택한 자료와 계속하기" : "자료 없이 계속하기"} <span>→</span></button>
               </>
             )}
             {reportStep === 2 && (

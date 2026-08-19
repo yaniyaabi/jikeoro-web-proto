@@ -17,6 +17,7 @@ type DemoReport = {
   reporter_name: string | null;
   created_at: string;
   updated_at: string;
+  media?: Array<{ kind: "image" | "video" | "audio"; name: string; type: string; size: number }>;
 };
 
 const seededReports: DemoReport[] = [
@@ -120,6 +121,7 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
       reporter_name: role === "member" ? "김지킴" : null,
       created_at: now,
       updated_at: now,
+      media: Array.isArray(body.media) ? body.media : [],
     };
     const reports = [report, ...readReports()];
     writeReports(reports);
@@ -137,6 +139,7 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
         response: report.response ?? "접수 내용을 확인하고 있습니다.",
         department: report.assigned_agency ?? "지켜路 운영팀",
         createdAt: report.created_at,
+        mediaCount: report.media?.length ?? 0,
       })),
     });
   }

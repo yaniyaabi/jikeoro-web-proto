@@ -273,3 +273,59 @@ footer,footer p{font-size:13px}
   .report-modal h2{font-size:32px}.modal-help{font-size:15px}.modal-primary{font-size:16px}
   .risk-map-intro>div>p:not(.eyebrow){font-size:15px}.risk-map-header-actions>a{font-size:13px}.map-connection-card>p:not(.eyebrow){font-size:14px}
 }
+
+/* 사진·영상·음성을 실제로 선택하고 확인하는 기록 도구 */
+.report-modal{width:min(100%,720px);overflow-x:hidden}
+.media-picker-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.media-picker-card{min-height:150px;border:1.5px dashed #9fb0a5;border-radius:14px;background:#f1f5ed;display:flex;align-items:center;justify-content:center;flex-direction:column;cursor:pointer;transition:.2s;text-align:center;padding:18px}
+.media-picker-card:hover{background:#e9f2df;border-color:#66816f}
+.media-picker-card input,.audio-file-button input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;overflow:hidden}
+.media-picker-card .upload-icon{margin-bottom:10px}
+.media-picker-card strong{font-size:18px}
+.media-picker-card small{font-size:14px;color:#71827b;margin-top:6px}
+.video-icon{font-size:18px}
+.voice-recorder{margin-top:12px;border:1px solid #d2dbd2;border-radius:14px;background:white;padding:14px;display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:10px}
+.voice-recorder>div{display:flex;flex-direction:column;gap:4px}
+.voice-recorder>div strong{font-size:17px}.voice-recorder>div small{font-size:14px;color:#657a72}
+.voice-recorder button,.audio-file-button{min-height:46px;border:1px solid #c8d3c9;border-radius:11px;background:#f2f6ef;color:var(--ink);padding:10px 13px;font-size:15px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;white-space:nowrap}
+.voice-recorder button span{color:var(--coral)}.voice-recorder button.recording{background:var(--coral);border-color:var(--coral);color:white}.voice-recorder button.recording span{color:white}
+.media-preview-list{display:grid;gap:9px;margin-top:12px}
+.media-preview{position:relative;min-height:74px;border:1px solid #d4ddd4;border-radius:13px;background:white;padding:9px 46px 9px 9px;display:grid;grid-template-columns:92px 1fr;align-items:center;gap:12px;overflow:hidden}
+.media-preview img,.media-preview video{width:92px;height:62px;border-radius:9px;object-fit:cover;background:#dce4da}
+.media-preview.audio{grid-template-columns:48px 1fr}.media-preview.audio audio{grid-column:1/3;width:100%;height:38px}.audio-preview-icon{width:44px;height:44px;border-radius:12px;background:var(--ink);color:var(--mint);display:grid;place-items:center;font-size:25px;font-weight:900}
+.media-preview>div{min-width:0;display:flex;flex-direction:column;gap:5px}.media-preview>div strong{font-size:16px}.media-preview>div small{font-size:13px;color:#687b74;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.media-preview>button{position:absolute;right:10px;top:10px;width:32px;height:32px;border:0;border-radius:50%;background:#e9eee7;color:var(--ink);font-size:20px;cursor:pointer}
+.media-privacy,.media-error{font-size:14px;line-height:1.55;margin:11px 2px 0}.media-privacy{color:#6c8078}.media-error{color:#b64637;font-weight:800}
+
+/* 고령자도 읽기 쉬운 글자 체계 — 원본 색상은 그대로 유지 */
+.brand small{font-size:13px}.desktop-nav{font-size:18px}.header-cta,.login-button,.account-button b{font-size:16px}.eyebrow{font-size:15px}
+.hero-description{font-size:clamp(20px,1.35vw,24px)}.primary-button{font-size:18px}.text-link{font-size:17px}.hero-note p{font-size:15px}
+.mini-label{font-size:12px}.status-pill{font-size:14px}.insight-badge span{font-size:12px}.map-label,.seongsu-road small,.station-name,.cafe-zone{font-size:12px}.seongsu-bridge small,.seoul-forest small,.han-river small{font-size:10px}
+.floating-report small,.floating-report span{font-size:12px}.floating-report strong{font-size:16px}.dashboard-bottom small{font-size:12px}.dashboard-bottom span{font-size:14px}.trust-strip p{font-size:14px}
+
+.section-heading>p{font-size:18px}.filter-row button{font-size:16px}.map-key,.panel-meta,.detail-location{font-size:14px}.detail-body>p{font-size:17px}.detail-body dt{font-size:14px}.detail-body dd{font-size:15px}.panel-button{font-size:17px}
+.panel-meta span,.panel-meta small{font-size:14px}.scene-caption{font-size:14px}.location-line{font-size:15px!important}
+.steps-grid>article>span{font-size:14px}.steps-grid h3{font-size:24px}.steps-grid p{font-size:17px}.project-copy>p:not(.eyebrow){font-size:18px}.project-copy a{font-size:16px}.project-metrics div>span{font-size:16px}.project-metrics>p,.project-metrics small{font-size:14px}
+.invite-copy>p:not(.eyebrow){font-size:18px}.invite-copy li{font-size:16px}.invite-copy button{font-size:17px}.invite-copy>small{font-size:14px}footer,footer p{font-size:15px}
+
+.modal-step{font-size:15px}.modal-help{font-size:17px}.modal-primary{font-size:18px;min-height:54px}.report-modal legend,.text-field>span,.field-guide{font-size:16px}.type-options span{font-size:16px}.location-methods button{font-size:16px}.location-result strong{font-size:16px}.location-result small,.location-result>button{font-size:14px}
+.input-field>span{font-size:15px}.input-field>span small{font-size:14px}.report-modal input,.report-modal textarea{font-size:17px}.manual-divider,.manual-hint,.privacy-note,.location-validation{font-size:14px}.auto-info span{font-size:14px}.gps-accuracy{font-size:13px!important}.success-state>p:not(.modal-step){font-size:16px}
+
+.member-profile strong{font-size:16px}.member-profile small,.member-profile button,.member-profile>a{font-size:14px}.impact-card>p,.badge-card>p,.impact-card>small{font-size:15px}.impact-stats span{font-size:14px}.mission-top span,.mission-top b,.mission-card>p,.mission-bottom strong,.mission-bottom button,.mission-bottom a{font-size:14px}.badge-row b,.badge-card>small{font-size:14px}.activity-filters button{font-size:14px}
+.member-report small,.member-report time,.response-box small,.status-track span,.prototype-note{font-size:13px}.member-report h3,.member-report h4{font-size:18px}.member-report p,.response-box p{font-size:15px}
+.status-chip,.prototype-auth-note{font-size:14px}
+.report-media-count{display:inline-flex;margin-top:9px;border-radius:999px;background:#e8f0e4;padding:6px 9px;font-size:14px;font-weight:850;color:#4f6c5c}
+
+.admin-console-label,.admin-account b,.admin-account small,.admin-account button,.admin-stats span,.admin-stats small,.admin-panel-heading span,.admin-panel-heading button,.admin-report-list>button>div:first-child small,.admin-report-list>button>p,.admin-list-footer span,.admin-list-footer b,.admin-detail-top small,.admin-detail-top>p,.admin-description small,.admin-form-grid span,.admin-response-field>span,.admin-notice{font-size:14px}
+.admin-title-row>p,.admin-location,.admin-description p,.empty-admin-list{font-size:16px}.admin-report-list h3{font-size:17px}.admin-form-grid select,.admin-form-grid input,.admin-response-field textarea,.admin-login-card input{font-size:17px}.admin-save-button,.admin-login-card button,.admin-account button{font-size:17px}
+.admin-login-card>p:not(.eyebrow):not(.admin-login-error){font-size:17px}.admin-role-options b{font-size:18px}.admin-role-options small{font-size:14px}.admin-role-options i{font-size:14px}.demo-login-note{font-size:14px}.admin-login-error{font-size:14px!important}.back-home-link{font-size:15px}
+
+.risk-map-header-actions>span{font-size:14px}.risk-map-header-actions>a{font-size:16px}.risk-map-intro>div>p:not(.eyebrow){font-size:18px}.risk-map-intro dt{font-size:14px}.risk-map-intro dd span{font-size:14px}.map-connection-card>p:not(.eyebrow){font-size:17px}.map-connection-card small,.map-privacy-note{font-size:13px}.map-error-card strong{font-size:16px}.risk-map-filters button{font-size:14px}
+.report-index{font-size:13px}.report-list-copy b,.report-list-copy small,.report-list-place,.report-list-copy time{font-size:13px}.report-list-copy>strong{font-size:17px}.risk-list-message{font-size:16px}.selected-report-summary small{font-size:12px}.selected-report-summary strong{font-size:16px}.selected-report-summary p{font-size:14px}
+
+@media(max-width:720px){
+  .brand small{font-size:12px}.login-button{font-size:15px}.hero-description{font-size:19px}.primary-button,.text-link{font-size:17px}.hero-note p{font-size:14px}.trust-strip p{font-size:13px}.mobile-report-button{font-size:17px}
+  .section-heading>p,.detail-body>p,.steps-grid p,.project-copy>p:not(.eyebrow),.invite-copy>p:not(.eyebrow){font-size:17px}.invite-copy li{font-size:15px}.project-metrics div>span{font-size:16px}.project-metrics>p{font-size:14px}
+  .report-modal{padding:34px 20px 24px}.report-modal h2{font-size:34px}.modal-help{font-size:17px}.modal-primary{font-size:18px}.media-picker-grid{grid-template-columns:1fr}.media-picker-card{min-height:125px}.voice-recorder{grid-template-columns:1fr 1fr}.voice-recorder>div{grid-column:1/3}.voice-recorder button,.audio-file-button{font-size:15px}.media-preview{grid-template-columns:74px 1fr}.media-preview img,.media-preview video{width:74px;height:58px}
+  .risk-map-intro>div>p:not(.eyebrow){font-size:17px}.risk-map-header-actions>a{font-size:15px}.map-connection-card>p:not(.eyebrow){font-size:16px}
+}
