@@ -174,3 +174,102 @@ footer{height:150px;display:flex;align-items:center;justify-content:space-betwee
 @media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}*,*::before,*::after{transition:none!important}}
 
 :focus-visible{outline:3px solid var(--coral);outline-offset:3px}
+
+/* 읽기 편한 글자 크기: 색상과 구성은 유지하고 작은 글자만 보정합니다. */
+.brand small{font-size:11px}
+.desktop-nav{font-size:16px}
+.header-cta,.login-button{font-size:14px}
+.account-button b{font-size:14px}
+.eyebrow{font-size:13px}
+.hero-description{font-size:clamp(18px,1.2vw,22px)}
+.primary-button,.text-link{font-size:16px}
+.hero-note p{font-size:13px}
+.mini-label{font-size:10px}
+.status-pill{font-size:12px}
+.insight-badge span{font-size:10px}
+.map-label{font-size:11px}
+.seongsu-road small,.station-name,.cafe-zone{font-size:10px}
+.seongsu-bridge small{font-size:9px}
+.seoul-forest small,.han-river small{font-size:8px}
+.floating-report small,.floating-report span{font-size:10px}
+.floating-report strong{font-size:14px}
+.dashboard-bottom small{font-size:10px}
+.dashboard-bottom span{font-size:11px}
+.trust-strip p{font-size:12px}
+
+.section-heading>p{font-size:16px}
+.filter-row button{font-size:14px}
+.map-key,.panel-meta,.detail-location{font-size:12px}
+.detail-body>p{font-size:15px}
+.detail-body dt{font-size:11px}
+.detail-body dd{font-size:13px}
+.panel-button{font-size:15px}
+.steps-grid>article>span{font-size:12px}
+.steps-grid h3{font-size:22px}
+.steps-grid p{font-size:15px}
+.project-copy>p:not(.eyebrow){font-size:16px}
+.project-metrics>p,.project-metrics small{font-size:13px}
+.invite-copy>p:not(.eyebrow){font-size:16px}
+.invite-copy li{font-size:14px}
+.invite-copy button{font-size:15px}
+.invite-copy>small{font-size:12px}
+footer,footer p{font-size:13px}
+
+.modal-step{font-size:13px}
+.modal-help{font-size:15px}
+.upload-box strong{font-size:17px}
+.upload-box small{font-size:13px}
+.modal-primary{font-size:16px}
+.media-legend,.media-item label,.option-label,.field-guide{font-size:14px}
+.location-methods button{font-size:14px}
+.location-result strong{font-size:14px}
+.location-result small{font-size:12px}
+.report-modal label{font-size:14px}
+.report-modal input,.report-modal textarea{font-size:16px}
+.manual-hint,.privacy-note{font-size:12px}
+.auto-info{font-size:13px}
+.gps-accuracy{font-size:11px!important}
+
+.member-profile strong{font-size:14px}
+.member-profile small,.member-profile button,.member-profile>a{font-size:12px}
+.impact-card>p,.badge-card>p{font-size:13px}
+.impact-card>small{font-size:13px}
+.impact-stats span{font-size:12px}
+.mission-top span,.mission-top b,.mission-card>p,.mission-bottom strong,.mission-bottom button,.mission-bottom a{font-size:12px}
+.badge-row b,.badge-card>small{font-size:12px}
+.activity-filters button{font-size:12px}
+.member-report small,.member-report time,.response-box small,.status-track span,.prototype-note{font-size:11px}
+.member-report h3,.member-report h4{font-size:16px}
+.member-report p,.response-box p{font-size:13px}
+
+.admin-login-card label,.admin-field label{font-size:14px}
+.admin-login-card input,.admin-field input,.admin-field select,.admin-field textarea{font-size:16px}
+.admin-login-card button,.admin-save-button,.admin-account button{font-size:15px}
+.admin-title-row>p,.admin-detail-panel>p{font-size:15px}
+.admin-stats small,.admin-report-list small,.admin-report-list time,.admin-detail-top p{font-size:12px}
+.admin-report-list strong{font-size:15px}
+
+.risk-map-header-actions>span{font-size:12px}
+.risk-map-header-actions>a{font-size:14px}
+.risk-map-intro>div>p:not(.eyebrow){font-size:16px}
+.risk-map-intro dt{font-size:11px}
+.risk-map-intro dd span{font-size:12px}
+.map-connection-card>p:not(.eyebrow){font-size:15px}
+.map-connection-card small,.map-privacy-note{font-size:11px}
+.map-error-card strong{font-size:14px}
+.risk-map-filters button{font-size:12px}
+.report-index{font-size:11px}
+.report-list-copy b,.report-list-copy small,.report-list-place,.report-list-copy time{font-size:11px}
+.report-list-copy>strong{font-size:15px}
+.risk-list-message{font-size:14px}
+.selected-report-summary small{font-size:10px}
+.selected-report-summary strong{font-size:14px}
+.selected-report-summary p{font-size:12px}
+
+@media (max-width:720px){
+  .brand small{font-size:10px}.login-button{font-size:13px}.hero-description{font-size:17px}.primary-button,.text-link{font-size:15px}.hero-note p{font-size:12px}.trust-strip p{font-size:11px}
+  .invite-copy>p:not(.eyebrow){font-size:15px}.invite-copy li{font-size:13px}.mobile-report-button{font-size:15px}
+  .section-heading>p,.detail-body>p,.steps-grid p,.project-copy>p:not(.eyebrow){font-size:15px}
+  .report-modal h2{font-size:32px}.modal-help{font-size:15px}.modal-primary{font-size:16px}
+  .risk-map-intro>div>p:not(.eyebrow){font-size:15px}.risk-map-header-actions>a{font-size:13px}.map-connection-card>p:not(.eyebrow){font-size:14px}
+}
