@@ -515,8 +515,6 @@ export default function Home() {
         <span />
         <p>주민참여 데이터</p>
         <span />
-        <p>고령자 친화 UI</p>
-        <span />
         <p>성수동 1차년도 파일럿</p>
       </section>
 
