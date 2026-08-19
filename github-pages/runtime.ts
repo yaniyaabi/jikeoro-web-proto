@@ -2,6 +2,11 @@ const PAGES_PREFIX = "/jikeoro-web-proto";
 const REPORTS_KEY = "jikeoro-pages-reports";
 const ROLE_KEY = "jikeoro-pages-role";
 
+// Authentication is intentionally scoped to the current tab. The previous
+// localStorage implementation kept a demo role across visits, so returning
+// from the map could make a visitor look logged in without a fresh login.
+window.localStorage.removeItem(ROLE_KEY);
+
 type DemoReport = {
   id: string;
   category: string;
@@ -83,7 +88,7 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   if (!url.pathname.startsWith("/api/")) return networkFetch(input, init);
 
   const method = (init?.method ?? "GET").toUpperCase();
-  const role = window.localStorage.getItem(ROLE_KEY);
+  const role = window.sessionStorage.getItem(ROLE_KEY);
 
   if (url.pathname === "/api/auth/session") {
     return json({
@@ -94,11 +99,12 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
 
   if (url.pathname === "/api/auth/demo" && method === "POST") {
     const body = JSON.parse(String(init?.body ?? "{}"));
-    window.localStorage.setItem(ROLE_KEY, body.role ?? "member");
+    window.sessionStorage.setItem(ROLE_KEY, body.role ?? "member");
     return json({ ok: true });
   }
 
   if (url.pathname === "/api/auth/logout" && method === "POST") {
+    window.sessionStorage.removeItem(ROLE_KEY);
     window.localStorage.removeItem(ROLE_KEY);
     return json({ ok: true });
   }

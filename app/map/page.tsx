@@ -65,13 +65,26 @@ export default function RiskMapPage() {
   useEffect(() => {
     if (!mapElementRef.current || mapRef.current) return;
     let disposed = false;
+    let loadTimer: number | undefined;
     import("maplibre-gl").then((maplibregl) => {
       if (disposed || !mapElementRef.current) return;
       try {
         mapLibraryRef.current = maplibregl;
         const map = new maplibregl.Map({
           container: mapElementRef.current,
-          style: "https://tiles.openfreemap.org/styles/positron",
+          style: {
+            version: 8,
+            sources: {
+              openStreetMap: {
+                type: "raster",
+                tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
+                tileSize: 256,
+                maxzoom: 19,
+                attribution: "© OpenStreetMap contributors",
+              },
+            },
+            layers: [{ id: "openStreetMap", type: "raster", source: "openStreetMap" }],
+          },
           center: [127.0522, 37.5448],
           zoom: 14.8,
           minZoom: 5,
@@ -79,10 +92,15 @@ export default function RiskMapPage() {
           attributionControl: true,
         });
         map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
-        map.on("load", () => setMapReady(true));
-        map.on("error", () => {
-          if (!map.loaded()) setMapError("무료 지도를 불러오지 못했어요. 인터넷 연결을 확인해 주세요.");
+        map.on("load", () => {
+          if (loadTimer) window.clearTimeout(loadTimer);
+          setMapError("");
+          setMapReady(true);
+          map.resize();
         });
+        loadTimer = window.setTimeout(() => {
+          if (!map.loaded()) setMapError("무료 지도를 불러오지 못했어요. 인터넷 연결을 확인해 주세요.");
+        }, 12000);
         mapRef.current = map;
       } catch (error) {
         console.error("MapLibre initialization failed", error);
@@ -94,6 +112,7 @@ export default function RiskMapPage() {
     });
     return () => {
       disposed = true;
+      if (loadTimer) window.clearTimeout(loadTimer);
       markersRef.current.forEach((marker) => marker.remove());
       markersRef.current = [];
       mapRef.current?.remove();
