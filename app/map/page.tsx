@@ -5,6 +5,7 @@ import type { Map as MapLibreMap, Marker as MapLibreMarker } from "maplibre-gl";
 import type { Feature, FeatureCollection, MultiPolygon, Polygon, Position } from "geojson";
 import { SiteHeader } from "../components/site-header";
 import { sitePath } from "../lib/site-path";
+import { HazardIllustration } from "../components/hazard-illustration";
 
 type MapReport = {
   id: string;
@@ -571,10 +572,9 @@ export default function RiskMapPage() {
               {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
               {!mediaLoading && activeMedia?.kind === "video" && <video src={activeMedia.previewUrl} controls preload="metadata" aria-label={`${selected.title} 현장 영상`} />}
               {!mediaLoading && !activeMedia && (
-                <div className={`map-sample-media photo-${toneByType[selected.type] ?? "navy"}`}>
-                  <span className="photo-grid" /><span className="scene-object"><i /><b /></span>
+                <div className="map-sample-media hazard-photo">
+                  <HazardIllustration type={selected.type} />
                   <span className="scene-caption">첨부 예시 · {selected.type}</span>
-                  <i className="focus-corner a" /><i className="focus-corner b" /><i className="focus-corner c" /><i className="focus-corner d" />
                   <p>이 예시 기록에는 원본 사진·영상이 없어 현장 유형 이미지로 표시합니다.</p>
                 </div>
               )}

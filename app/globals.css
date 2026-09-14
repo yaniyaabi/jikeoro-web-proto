@@ -515,3 +515,7 @@ footer,footer p{font-size:13px}
 
 @media(max-width:1050px){.report-guide{grid-template-columns:1fr}.guide-preview-wrap{padding:62px 34px 44px}.guide-copy{padding:44px}.guide-step-tabs{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:720px){.guide-preview-wrap{padding:58px 12px 24px}.guide-preview-label{left:14px;top:14px;font-size:12px}.guide-screen{min-height:470px;padding:42px 18px 22px;border-radius:18px}.guide-screen-title{font-size:28px}.guide-media-options>span{min-height:118px}.guide-copy{padding:31px 22px}.guide-copy h3{font-size:32px}.guide-copy>p{font-size:17px}.guide-copy li{font-size:16px}.guide-navigation{display:grid;grid-template-columns:1fr 1fr}.guide-navigation button{padding:10px 8px}.guide-step-tabs{grid-template-columns:1fr;gap:7px}.guide-step-tabs button{min-height:60px}.guide-type-options>*{font-size:11px}.guide-voice-options span{font-size:11px}.guide-map-preview{height:155px}}
+
+/* 위험 유형별로 실제 형태가 바로 읽히는 선명한 벡터 장면 */
+.hazard-photo{position:relative;background:#dfe7de;isolation:isolate}.hazard-illustration-svg{display:block;width:100%;height:100%;object-fit:cover}.hazard-photo .scene-caption{z-index:3;left:16px;top:14px;background:rgba(16,45,42,.92);color:#c6f56c;padding:7px 11px;font-size:13px;box-shadow:0 5px 14px rgba(16,45,42,.16)}
+.map-sample-media.hazard-photo{overflow:hidden}.map-sample-media.hazard-photo>p{z-index:4;background:rgba(255,255,255,.92)}

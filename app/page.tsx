@@ -3,6 +3,7 @@
 import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import type { Map as MapLibreMap } from "maplibre-gl";
 import { SiteHeader } from "./components/site-header";
+import { HazardIllustration } from "./components/hazard-illustration";
 import { sitePath } from "./lib/site-path";
 
 type Hazard = {
@@ -858,8 +859,9 @@ export default function Home() {
 
           <aside className="report-panel" aria-live="polite">
             <div className="panel-meta"><span>{selected.type}</span><small>{selected.time}</small></div>
-            <div className={`detail-photo photo-${selected.tone}`} aria-hidden="true">
-              <span className="photo-grid" /><span className="scene-object"><i /><b /></span><span className="scene-caption">{selected.type}</span><i className="focus-corner a" /><i className="focus-corner b" /><i className="focus-corner c" /><i className="focus-corner d" />
+            <div className="detail-photo hazard-photo">
+              <HazardIllustration type={selected.type} />
+              <span className="scene-caption">{selected.type}</span>
             </div>
             <div className="detail-body">
               <p className="location-line"><span aria-hidden="true">⌖</span> {selected.place}</p>
