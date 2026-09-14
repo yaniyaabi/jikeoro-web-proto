@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Map as MapLibreMap, Marker as MapLibreMarker } from "maplibre-gl";
-import { sitePath } from "../lib/site-path";
+import { SiteSidebar } from "../components/site-sidebar";
 
 type MapReport = {
   id: string;
@@ -15,11 +15,46 @@ type MapReport = {
   place: string;
   status: "received" | "review" | "action" | "completed";
   createdAt: string;
+  mediaCount?: number;
 };
+
+type StoredReportMedia = {
+  id: string;
+  reportId: string;
+  kind: "image" | "video" | "audio";
+  name: string;
+  type: string;
+  blob: Blob;
+};
+
+type PreviewMedia = StoredReportMedia & { previewUrl: string };
+type LikeEntry = { count: number; liked: boolean };
+type LikeStore = Record<string, LikeEntry>;
 
 const categories = ["전체", "단차", "포트홀", "조도", "적치물"];
 const toneByType: Record<string, string> = { 단차: "coral", 포트홀: "yellow", 조도: "navy", 적치물: "mint" };
 const statusText: Record<MapReport["status"], string> = { received: "접수", review: "현장 검토", action: "조치 진행", completed: "개선 완료" };
+const LIKES_KEY = "jikeoro-map-likes";
+
+async function readReportMedia(reportId: string) {
+  if (!("indexedDB" in window)) return [] as StoredReportMedia[];
+  return new Promise<StoredReportMedia[]>((resolve) => {
+    const request = window.indexedDB.open("jikeoro-media", 1);
+    request.onupgradeneeded = () => {
+      const database = request.result;
+      if (!database.objectStoreNames.contains("media")) database.createObjectStore("media", { keyPath: "id" });
+    };
+    request.onerror = () => resolve([]);
+    request.onsuccess = () => {
+      const database = request.result;
+      const transaction = database.transaction("media", "readonly");
+      const getAll = transaction.objectStore("media").getAll();
+      getAll.onsuccess = () => resolve((getAll.result as StoredReportMedia[]).filter((item) => item.reportId === reportId));
+      getAll.onerror = () => resolve([]);
+      transaction.oncomplete = () => database.close();
+    };
+  });
+}
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("ko-KR", { month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(value));
@@ -43,6 +78,17 @@ export default function RiskMapPage() {
   const [mapReady, setMapReady] = useState(false);
   const [dataError, setDataError] = useState("");
   const [mapError, setMapError] = useState("");
+  const [selectedMedia, setSelectedMedia] = useState<PreviewMedia[]>([]);
+  const [selectedMediaIndex, setSelectedMediaIndex] = useState(0);
+  const [mediaLoading, setMediaLoading] = useState(false);
+  const [likes, setLikes] = useState<LikeStore>(() => {
+    if (typeof window === "undefined") return {};
+    try {
+      return JSON.parse(window.localStorage.getItem(LIKES_KEY) ?? "{}");
+    } catch {
+      return {};
+    }
+  });
 
   useEffect(() => {
     fetch("/api/map/reports")
@@ -61,6 +107,29 @@ export default function RiskMapPage() {
     [filter, reports],
   );
   const selected = reports.find((report) => report.id === selectedId) ?? filteredReports[0] ?? null;
+
+  useEffect(() => {
+    if (!selected?.id) return;
+    let disposed = false;
+    let previewUrls: string[] = [];
+    Promise.resolve().then(async () => {
+      if (disposed) return;
+      setMediaLoading(true);
+      setSelectedMedia([]);
+      setSelectedMediaIndex(0);
+      const items = await readReportMedia(selected.id);
+      if (!disposed) {
+        const previews = items.map((item) => ({ ...item, previewUrl: URL.createObjectURL(item.blob) }));
+        previewUrls = previews.map((item) => item.previewUrl);
+        setSelectedMedia(previews);
+      }
+      if (!disposed) setMediaLoading(false);
+    });
+    return () => {
+      disposed = true;
+      previewUrls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [selected?.id]);
 
   useEffect(() => {
     if (!mapElementRef.current || mapRef.current) return;
@@ -161,20 +230,26 @@ export default function RiskMapPage() {
     mapRef.current?.flyTo({ center: [report.longitude, report.latitude], zoom: Math.max(mapRef.current.getZoom(), 16), essential: true });
   };
 
+  const toggleLike = (reportId: string) => {
+    setLikes((current) => {
+      const entry = current[reportId] ?? { count: 0, liked: false };
+      const next = {
+        ...current,
+        [reportId]: { count: Math.max(0, entry.count + (entry.liked ? -1 : 1)), liked: !entry.liked },
+      };
+      window.localStorage.setItem(LIKES_KEY, JSON.stringify(next));
+      return next;
+    });
+  };
+
   const todayCount = reports.filter((report) => new Date(report.createdAt).toDateString() === new Date().toDateString()).length;
+  const visualMedia = selectedMedia.filter((item) => item.kind === "image" || item.kind === "video");
+  const activeMedia = visualMedia[selectedMediaIndex] ?? visualMedia[0] ?? null;
+  const selectedLike = selected ? likes[selected.id] ?? { count: 0, liked: false } : { count: 0, liked: false };
 
   return (
-    <main className="risk-map-page">
-      <header className="risk-map-header">
-        <a className="brand" href={sitePath("/")} aria-label="지켜로 첫 화면으로 이동">
-          <span className="brand-mark" aria-hidden="true">路</span>
-          <span><strong>지켜路</strong><small>우리동네 보행안전 지도</small></span>
-        </a>
-        <div className="risk-map-header-actions">
-          <span>GPS 기록 현황</span>
-          <a href={sitePath("/?report=1")}>위험요소 기록하기</a>
-        </div>
-      </header>
+    <main className="risk-map-page with-site-sidebar">
+      <SiteSidebar active="map" />
 
       <section className="risk-map-intro">
         <div>
@@ -219,15 +294,27 @@ export default function RiskMapPage() {
                   <strong>{report.title}</strong>
                   <span className="report-list-place">{report.place}</span>
                   <time>{formatDate(report.createdAt)}</time>
+                  {Boolean(report.mediaCount) && <span className="map-media-count">사진·영상 {report.mediaCount}개</span>}
                   <span className={`gps-accuracy${(report.accuracy ?? 0) > 500 ? " low" : ""}`}>{formatAccuracy(report.accuracy)}</span>
                 </span>
               </button>
             ))}
           </div>
           {selected && (
-            <div className="selected-report-summary">
-              <span className={`summary-tone tone-${toneByType[selected.type] ?? "navy"}`} />
-              <div><small>선택한 기록 · {formatAccuracy(selected.accuracy)}</small><strong>{selected.title}</strong><p>{selected.description}</p></div>
+            <div className="selected-report-detail">
+              <section className="selected-report-media" aria-label="선택한 기록의 첨부 자료">
+                {mediaLoading && <p className="map-media-empty">첨부 자료를 불러오는 중이에요.</p>}
+                {!mediaLoading && activeMedia?.kind === "image" && <img src={activeMedia.previewUrl} alt={`${selected.title} 현장 사진`} />}
+                {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+                {!mediaLoading && activeMedia?.kind === "video" && <video src={activeMedia.previewUrl} controls preload="metadata" aria-label={`${selected.title} 현장 영상`} />}
+                {!mediaLoading && !activeMedia && <p className="map-media-empty">이 기록에는 등록된 사진·영상이 없어요.</p>}
+                {visualMedia.length > 1 && <div className="map-media-thumbnails">{visualMedia.map((item, index) => <button key={item.id} type="button" className={selectedMediaIndex === index ? "active" : ""} onClick={() => setSelectedMediaIndex(index)}>{item.kind === "image" ? "사진" : "영상"} {index + 1}</button>)}</div>}
+              </section>
+              <div className="selected-report-summary">
+                <span className={`summary-tone tone-${toneByType[selected.type] ?? "navy"}`} />
+                <div><small>선택한 기록 · {formatAccuracy(selected.accuracy)}</small><strong>{selected.title}</strong><p>{selected.description}</p></div>
+                <button className={`map-like-button${selectedLike.liked ? " liked" : ""}`} type="button" onClick={() => toggleLike(selected.id)} aria-pressed={selectedLike.liked}><span aria-hidden="true">{selectedLike.liked ? "♥" : "♡"}</span> 좋아요 <b>{selectedLike.count}</b></button>
+              </div>
             </div>
           )}
         </aside>

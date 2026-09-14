@@ -171,6 +171,7 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
           place: report.place_description ?? report.address ?? "성수동 위치 기록",
           status: report.status,
           createdAt: report.created_at,
+          mediaCount: report.media?.filter((item) => item.kind === "image" || item.kind === "video").length ?? 0,
         })),
     });
   }

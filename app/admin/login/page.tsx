@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { SiteSidebar } from "../../components/site-sidebar";
 import { sitePath } from "../../lib/site-path";
 
 type AdminRole = "research_admin" | "agency_staff";
@@ -26,11 +27,8 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <main className="admin-login-page">
-      <a className="brand admin-login-brand" href={sitePath("/")} aria-label="지켜로 홈">
-        <span className="brand-mark" aria-hidden="true">路</span>
-        <span><strong>지켜路</strong><small>우리동네 보행안전 지도</small></span>
-      </a>
+    <main className="admin-login-page with-site-sidebar">
+      <SiteSidebar active="admin" />
       <section className="admin-login-card">
         <p className="eyebrow">OPERATIONS SIGN IN</p>
         <h1>현장의 기록을<br />변화로 연결합니다.</h1>

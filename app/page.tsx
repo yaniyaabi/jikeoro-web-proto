@@ -2,6 +2,7 @@
 
 import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import type { Map as MapLibreMap } from "maplibre-gl";
+import { SiteSidebar } from "./components/site-sidebar";
 import { sitePath } from "./lib/site-path";
 
 type Hazard = {
@@ -649,32 +650,8 @@ export default function Home() {
   };
 
   return (
-    <main>
-      <header className="site-header">
-        <a className="brand" href="#top" aria-label="지켜로 홈">
-          <span className="brand-mark" aria-hidden="true">
-            路
-          </span>
-          <span>
-            <strong>지켜路</strong>
-            <small>우리동네 보행안전 지도</small>
-          </span>
-        </a>
-        <nav className="desktop-nav" aria-label="주요 메뉴">
-          <a href={sitePath("/map")}>위험지도</a>
-          <a href="#map">참여방법</a>
-          {isLoggedIn && <a href={sitePath("/my")}>내 활동</a>}
-          <a href="#project">프로젝트</a>
-        </nav>
-        <div className="header-actions">
-          <button className="header-cta" onClick={openReport}>위험요소 기록하기</button>
-          {isLoggedIn ? (
-            <a className="account-button" href={sitePath("/my")} aria-label="내 지켜로 활동 보기"><span>김</span><b>김지킴</b></a>
-          ) : (
-            <button className="login-button" onClick={enterMyJikeoro}>로그인</button>
-          )}
-        </div>
-      </header>
+    <main className="with-site-sidebar">
+      <SiteSidebar active="home" />
 
       <section className="hero" id="top">
         <div className="hero-copy">

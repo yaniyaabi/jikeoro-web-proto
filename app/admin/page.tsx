@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { SiteSidebar } from "../components/site-sidebar";
 import { sitePath } from "../lib/site-path";
 
 type ReportStatus = "received" | "review" | "action" | "completed";
@@ -90,14 +91,11 @@ export default function AdminPage() {
   const counts = statusOrder.reduce((result, key) => ({ ...result, [key]: reports.filter((report) => report.status === key).length }), {} as Record<ReportStatus, number>);
 
   return (
-    <main className="admin-page">
-      <header className="site-header member-header admin-header">
-        <a className="brand" href={sitePath("/")} aria-label="지켜로 홈"><span className="brand-mark">路</span><span><strong>지켜路</strong><small>보행안전 운영센터</small></span></a>
-        <span className="admin-console-label">관리자 콘솔</span>
-        <div className="admin-account"><span>{user?.role === "research_admin" ? "研" : "官"}</span><div><b>{user?.name}</b><small>{user?.role === "research_admin" ? "연구진·관리자" : user?.agency}</small></div><button onClick={logout}>로그아웃</button></div>
-      </header>
+    <main className="admin-page with-site-sidebar">
+      <SiteSidebar active="admin" />
 
       <section className="admin-main">
+        <div className="admin-context-bar"><span className="admin-console-label">관리자 콘솔</span><div className="admin-account"><span>{user?.role === "research_admin" ? "研" : "官"}</span><div><b>{user?.name}</b><small>{user?.role === "research_admin" ? "연구진·관리자" : user?.agency}</small></div><button onClick={logout}>로그아웃</button></div></div>
         <div className="admin-title-row"><div><p className="eyebrow">REPORT OPERATIONS</p><h1>성수동 보행위험<br />처리 현황</h1></div><p>{user?.role === "research_admin" ? "전체 기록을 검토하고 담당기관을 연결합니다." : "우리 기관에 배정된 기록을 확인하고 처리 결과를 남깁니다."}</p></div>
         <div className="admin-stats">
           {statusOrder.map((key, index) => <button key={key} className={filter === key ? "active" : ""} onClick={() => setFilter(filter === key ? "all" : key)}><span>0{index + 1}</span><b>{counts[key]}</b><small>{statusLabels[key]}</small></button>)}
