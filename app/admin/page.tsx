@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { SiteHeader } from "../components/site-header";
+import { SiteFooter } from "../components/site-footer";
 import { sitePath } from "../lib/site-path";
 
 type ReportStatus = "received" | "review" | "action" | "completed";
@@ -91,6 +92,7 @@ export default function AdminPage() {
   const counts = statusOrder.reduce((result, key) => ({ ...result, [key]: reports.filter((report) => report.status === key).length }), {} as Record<ReportStatus, number>);
 
   return (
+    <>
     <main className="admin-page">
       <SiteHeader active="admin" inner />
 
@@ -134,5 +136,7 @@ export default function AdminPage() {
         <p className="prototype-auth-note">체험 로그인은 운영 구조를 검토하기 위한 기능입니다. 실제 배포 시 기관 계정 인증과 서버 권한 정책으로 교체됩니다.</p>
       </section>
     </main>
+    <SiteFooter />
+    </>
   );
 }

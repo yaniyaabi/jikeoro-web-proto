@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { SiteHeader } from "../components/site-header";
+import { SiteFooter } from "../components/site-footer";
 import { sitePath } from "../lib/site-path";
 
 type ReportStatus = "received" | "review" | "action" | "completed";
@@ -145,6 +146,7 @@ export default function MyJikeoroPage() {
   }
 
   return (
+    <>
     <main className="member-page">
       <SiteHeader active="my" inner />
 
@@ -220,5 +222,7 @@ export default function MyJikeoroPage() {
         <p className="prototype-auth-note">현재는 로그인·대응 현황을 미리 보여주는 프로토타입입니다. 실제 운영 단계에서는 본인 계정에 저장된 기록만 안전하게 표시됩니다.</p>
       </section>
     </main>
+    <SiteFooter />
+    </>
   );
 }

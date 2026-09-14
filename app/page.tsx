@@ -3,6 +3,7 @@
 import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import type { Map as MapLibreMap } from "maplibre-gl";
 import { SiteHeader } from "./components/site-header";
+import { SiteFooter } from "./components/site-footer";
 import { HazardIllustration } from "./components/hazard-illustration";
 import { sitePath } from "./lib/site-path";
 
@@ -892,11 +893,7 @@ export default function Home() {
         </div>
       </section>
 
-      <footer>
-        <a className="brand footer-brand" href="#top"><span className="brand-mark">路</span><span><strong>지켜路</strong><small>우리 동네 보행안전 지도</small></span></a>
-        <p>KAIST Health Design Lab · 1차년도 연구 프로토타입</p>
-        <p><a className="admin-entry-link" href={sitePath("/admin/login")}>관리자·기관 로그인</a><br />© 2026 JIKEORO. Prototype for research.</p>
-      </footer>
+      <SiteFooter showAdminLink />
 
       <button className="mobile-report-button" onClick={openReport}><span>＋</span> 위험요소 기록하기</button>
 

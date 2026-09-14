@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { SiteHeader } from "../../components/site-header";
+import { SiteFooter } from "../../components/site-footer";
 import { sitePath } from "../../lib/site-path";
 
 type AdminRole = "research_admin" | "agency_staff";
@@ -27,6 +28,7 @@ export default function AdminLoginPage() {
   };
 
   return (
+    <>
     <main className="admin-login-page">
       <SiteHeader active="admin" inner />
       <section className="admin-login-card">
@@ -50,5 +52,7 @@ export default function AdminLoginPage() {
       </section>
       <a className="back-home-link" href={sitePath("/")}>← 주민용 화면으로 돌아가기</a>
     </main>
+    <SiteFooter />
+    </>
   );
 }

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { Map as MapLibreMap, Marker as MapLibreMarker } from "maplibre-gl";
 import type { Feature, FeatureCollection, MultiPolygon, Polygon, Position } from "geojson";
 import { SiteHeader } from "../components/site-header";
+import { SiteFooter } from "../components/site-footer";
 import { sitePath } from "../lib/site-path";
 import { HazardIllustration } from "../components/hazard-illustration";
 
@@ -466,6 +467,7 @@ export default function RiskMapPage() {
   const activeMedia = visualMedia[selectedMediaIndex] ?? visualMedia[0] ?? null;
 
   return (
+    <>
     <main className="risk-map-page">
       <SiteHeader active="map" inner />
       <section className="risk-map-intro">
@@ -585,5 +587,7 @@ export default function RiskMapPage() {
         </div>
       )}
     </main>
+    <SiteFooter />
+    </>
   );
 }
