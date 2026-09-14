@@ -608,7 +608,7 @@ export default function Home() {
             {reportStep === 1 && (
               <>
                 <p className="modal-step">1 / 2</p>
-                <h2 id="report-title">어떤 위험을<br />발견하셨나요?</h2>
+                <h2 id="report-title">위험 모습을<br />남겨주세요.</h2>
                 <p className="modal-help">사진이나 영상을 넣고, 필요하면 현장의 소리도 직접 녹음해주세요.</p>
                 <div className="media-picker-grid">
                   <label className="media-picker-card">
