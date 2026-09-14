@@ -32,7 +32,7 @@ type StoredReportMedia = {
 type PreviewMedia = StoredReportMedia & { previewUrl: string };
 type LikeEntry = { count: number; liked: boolean };
 type LikeStore = Record<string, LikeEntry>;
-type ProjectedBoundary = { width: number; height: number; maskPath: string; selectedPath: string };
+type ProjectedBoundary = { width: number; height: number; selectedPath: string };
 type MunicipalityProperties = {
   code: string;
   name: string;
@@ -45,6 +45,7 @@ const categories = ["전체", "단차", "포트홀", "조도", "적치물"];
 const toneByType: Record<string, string> = { 단차: "coral", 포트홀: "yellow", 조도: "navy", 적치물: "mint" };
 const statusText: Record<MapReport["status"], string> = { received: "접수", review: "현장 검토", action: "조치 진행", completed: "개선 완료" };
 const LIKES_KEY = "jikeoro-map-likes";
+const KOREA_VIEW_BOUNDS: [[number, number], [number, number]] = [[124.2, 32.6], [132.2, 39.1]];
 const provinceNames: Record<string, string> = {
   "11": "서울특별시", "21": "부산광역시", "22": "대구광역시", "23": "인천광역시",
   "24": "광주광역시", "25": "대전광역시", "26": "울산광역시", "29": "세종특별자치시",
@@ -55,6 +56,10 @@ const provinceNames: Record<string, string> = {
 
 function provinceCode(feature: MunicipalityFeature) {
   return feature.properties.code.slice(0, 2);
+}
+
+function showNationwide(map: MapLibreMap) {
+  map.fitBounds(KOREA_VIEW_BOUNDS, { padding: 34, duration: 800, maxZoom: 7 });
 }
 
 function geometryPolygons(geometry: Polygon | MultiPolygon): Position[][][] {
@@ -165,6 +170,7 @@ export default function RiskMapPage() {
   const [dataError, setDataError] = useState("");
   const [mapError, setMapError] = useState("");
   const [municipalities, setMunicipalities] = useState<MunicipalityFeature[]>([]);
+  const [provinceBoundaries, setProvinceBoundaries] = useState<MunicipalityFeature[]>([]);
   const [boundaryError, setBoundaryError] = useState("");
   const [province, setProvince] = useState("");
   const [municipality, setMunicipality] = useState("");
@@ -196,15 +202,26 @@ export default function RiskMapPage() {
   }, []);
 
   useEffect(() => {
-    fetch(sitePath("/data/korea-municipalities-2013.geojson"))
-      .then((response) => response.ok ? response.json() : Promise.reject(new Error("boundary")))
-      .then((data: FeatureCollection<Polygon | MultiPolygon, MunicipalityProperties>) => setMunicipalities(data.features))
+    Promise.all([
+      fetch(sitePath("/data/korea-municipalities-2013.geojson")),
+      fetch(sitePath("/data/korea-provinces-2013.geojson")),
+    ])
+      .then((responses) => responses.every((response) => response.ok) ? Promise.all(responses.map((response) => response.json())) : Promise.reject(new Error("boundary")))
+      .then(([municipalityData, provinceData]: FeatureCollection<Polygon | MultiPolygon, MunicipalityProperties>[]) => {
+        setMunicipalities(municipalityData.features);
+        setProvinceBoundaries(provinceData.features);
+      })
       .catch(() => setBoundaryError("지역 경계 데이터를 불러오지 못했어요."));
   }, []);
 
   const selectedBoundary = useMemo(
-    () => municipalities.find((feature) => feature.properties.code === appliedMunicipality) ?? null,
-    [appliedMunicipality, municipalities],
+    () => appliedMunicipality.endsWith(":all")
+      ? (() => {
+          const selectedProvince = provinceBoundaries.find((feature) => feature.properties.code === appliedMunicipality.split(":")[0]);
+          return selectedProvince ? { ...selectedProvince, properties: { ...selectedProvince.properties, name: "전체" } } : null;
+        })()
+      : municipalities.find((feature) => feature.properties.code === appliedMunicipality) ?? null,
+    [appliedMunicipality, municipalities, provinceBoundaries],
   );
   const provinceOptions = useMemo(
     () => [...new Set(municipalities.map(provinceCode))]
@@ -333,7 +350,10 @@ export default function RiskMapPage() {
       const label = document.createElement("b");
       label.textContent = String(index + 1);
       element.appendChild(label);
-      element.addEventListener("click", () => setSelectedId(report.id));
+      element.addEventListener("click", () => {
+        setSelectedId(report.id);
+        map.flyTo({ center: [report.longitude, report.latitude], zoom: 16.8, duration: 850, essential: true });
+      });
       const marker = new maplibregl.Marker({ element, anchor: "bottom" })
         .setLngLat([report.longitude, report.latitude])
         .addTo(map);
@@ -354,16 +374,7 @@ export default function RiskMapPage() {
     if (!mapReady || !map) return;
 
     if (!selectedBoundary) {
-      if (reports.length) {
-        const first = reports[0];
-        const bounds = reports.reduce(
-          (nextBounds, report) => nextBounds.extend([report.longitude, report.latitude]),
-          new (mapLibraryRef.current!).LngLatBounds([first.longitude, first.latitude], [first.longitude, first.latitude]),
-        );
-        map.fitBounds(bounds, { padding: 80, maxZoom: 15, duration: 700 });
-      } else {
-        map.flyTo({ center: [127.8, 36.3], zoom: 6.5, essential: true });
-      }
+      showNationwide(map);
       return;
     }
 
@@ -372,7 +383,7 @@ export default function RiskMapPage() {
       [[bounds.minLongitude, bounds.minLatitude], [bounds.maxLongitude, bounds.maxLatitude]],
       { padding: { top: 70, right: 70, bottom: 70, left: 70 }, duration: 800, maxZoom: 13.5 },
     );
-  }, [mapReady, reports, selectedBoundary]);
+  }, [mapReady, selectedBoundary]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -394,12 +405,10 @@ export default function RiskMapPage() {
           return `${index === 0 ? "M" : "L"}${point.x.toFixed(1)},${point.y.toFixed(1)}`;
         }).join(" ") + " Z";
         const polygons = geometryPolygons(selectedBoundary.geometry);
-        const exteriorPaths = polygons.map((polygon) => ringPath(polygon[0])).join(" ");
         const selectedPath = polygons.flatMap((polygon) => polygon.map(ringPath)).join(" ");
         setProjectedBoundary({
           width,
           height,
-          maskPath: `M0,0 H${width} V${height} H0 Z ${exteriorPaths}`,
           selectedPath,
         });
       });
@@ -417,7 +426,7 @@ export default function RiskMapPage() {
 
   const selectReport = (report: MapReport) => {
     setSelectedId(report.id);
-    mapRef.current?.flyTo({ center: [report.longitude, report.latitude], zoom: Math.max(mapRef.current.getZoom(), 16), essential: true });
+    mapRef.current?.flyTo({ center: [report.longitude, report.latitude], zoom: 16.8, duration: 850, essential: true });
   };
 
   const openReportMedia = (report: MapReport) => {
@@ -448,6 +457,7 @@ export default function RiskMapPage() {
     setMunicipality("");
     setAppliedMunicipality("");
     setSelectedId(null);
+    if (mapRef.current) showNationwide(mapRef.current);
   };
 
   const todayCount = reports.filter((report) => new Date(report.createdAt).toDateString() === new Date().toDateString()).length;
@@ -487,6 +497,7 @@ export default function RiskMapPage() {
             <span>시·군·구</span>
             <select value={municipality} onChange={(event) => setMunicipality(event.target.value)} disabled={!province}>
               <option value="">시·군·구 선택</option>
+              {province && <option value={`${province}:all`}>전체</option>}
               {municipalityOptions.map((feature) => <option key={feature.properties.code} value={feature.properties.code}>{feature.properties.name}</option>)}
             </select>
           </label>
@@ -501,7 +512,6 @@ export default function RiskMapPage() {
           <div ref={mapElementRef} className="free-map-canvas" aria-label="무료 공개 지도" />
           {projectedBoundary && (
             <svg className="municipality-boundary-overlay" viewBox={`0 0 ${projectedBoundary.width} ${projectedBoundary.height}`} preserveAspectRatio="none" aria-hidden="true">
-              <path className="municipality-outside-mask" d={projectedBoundary.maskPath} fillRule="evenodd" clipRule="evenodd" />
               <path className="municipality-selected-fill" d={projectedBoundary.selectedPath} fillRule="evenodd" clipRule="evenodd" />
               <path className="municipality-selected-outline" d={projectedBoundary.selectedPath} fill="none" />
             </svg>
