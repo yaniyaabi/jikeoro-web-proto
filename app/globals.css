@@ -362,6 +362,20 @@ footer,footer p{font-size:13px}
   .media-only .map-detail-media{height:min(72svh,560px);min-height:330px}.media-only .map-detail-media>img,.media-only .map-detail-media>video{min-height:330px}.map-lightbox-caption{left:14px;right:65px;top:15px;display:block}.map-lightbox-caption b,.map-lightbox-caption span{display:block}.map-lightbox-caption span{margin-top:4px;font-size:12px}
 }
 
+/* 모든 화면에서 사용하는 상단 메뉴와 현황지도 제보 목록 */
+.risk-map-page>.site-header{position:relative;background:rgba(245,247,240,.96);border-bottom:1px solid #dce4da;backdrop-filter:blur(10px)}
+.risk-report-drawer{min-height:0;overflow:hidden}
+.risk-report-list{min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable}
+.risk-report-list::-webkit-scrollbar{width:9px}.risk-report-list::-webkit-scrollbar-track{background:#edf2e9}.risk-report-list::-webkit-scrollbar-thumb{background:#9eb0a6;border:2px solid #edf2e9;border-radius:99px}
+@media(min-width:901px){
+  .risk-map-page{padding-left:0;padding-right:0}
+  .risk-map-intro,.risk-map-workspace{width:calc(100% - clamp(36px,6vw,92px))}
+  .risk-map-workspace{height:calc(100svh - 350px);min-height:560px;max-height:760px}
+}
+@media(max-width:900px){
+  .risk-map-page>.site-header{margin-left:-12px;width:calc(100% + 24px)}
+}
+
 /* 홈페이지와 쉬운 앱이 같은 순서로 작동하는 3단계 제보 흐름 */
 .description-voice-tools{margin-top:10px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:11px;align-items:center}
 .description-voice-tools button{min-height:48px;border:1px solid #c7d3c8;border-radius:11px;background:#eef4ea;color:var(--ink);padding:10px 15px;font-size:16px;font-weight:900;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap}

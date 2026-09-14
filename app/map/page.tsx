@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Map as MapLibreMap, Marker as MapLibreMarker } from "maplibre-gl";
+import { SiteHeader } from "../components/site-header";
 
 type MapReport = {
   id: string;
@@ -282,6 +283,7 @@ export default function RiskMapPage() {
 
   return (
     <main className="risk-map-page">
+      <SiteHeader active="map" inner />
       <section className="risk-map-intro">
         <div>
           <p className="eyebrow">SEONGSU LIVE SAFETY MAP</p>
