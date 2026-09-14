@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const runtimeUrl = new URL("../github-pages/runtime.ts", import.meta.url);
+const myPageUrl = new URL("../app/my/page.tsx", import.meta.url);
 
 test("GitHub Pages demo authentication requires an explicit login per tab", async () => {
   const runtime = await readFile(runtimeUrl, "utf8");
@@ -24,4 +25,16 @@ test("prototype member accounts store a verifier instead of the raw password", a
   assert.match(runtime, /passwordHash: await hashPassword/);
   assert.match(runtime, /window\.sessionStorage\.setItem\(USER_KEY/);
   assert.doesNotMatch(runtime, /password:\s*password/);
+});
+
+test("member participation starts empty and is derived from that member's reports", async () => {
+  const myPage = await readFile(myPageUrl, "utf8");
+
+  assert.match(myPage, /reports\.length \* 100/);
+  assert.match(myPage, /reports\.length >= 1/);
+  assert.match(myPage, /reports\.length >= 3/);
+  assert.match(myPage, /아직 모은 배지가 없어요/);
+  assert.doesNotMatch(myPage, /<b>420<\/b>/);
+  assert.doesNotMatch(myPage, /<b>4주<\/b>/);
+  assert.doesNotMatch(myPage, /width: "66%"/);
 });

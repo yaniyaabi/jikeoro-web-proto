@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { SiteHeader } from "../components/site-header";
 import { SiteFooter } from "../components/site-footer";
 import { sitePath } from "../lib/site-path";
@@ -37,6 +37,63 @@ type StoredReportMedia = {
 };
 
 type ReportMediaPreview = StoredReportMedia & { previewUrl: string };
+
+type EarnedBadge = {
+  symbol: string;
+  label: string;
+  tone?: "mint" | "navy";
+};
+
+function startOfWeek(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  const day = date.getDay();
+  date.setHours(0, 0, 0, 0);
+  date.setDate(date.getDate() - ((day + 6) % 7));
+  return date;
+}
+
+function calculateParticipation(reports: UserReport[]) {
+  const completedCount = reports.filter((report) => report.status === "completed").length;
+  const now = new Date();
+  const lightingReportsThisMonth = reports.filter((report) => {
+    if (report.type !== "조도" || !report.createdAt) return false;
+    const createdAt = new Date(report.createdAt);
+    return !Number.isNaN(createdAt.getTime())
+      && createdAt.getFullYear() === now.getFullYear()
+      && createdAt.getMonth() === now.getMonth();
+  }).length;
+  const missionProgress = Math.min(lightingReportsThisMonth, 3);
+  const missionCompleted = lightingReportsThisMonth >= 3;
+  const points = reports.length * 100 + completedCount * 50 + (missionCompleted ? 150 : 0);
+
+  const weekStarts = Array.from(new Set(reports
+    .map((report) => report.createdAt ? startOfWeek(report.createdAt)?.getTime() : null)
+    .filter((value): value is number => value != null)))
+    .sort((a, b) => b - a);
+  let streakWeeks = weekStarts.length ? 1 : 0;
+  for (let index = 1; index < weekStarts.length; index += 1) {
+    const previousWeek = weekStarts[index - 1];
+    const currentWeek = weekStarts[index];
+    if (Math.round((previousWeek - currentWeek) / 604_800_000) !== 1) break;
+    streakWeeks += 1;
+  }
+
+  const badges: EarnedBadge[] = [];
+  if (reports.length >= 1) badges.push({ symbol: "1", label: "첫 발견" });
+  if (reports.length >= 3) badges.push({ symbol: "路", label: "동네지킴이", tone: "mint" });
+  if (reports.some((report) => report.type === "조도")) badges.push({ symbol: "☾", label: "밤길 관찰자", tone: "navy" });
+
+  return {
+    completedCount,
+    points,
+    streakWeeks,
+    missionProgress,
+    missionCompleted,
+    badges,
+    level: reports.length === 0 ? 0 : Math.floor((reports.length - 1) / 3) + 1,
+  };
+}
 
 async function readReportMedia(reportId: string) {
   if (!("indexedDB" in window)) return [] as StoredReportMedia[];
@@ -146,6 +203,7 @@ export default function MyJikeoroPage() {
   const [detailMediaLoading, setDetailMediaLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
+  const participation = useMemo(() => calculateParticipation(reports), [reports]);
   const visibleReports = reports.filter((report) => {
     if (activityFilter === "completed") return report.status === "completed";
     if (activityFilter === "active") return report.status !== "completed";
@@ -290,7 +348,7 @@ export default function MyJikeoroPage() {
           </div>
           <div className="member-profile">
             <span className="profile-avatar">{memberName.slice(0, 1)}</span>
-            <div><strong>{memberName}</strong><small>우리 동네 주민 · 동네지킴이 Lv.2</small></div>
+            <div><strong>{memberName}</strong><small>우리 동네 주민 · 동네지킴이 Lv.{participation.level}</small></div>
             <button type="button" onClick={logout}>로그아웃</button>
           </div>
         </div>
@@ -299,27 +357,35 @@ export default function MyJikeoroPage() {
           <article className="impact-card">
             <p>나의 참여 효과</p>
             <strong>{reports.length}<span>건</span></strong>
-            <small>{reports.length ? `남긴 기록 중 ${reports.filter((report) => report.status === "completed").length}건이 개선 완료됐어요.` : "첫 번째 위험 기록을 남겨 우리 동네를 살펴보세요."}</small>
+            <small>{reports.length ? `남긴 기록 중 ${participation.completedCount}건이 개선 완료됐어요.` : "첫 번째 위험 기록을 남겨 우리 동네를 살펴보세요."}</small>
             <div className="impact-stats">
-              <span><b>420</b> 기여 포인트</span>
-              <span><b>4주</b> 연속 참여</span>
+              <span><b>{participation.points}</b> 기여 포인트</span>
+              <span><b>{participation.streakWeeks}주</b> 연속 참여</span>
             </div>
+            <small className="point-rule">기록 1건당 100P · 개선 완료 시 50P 추가</small>
           </article>
           <article className="mission-card">
             <div className="mission-top"><span>이번 달 동네 미션</span><b>+150P</b></div>
             <h2>우리 동네 밤길을<br />한 번 더 살펴봐요</h2>
             <p>조명이 부족한 길 3곳 기록하기</p>
-            <div className="mission-progress"><i style={{ width: "66%" }} /></div>
-            <div className="mission-bottom"><strong>2 / 3곳 완료</strong><a href={sitePath("/?report=1")}>한 곳 더 기록하기 →</a></div>
+            <div className="mission-progress"><i style={{ width: `${(participation.missionProgress / 3) * 100}%` }} /></div>
+            <div className="mission-bottom">
+              <strong>{participation.missionProgress} / 3곳 완료</strong>
+              <a href={sitePath("/?report=1")}>{participation.missionCompleted ? "미션 완료 ✓" : participation.missionProgress ? "한 곳 더 기록하기 →" : "첫 조명 기록하기 →"}</a>
+            </div>
           </article>
           <article className="badge-card">
             <p>내가 모은 배지</p>
-            <div className="badge-row">
-              <span><i>1</i><b>첫 발견</b></span>
-              <span><i>路</i><b>동네지킴이</b></span>
-              <span><i>☾</i><b>밤길 관찰자</b></span>
-            </div>
-            <small>기록과 확인 활동을 이어가면 새로운 배지가 열려요.</small>
+            {participation.badges.length ? (
+              <div className="badge-row">
+                {participation.badges.map((badge) => (
+                  <span key={badge.label}><i className={badge.tone ? `badge-${badge.tone}` : ""}>{badge.symbol}</i><b>{badge.label}</b></span>
+                ))}
+              </div>
+            ) : (
+              <div className="empty-badges"><i>＋</i><strong>아직 모은 배지가 없어요.</strong></div>
+            )}
+            <small>{participation.badges.length ? "기록과 확인 활동을 이어가면 새로운 배지가 열려요." : "첫 위험 기록을 남기면 ‘첫 발견’ 배지를 받아요."}</small>
           </article>
         </div>
 
