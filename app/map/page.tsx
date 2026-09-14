@@ -32,6 +32,7 @@ type StoredReportMedia = {
 type PreviewMedia = StoredReportMedia & { previewUrl: string };
 type LikeEntry = { count: number; liked: boolean };
 type LikeStore = Record<string, LikeEntry>;
+type ProjectedBoundary = { width: number; height: number; maskPath: string; selectedPath: string };
 type MunicipalityProperties = {
   code: string;
   name: string;
@@ -58,17 +59,6 @@ function provinceCode(feature: MunicipalityFeature) {
 
 function geometryPolygons(geometry: Polygon | MultiPolygon): Position[][][] {
   return geometry.type === "Polygon" ? [geometry.coordinates] : geometry.coordinates;
-}
-
-function ringArea(ring: Position[]) {
-  return ring.reduce((area, point, index) => {
-    const next = ring[(index + 1) % ring.length];
-    return area + point[0] * next[1] - next[0] * point[1];
-  }, 0) / 2;
-}
-
-function asClockwise(ring: Position[]) {
-  return ringArea(ring) > 0 ? [...ring].reverse() : ring;
 }
 
 function pointInRing(point: Position, ring: Position[]) {
@@ -101,21 +91,6 @@ function geometryBounds(feature: MunicipalityFeature) {
     }),
     { minLongitude: 180, minLatitude: 90, maxLongitude: -180, maxLatitude: -90 },
   );
-}
-
-function boundaryMaskData(feature: MunicipalityFeature): Feature<Polygon, { kind: "mask" }> {
-  const holes = geometryPolygons(feature.geometry)
-    .map((polygon) => polygon[0])
-    .filter(Boolean)
-    .map(asClockwise);
-  return {
-    type: "Feature",
-    properties: { kind: "mask" },
-    geometry: {
-      type: "Polygon",
-      coordinates: [[[-180, -85], [180, -85], [180, 85], [-180, 85], [-180, -85]], ...holes],
-    },
-  };
 }
 
 async function readReportMedia(reportId: string) {
@@ -194,6 +169,7 @@ export default function RiskMapPage() {
   const [province, setProvince] = useState("");
   const [municipality, setMunicipality] = useState("");
   const [appliedMunicipality, setAppliedMunicipality] = useState("");
+  const [projectedBoundary, setProjectedBoundary] = useState<ProjectedBoundary | null>(null);
   const [selectedMedia, setSelectedMedia] = useState<PreviewMedia[]>([]);
   const [selectedMediaIndex, setSelectedMediaIndex] = useState(0);
   const [mediaLoading, setMediaLoading] = useState(false);
@@ -352,6 +328,7 @@ export default function RiskMapPage() {
       const element = document.createElement("button");
       element.type = "button";
       element.className = `free-risk-marker marker-${tone}`;
+      element.style.zIndex = "4";
       element.setAttribute("aria-label", `${safeType} 위험요소`);
       const label = document.createElement("b");
       label.textContent = String(index + 1);
@@ -376,12 +353,6 @@ export default function RiskMapPage() {
     const map = mapRef.current;
     if (!mapReady || !map) return;
 
-    ["municipality-outline", "municipality-fill", "municipality-mask"].forEach((layerId) => {
-      if (map.getLayer(layerId)) map.removeLayer(layerId);
-    });
-    if (map.getSource("municipality-boundary")) map.removeSource("municipality-boundary");
-    if (map.getSource("municipality-mask")) map.removeSource("municipality-mask");
-
     if (!selectedBoundary) {
       if (reports.length) {
         const first = reports[0];
@@ -401,28 +372,48 @@ export default function RiskMapPage() {
       [[bounds.minLongitude, bounds.minLatitude], [bounds.maxLongitude, bounds.maxLatitude]],
       { padding: { top: 70, right: 70, bottom: 70, left: 70 }, duration: 800, maxZoom: 13.5 },
     );
-
-    map.addSource("municipality-mask", { type: "geojson", data: boundaryMaskData(selectedBoundary) });
-    map.addLayer({
-      id: "municipality-mask",
-      type: "fill",
-      source: "municipality-mask",
-      paint: { "fill-color": "#979b99", "fill-opacity": 0.86 },
-    });
-    map.addSource("municipality-boundary", { type: "geojson", data: selectedBoundary });
-    map.addLayer({
-      id: "municipality-fill",
-      type: "fill",
-      source: "municipality-boundary",
-      paint: { "fill-color": "#b7f06b", "fill-opacity": 0.12 },
-    });
-    map.addLayer({
-      id: "municipality-outline",
-      type: "line",
-      source: "municipality-boundary",
-      paint: { "line-color": "#0b332f", "line-width": 4, "line-opacity": 1 },
-    });
   }, [mapReady, reports, selectedBoundary]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!mapReady || !map || !selectedBoundary) {
+      setProjectedBoundary(null);
+      return;
+    }
+
+    let frame = 0;
+    const updateOverlay = () => {
+      window.cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(() => {
+        const container = map.getContainer();
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+        if (!width || !height) return;
+        const ringPath = (ring: Position[]) => ring.map(([longitude, latitude], index) => {
+          const point = map.project([longitude, latitude]);
+          return `${index === 0 ? "M" : "L"}${point.x.toFixed(1)},${point.y.toFixed(1)}`;
+        }).join(" ") + " Z";
+        const polygons = geometryPolygons(selectedBoundary.geometry);
+        const exteriorPaths = polygons.map((polygon) => ringPath(polygon[0])).join(" ");
+        const selectedPath = polygons.flatMap((polygon) => polygon.map(ringPath)).join(" ");
+        setProjectedBoundary({
+          width,
+          height,
+          maskPath: `M0,0 H${width} V${height} H0 Z ${exteriorPaths}`,
+          selectedPath,
+        });
+      });
+    };
+
+    updateOverlay();
+    map.on("move", updateOverlay);
+    map.on("resize", updateOverlay);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      map.off("move", updateOverlay);
+      map.off("resize", updateOverlay);
+    };
+  }, [mapReady, selectedBoundary]);
 
   const selectReport = (report: MapReport) => {
     setSelectedId(report.id);
@@ -508,6 +499,13 @@ export default function RiskMapPage() {
       <section className="risk-map-workspace" aria-label="전국 우리 동네 위험요소 GPS 현황">
         <div className="risk-map-canvas">
           <div ref={mapElementRef} className="free-map-canvas" aria-label="무료 공개 지도" />
+          {projectedBoundary && (
+            <svg className="municipality-boundary-overlay" viewBox={`0 0 ${projectedBoundary.width} ${projectedBoundary.height}`} preserveAspectRatio="none" aria-hidden="true">
+              <path className="municipality-outside-mask" d={projectedBoundary.maskPath} fillRule="evenodd" clipRule="evenodd" />
+              <path className="municipality-selected-fill" d={projectedBoundary.selectedPath} fillRule="evenodd" clipRule="evenodd" />
+              <path className="municipality-selected-outline" d={projectedBoundary.selectedPath} fill="none" />
+            </svg>
+          )}
           {!mapReady && !mapError && <div className="map-loading"><i />현황지도를 불러오는 중</div>}
           {mapError && <div className="map-error-card"><span aria-hidden="true">!</span><strong>{mapError}</strong></div>}
           {selectedBoundary && <div className="map-region-badge"><b>{provinceNames[provinceCode(selectedBoundary)]}</b><span>{selectedBoundary.properties.name}</span></div>}
