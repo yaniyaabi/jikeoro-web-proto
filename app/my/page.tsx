@@ -11,14 +11,87 @@ type UserReport = {
   id: number | string;
   type: string;
   title: string;
+  description?: string;
   place: string;
   submitted: string;
+  createdAt?: string;
+  observedAt?: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  accuracy?: number | null;
+  weather?: { temperature: number; code: number; observedAt: string } | null;
   status: ReportStatus;
   stage: number;
   response: string;
   department: string;
   mediaCount?: number;
 };
+
+type StoredReportMedia = {
+  id: string;
+  reportId: string;
+  kind: "image" | "video" | "audio";
+  name: string;
+  type: string;
+  blob: Blob;
+};
+
+type ReportMediaPreview = StoredReportMedia & { previewUrl: string };
+
+async function readReportMedia(reportId: string) {
+  if (!("indexedDB" in window)) return [] as StoredReportMedia[];
+  return new Promise<StoredReportMedia[]>((resolve) => {
+    const request = window.indexedDB.open("jikeoro-media", 1);
+    request.onupgradeneeded = () => {
+      const database = request.result;
+      if (!database.objectStoreNames.contains("media")) database.createObjectStore("media", { keyPath: "id" });
+    };
+    request.onerror = () => resolve([]);
+    request.onsuccess = () => {
+      const database = request.result;
+      const transaction = database.transaction("media", "readonly");
+      const getAll = transaction.objectStore("media").getAll();
+      getAll.onsuccess = () => resolve((getAll.result as StoredReportMedia[]).filter((item) => item.reportId === reportId));
+      getAll.onerror = () => resolve([]);
+      transaction.oncomplete = () => database.close();
+    };
+  });
+}
+
+async function deleteReportMedia(reportId: string) {
+  if (!("indexedDB" in window)) return;
+  await new Promise<void>((resolve) => {
+    const request = window.indexedDB.open("jikeoro-media", 1);
+    request.onupgradeneeded = () => {
+      const database = request.result;
+      if (!database.objectStoreNames.contains("media")) database.createObjectStore("media", { keyPath: "id" });
+    };
+    request.onerror = () => resolve();
+    request.onsuccess = () => {
+      const database = request.result;
+      const transaction = database.transaction("media", "readwrite");
+      const store = transaction.objectStore("media");
+      const getAllKeys = store.getAllKeys();
+      getAllKeys.onsuccess = () => {
+        getAllKeys.result.forEach((key) => {
+          if (String(key).startsWith(`${reportId}-`)) store.delete(key);
+        });
+      };
+      transaction.oncomplete = () => { database.close(); resolve(); };
+      transaction.onerror = () => { database.close(); resolve(); };
+    };
+  });
+}
+
+function describeWeather(code: number) {
+  if (code === 0) return "맑음";
+  if (code <= 3) return "구름";
+  if (code === 45 || code === 48) return "안개";
+  if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) return "비";
+  if ((code >= 71 && code <= 77) || code === 85 || code === 86) return "눈";
+  if (code >= 95) return "뇌우";
+  return "날씨 기록";
+}
 
 const statusLabels: Record<ReportStatus, string> = {
   received: "접수 완료",
@@ -67,6 +140,11 @@ export default function MyJikeoroPage() {
   const [authReady, setAuthReady] = useState(false);
   const [reports, setReports] = useState<UserReport[]>(userReports);
   const [activityFilter, setActivityFilter] = useState<ActivityFilter>("all");
+  const [selectedReport, setSelectedReport] = useState<UserReport | null>(null);
+  const [detailMedia, setDetailMedia] = useState<ReportMediaPreview[]>([]);
+  const [detailMediaLoading, setDetailMediaLoading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
   const visibleReports = reports.filter((report) => {
     if (activityFilter === "completed") return report.status === "completed";
     if (activityFilter === "active") return report.status !== "completed";
@@ -136,9 +214,61 @@ export default function MyJikeoroPage() {
     loadMemberData();
   }, []);
 
+  useEffect(() => {
+    if (!selectedReport) return;
+    let disposed = false;
+    let previewUrls: string[] = [];
+    setDetailMedia([]);
+    setDetailMediaLoading(true);
+    setDeleteError("");
+    readReportMedia(String(selectedReport.id)).then((items) => {
+      if (disposed) return;
+      const previews = items.map((item) => ({ ...item, previewUrl: URL.createObjectURL(item.blob) }));
+      previewUrls = previews.map((item) => item.previewUrl);
+      setDetailMedia(previews);
+      setDetailMediaLoading(false);
+    });
+    return () => {
+      disposed = true;
+      previewUrls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [selectedReport]);
+
+  useEffect(() => {
+    if (!selectedReport) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !deleting) setSelectedReport(null);
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [selectedReport, deleting]);
+
   const logout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
     window.location.href = sitePath("/");
+  };
+
+  const deleteSelectedReport = async () => {
+    if (!selectedReport || deleting) return;
+    if (!window.confirm("이 기록과 이 기기에 저장된 첨부파일을 삭제할까요? 삭제한 기록은 되돌릴 수 없습니다.")) return;
+    setDeleting(true);
+    setDeleteError("");
+    const response = await fetch("/api/reports", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: String(selectedReport.id) }),
+    }).catch(() => null);
+    if (!response?.ok) {
+      const result = await response?.json().catch(() => null);
+      setDeleteError(result?.error ?? "기록을 삭제하지 못했어요. 잠시 후 다시 시도해주세요.");
+      setDeleting(false);
+      return;
+    }
+    await deleteReportMedia(String(selectedReport.id));
+    setReports((current) => current.filter((report) => String(report.id) !== String(selectedReport.id)));
+    setSelectedReport(null);
+    setDetailMedia([]);
+    setDeleting(false);
   };
 
   if (!authReady) {
@@ -202,7 +332,20 @@ export default function MyJikeoroPage() {
           </div>
           <div className="member-report-list" aria-live="polite">
             {visibleReports.map((report) => (
-              <article className="member-report" key={report.id}>
+              <article
+                className="member-report"
+                key={report.id}
+                role="button"
+                tabIndex={0}
+                aria-label={`${report.title} 상세 내용 보기`}
+                onClick={() => setSelectedReport(report)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    setSelectedReport(report);
+                  }
+                }}
+              >
                 <div className="report-main">
                   <div className="report-meta"><span className={`status-chip status-${report.status}`}>{statusLabels[report.status]}</span><small>{report.submitted} · {report.type}</small></div>
                   <h3>{report.title}</h3>
@@ -215,12 +358,85 @@ export default function MyJikeoroPage() {
                     <li className={index < report.stage ? "done" : ""} key={label}><i>{index < report.stage ? "✓" : index + 1}</i><span>{label}</span></li>
                   ))}
                 </ol>
+                <span className="member-report-open-hint">상세 보기 <b>→</b></span>
               </article>
             ))}
           </div>
         </div>
         <p className="prototype-auth-note">현재는 로그인·대응 현황을 미리 보여주는 프로토타입입니다. 실제 운영 단계에서는 본인 계정에 저장된 기록만 안전하게 표시됩니다.</p>
       </section>
+
+      {selectedReport && (
+        <div className="member-detail-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && !deleting && setSelectedReport(null)}>
+          <section className="member-detail-modal" role="dialog" aria-modal="true" aria-labelledby="member-detail-title">
+            <button className="member-detail-close" type="button" onClick={() => setSelectedReport(null)} disabled={deleting} aria-label="상세 내용 닫기">×</button>
+
+            <header className="member-detail-heading">
+              <div className="report-meta">
+                <span className={`status-chip status-${selectedReport.status}`}>{statusLabels[selectedReport.status]}</span>
+                <small>{selectedReport.type} · {selectedReport.submitted}</small>
+              </div>
+              <h2 id="member-detail-title">{selectedReport.title}</h2>
+              <p>내가 남긴 위험 기록의 내용과 첨부자료를 확인할 수 있어요.</p>
+            </header>
+
+            <div className="member-detail-grid">
+              <div className="member-detail-main">
+                <section className="member-detail-section">
+                  <h3>제보 내용</h3>
+                  <p>{selectedReport.description?.trim() || selectedReport.title}</p>
+                </section>
+
+                <section className="member-detail-section">
+                  <div className="member-detail-section-title">
+                    <h3>첨부자료</h3>
+                    <span>{detailMedia.length || selectedReport.mediaCount || 0}개</span>
+                  </div>
+                  {detailMediaLoading && <p className="member-media-message">첨부자료를 불러오고 있어요.</p>}
+                  {!detailMediaLoading && detailMedia.length > 0 && (
+                    <div className="member-media-gallery">
+                      {detailMedia.map((media, index) => (
+                        <figure className={`member-media-item media-${media.kind}`} key={media.id}>
+                          {media.kind === "image" && <img src={media.previewUrl} alt={`${selectedReport.title} 첨부 사진 ${index + 1}`} />}
+                          {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+                          {media.kind === "video" && <video src={media.previewUrl} controls preload="metadata" />}
+                          {media.kind === "audio" && <div className="member-audio-preview"><span>●</span><audio src={media.previewUrl} controls /></div>}
+                          <figcaption><b>{media.kind === "image" ? "사진" : media.kind === "video" ? "영상" : "음성"}</b><span>{media.name}</span></figcaption>
+                        </figure>
+                      ))}
+                    </div>
+                  )}
+                  {!detailMediaLoading && detailMedia.length === 0 && (
+                    <p className="member-media-message">
+                      {selectedReport.mediaCount ? "첨부 원본은 제보에 사용한 같은 기기와 브라우저에서만 확인할 수 있어요." : "이 기록에는 첨부자료가 없어요."}
+                    </p>
+                  )}
+                </section>
+              </div>
+
+              <aside className="member-detail-side">
+                <dl className="member-detail-facts">
+                  <div><dt>위험유형</dt><dd>{selectedReport.type}</dd></div>
+                  <div><dt>위치</dt><dd>{selectedReport.place}</dd></div>
+                  {(selectedReport.latitude != null && selectedReport.longitude != null) && <div><dt>위치 좌표</dt><dd>{selectedReport.latitude.toFixed(5)}, {selectedReport.longitude.toFixed(5)}</dd></div>}
+                  <div><dt>제보 시각</dt><dd>{selectedReport.createdAt ? new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium", timeStyle: "short" }).format(new Date(selectedReport.createdAt)) : selectedReport.submitted}</dd></div>
+                  {selectedReport.weather && <div><dt>날씨</dt><dd>{describeWeather(selectedReport.weather.code)} · {Math.round(selectedReport.weather.temperature)}°C</dd></div>}
+                </dl>
+                <div className="member-detail-response">
+                  <small>{selectedReport.department} 답변</small>
+                  <p>{selectedReport.response}</p>
+                </div>
+              </aside>
+            </div>
+
+            {deleteError && <p className="member-delete-error" role="alert">{deleteError}</p>}
+            <div className="member-detail-actions">
+              <button type="button" className="member-delete-button" onClick={deleteSelectedReport} disabled={deleting}>{deleting ? "삭제 중..." : "기록 삭제"}</button>
+              <button type="button" className="member-detail-done" onClick={() => setSelectedReport(null)} disabled={deleting}>확인</button>
+            </div>
+          </section>
+        </div>
+      )}
     </main>
     <SiteFooter />
     </>

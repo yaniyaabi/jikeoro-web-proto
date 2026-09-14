@@ -18,10 +18,30 @@ export async function GET(request: Request) {
   await ensureDatabase();
   const result = await getD1().prepare(
     `SELECT id, category AS type, title, description, COALESCE(address, place_description, '위치 확인 중') AS place,
-      created_at AS createdAt, status, assigned_agency AS department, COALESCE(response, '기록이 접수되어 내용을 확인하고 있어요.') AS response
+      latitude, longitude, accuracy, created_at AS createdAt, status, assigned_agency AS department,
+      COALESCE(response, '기록이 접수되어 내용을 확인하고 있어요.') AS response
      FROM reports WHERE user_id = ? ORDER BY created_at DESC`,
   ).bind(user.id).all();
   return Response.json({ reports: result.results });
+}
+
+export async function DELETE(request: Request) {
+  const user = getSessionUser(request);
+  if (!user || user.role !== "member") return Response.json({ error: "회원 로그인이 필요합니다." }, { status: 401 });
+  const body = await request.json().catch(() => null) as { id?: string } | null;
+  if (!body?.id) return Response.json({ error: "삭제할 기록이 없습니다." }, { status: 400 });
+
+  await ensureDatabase();
+  const d1 = getD1();
+  const report = await d1.prepare(`SELECT id FROM reports WHERE id = ? AND user_id = ?`).bind(body.id, user.id).first<{ id: string }>();
+  if (!report) return Response.json({ error: "기록을 찾을 수 없거나 삭제 권한이 없습니다." }, { status: 404 });
+
+  await d1.batch([
+    d1.prepare(`DELETE FROM admin_audit_logs WHERE report_id = ?`).bind(body.id),
+    d1.prepare(`DELETE FROM report_status_history WHERE report_id = ?`).bind(body.id),
+    d1.prepare(`DELETE FROM reports WHERE id = ? AND user_id = ?`).bind(body.id, user.id),
+  ]);
+  return Response.json({ ok: true });
 }
 
 export async function POST(request: Request) {

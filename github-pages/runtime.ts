@@ -149,17 +149,36 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
         id: report.id,
         type: report.category,
         title: report.title,
+        description: report.description,
         place: report.place_description ?? report.address ?? "우리 동네 위치 기록",
+        latitude: report.latitude,
+        longitude: report.longitude,
         status: report.status,
         response: report.response ?? "접수 내용을 확인하고 있습니다.",
         department: report.assigned_agency ?? "지켜路 운영팀",
         createdAt: report.created_at,
+        observedAt: report.observed_at ?? report.created_at,
+        weather: report.weather ?? null,
         mediaCount: report.media?.length ?? 0,
       })),
     });
   }
 
-  if (url.pathname === "/api/reports/claim") return json({ ok: true });
+  if (url.pathname === "/api/reports" && method === "DELETE") {
+    if (role !== "member") return json({ error: "회원 로그인이 필요합니다." }, 401);
+    const body = JSON.parse(String(init?.body ?? "{}"));
+    const reports = readReports();
+    const exists = reports.some((report) => report.id === body.id && report.reporter_name === "김지킴");
+    if (!exists) return json({ error: "기록을 찾을 수 없거나 삭제 권한이 없습니다." }, 404);
+    writeReports(reports.filter((report) => report.id !== body.id));
+    return json({ ok: true });
+  }
+
+  if (url.pathname === "/api/reports/claim" && method === "POST") {
+    const body = JSON.parse(String(init?.body ?? "{}"));
+    writeReports(readReports().map((report) => report.id === body.id ? { ...report, reporter_name: "김지킴" } : report));
+    return json({ ok: true });
+  }
 
   if (url.pathname === "/api/map/reports") {
     return json({
