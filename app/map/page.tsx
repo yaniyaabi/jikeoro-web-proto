@@ -55,6 +55,35 @@ async function readReportMedia(reportId: string) {
   });
 }
 
+function ReportThumbnail({ report, onOpen }: { report: MapReport; onOpen: () => void }) {
+  const [media, setMedia] = useState<PreviewMedia | null>(null);
+
+  useEffect(() => {
+    let disposed = false;
+    let previewUrl = "";
+    readReportMedia(report.id).then((items) => {
+      if (disposed) return;
+      const item = items.find((candidate) => candidate.kind === "image" || candidate.kind === "video");
+      if (!item) return;
+      previewUrl = URL.createObjectURL(item.blob);
+      setMedia({ ...item, previewUrl });
+    });
+    return () => {
+      disposed = true;
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [report.id]);
+
+  return (
+    <button className="map-inline-thumb" type="button" onClick={onOpen} aria-label={`${report.title} 사진 또는 영상 크게 보기`}>
+      {media?.kind === "image" && <img src={media.previewUrl} alt="" />}
+      {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+      {media?.kind === "video" && <video src={media.previewUrl} muted preload="metadata" />}
+      {!media && <span className={`map-inline-sample tone-${toneByType[report.type] ?? "navy"}`} aria-hidden="true"><span /></span>}
+    </button>
+  );
+}
+
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("ko-KR", { month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(value));
 }
@@ -210,10 +239,7 @@ export default function RiskMapPage() {
       const label = document.createElement("b");
       label.textContent = String(index + 1);
       element.appendChild(label);
-      element.addEventListener("click", () => {
-        setSelectedId(report.id);
-        setDetailOpen(true);
-      });
+      element.addEventListener("click", () => setSelectedId(report.id));
       const marker = new maplibregl.Marker({ element, anchor: "bottom" })
         .setLngLat([report.longitude, report.latitude])
         .addTo(map);
@@ -230,8 +256,12 @@ export default function RiskMapPage() {
 
   const selectReport = (report: MapReport) => {
     setSelectedId(report.id);
-    setDetailOpen(true);
     mapRef.current?.flyTo({ center: [report.longitude, report.latitude], zoom: Math.max(mapRef.current.getZoom(), 16), essential: true });
+  };
+
+  const openReportMedia = (report: MapReport) => {
+    setSelectedId(report.id);
+    setDetailOpen(true);
   };
 
   const toggleLike = (reportId: string) => {
@@ -249,7 +279,6 @@ export default function RiskMapPage() {
   const todayCount = reports.filter((report) => new Date(report.createdAt).toDateString() === new Date().toDateString()).length;
   const visualMedia = selectedMedia.filter((item) => item.kind === "image" || item.kind === "video");
   const activeMedia = visualMedia[selectedMediaIndex] ?? visualMedia[0] ?? null;
-  const selectedLike = selected ? likes[selected.id] ?? { count: 0, liked: false } : { count: 0, liked: false };
 
   return (
     <main className="risk-map-page">
@@ -288,26 +317,34 @@ export default function RiskMapPage() {
             {loading && <p className="risk-list-message">위치 기록을 불러오는 중이에요.</p>}
             {!loading && dataError && <p className="risk-list-message error">{dataError}</p>}
             {!loading && !dataError && !filteredReports.length && <p className="risk-list-message">이 유형으로 등록된 GPS 기록이 아직 없어요.</p>}
-            {filteredReports.map((report, index) => (
-              <button key={report.id} className={selected?.id === report.id ? "selected" : ""} onClick={() => selectReport(report)}>
-                <span className={`report-index index-${toneByType[report.type] ?? "navy"}`}>{index + 1}</span>
-                <span className="report-list-copy">
-                  <span><b>{report.type}</b><small>{statusText[report.status]}</small></span>
-                  <strong>{report.title}</strong>
-                  <span className="report-list-place">{report.place}</span>
-                  <time>{formatDate(report.createdAt)}</time>
-                  {Boolean(report.mediaCount) && <span className="map-media-count">사진·영상 {report.mediaCount}개</span>}
-                  <span className={`gps-accuracy${(report.accuracy ?? 0) > 500 ? " low" : ""}`}>{formatAccuracy(report.accuracy)}</span>
-                </span>
-              </button>
-            ))}
+            {filteredReports.map((report, index) => {
+              const reportLike = likes[report.id] ?? { count: 0, liked: false };
+              return (
+                <article key={report.id} className={`risk-report-item${selected?.id === report.id ? " selected" : ""}`}>
+                  <button className="risk-report-select" type="button" onClick={() => selectReport(report)}>
+                    <span className={`report-index index-${toneByType[report.type] ?? "navy"}`}>{index + 1}</span>
+                    <span className="report-list-copy">
+                      <span><b>{report.type}</b><small>{statusText[report.status]}</small></span>
+                      <strong>{report.title}</strong>
+                      <span className="report-list-place">{report.place}</span>
+                      <time>{formatDate(report.createdAt)}</time>
+                      <span className={`gps-accuracy${(report.accuracy ?? 0) > 500 ? " low" : ""}`}>{formatAccuracy(report.accuracy)}</span>
+                    </span>
+                  </button>
+                  <div className="map-inline-actions">
+                    <ReportThumbnail report={report} onOpen={() => openReportMedia(report)} />
+                    <button className={`map-inline-like${reportLike.liked ? " liked" : ""}`} type="button" onClick={() => toggleLike(report.id)} aria-pressed={reportLike.liked}><span aria-hidden="true">{reportLike.liked ? "♥" : "♡"}</span><b>{reportLike.count}</b></button>
+                  </div>
+                </article>
+              );
+            })}
           </div>
         </aside>
       </section>
 
       {detailOpen && selected && (
         <div className="map-detail-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setDetailOpen(false); }}>
-          <section className="map-detail-modal" role="dialog" aria-modal="true" aria-labelledby="map-detail-title">
+          <section className="map-detail-modal media-only" role="dialog" aria-modal="true" aria-label={`${selected.title} 첨부 자료 크게 보기`}>
             <button className="map-detail-close" type="button" onClick={() => setDetailOpen(false)} aria-label="상세 내용 닫기">×</button>
             <div className="map-detail-media" aria-label="선택한 기록의 첨부 자료">
               {mediaLoading && <p className="map-media-empty">첨부 자료를 불러오는 중이에요.</p>}
@@ -323,13 +360,7 @@ export default function RiskMapPage() {
                 </div>
               )}
               {visualMedia.length > 1 && <div className="map-media-thumbnails">{visualMedia.map((item, index) => <button key={item.id} type="button" className={selectedMediaIndex === index ? "active" : ""} onClick={() => setSelectedMediaIndex(index)}>{item.kind === "image" ? "사진" : "영상"} {index + 1}</button>)}</div>}
-            </div>
-            <div className="map-detail-copy">
-              <div className="map-detail-meta"><span>{selected.type}</span><small>{statusText[selected.status]} · {formatAccuracy(selected.accuracy)}</small></div>
-              <h2 id="map-detail-title">{selected.title}</h2>
-              <p className="map-detail-location">⌖ {selected.place}</p>
-              <p className="map-detail-description">{selected.description}</p>
-              <button className={`map-like-button${selectedLike.liked ? " liked" : ""}`} type="button" onClick={() => toggleLike(selected.id)} aria-pressed={selectedLike.liked}><span aria-hidden="true">{selectedLike.liked ? "♥" : "♡"}</span> 좋아요 <b>{selectedLike.count}</b></button>
+              <div className="map-lightbox-caption"><b>{selected.title}</b><span>{selected.place}</span></div>
             </div>
           </section>
         </div>
