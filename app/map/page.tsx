@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Map as MapLibreMap, Marker as MapLibreMarker } from "maplibre-gl";
-import { SiteHeader } from "../components/site-header";
 
 type MapReport = {
   id: string;
@@ -89,6 +88,7 @@ export default function RiskMapPage() {
       return {};
     }
   });
+  const [detailOpen, setDetailOpen] = useState(false);
 
   useEffect(() => {
     fetch("/api/map/reports")
@@ -210,7 +210,10 @@ export default function RiskMapPage() {
       const label = document.createElement("b");
       label.textContent = String(index + 1);
       element.appendChild(label);
-      element.addEventListener("click", () => setSelectedId(report.id));
+      element.addEventListener("click", () => {
+        setSelectedId(report.id);
+        setDetailOpen(true);
+      });
       const marker = new maplibregl.Marker({ element, anchor: "bottom" })
         .setLngLat([report.longitude, report.latitude])
         .addTo(map);
@@ -227,6 +230,7 @@ export default function RiskMapPage() {
 
   const selectReport = (report: MapReport) => {
     setSelectedId(report.id);
+    setDetailOpen(true);
     mapRef.current?.flyTo({ center: [report.longitude, report.latitude], zoom: Math.max(mapRef.current.getZoom(), 16), essential: true });
   };
 
@@ -249,8 +253,6 @@ export default function RiskMapPage() {
 
   return (
     <main className="risk-map-page">
-      <SiteHeader active="map" inner />
-
       <section className="risk-map-intro">
         <div>
           <p className="eyebrow">SEONGSU LIVE SAFETY MAP</p>
@@ -300,25 +302,38 @@ export default function RiskMapPage() {
               </button>
             ))}
           </div>
-          {selected && (
-            <div className="selected-report-detail">
-              <section className="selected-report-media" aria-label="선택한 기록의 첨부 자료">
-                {mediaLoading && <p className="map-media-empty">첨부 자료를 불러오는 중이에요.</p>}
-                {!mediaLoading && activeMedia?.kind === "image" && <img src={activeMedia.previewUrl} alt={`${selected.title} 현장 사진`} />}
-                {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-                {!mediaLoading && activeMedia?.kind === "video" && <video src={activeMedia.previewUrl} controls preload="metadata" aria-label={`${selected.title} 현장 영상`} />}
-                {!mediaLoading && !activeMedia && <p className="map-media-empty">이 기록에는 등록된 사진·영상이 없어요.</p>}
-                {visualMedia.length > 1 && <div className="map-media-thumbnails">{visualMedia.map((item, index) => <button key={item.id} type="button" className={selectedMediaIndex === index ? "active" : ""} onClick={() => setSelectedMediaIndex(index)}>{item.kind === "image" ? "사진" : "영상"} {index + 1}</button>)}</div>}
-              </section>
-              <div className="selected-report-summary">
-                <span className={`summary-tone tone-${toneByType[selected.type] ?? "navy"}`} />
-                <div><small>선택한 기록 · {formatAccuracy(selected.accuracy)}</small><strong>{selected.title}</strong><p>{selected.description}</p></div>
-                <button className={`map-like-button${selectedLike.liked ? " liked" : ""}`} type="button" onClick={() => toggleLike(selected.id)} aria-pressed={selectedLike.liked}><span aria-hidden="true">{selectedLike.liked ? "♥" : "♡"}</span> 좋아요 <b>{selectedLike.count}</b></button>
-              </div>
-            </div>
-          )}
         </aside>
       </section>
+
+      {detailOpen && selected && (
+        <div className="map-detail-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setDetailOpen(false); }}>
+          <section className="map-detail-modal" role="dialog" aria-modal="true" aria-labelledby="map-detail-title">
+            <button className="map-detail-close" type="button" onClick={() => setDetailOpen(false)} aria-label="상세 내용 닫기">×</button>
+            <div className="map-detail-media" aria-label="선택한 기록의 첨부 자료">
+              {mediaLoading && <p className="map-media-empty">첨부 자료를 불러오는 중이에요.</p>}
+              {!mediaLoading && activeMedia?.kind === "image" && <img src={activeMedia.previewUrl} alt={`${selected.title} 현장 사진`} />}
+              {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+              {!mediaLoading && activeMedia?.kind === "video" && <video src={activeMedia.previewUrl} controls preload="metadata" aria-label={`${selected.title} 현장 영상`} />}
+              {!mediaLoading && !activeMedia && (
+                <div className={`map-sample-media photo-${toneByType[selected.type] ?? "navy"}`}>
+                  <span className="photo-grid" /><span className="scene-object"><i /><b /></span>
+                  <span className="scene-caption">첨부 예시 · {selected.type}</span>
+                  <i className="focus-corner a" /><i className="focus-corner b" /><i className="focus-corner c" /><i className="focus-corner d" />
+                  <p>이 예시 기록에는 원본 사진·영상이 없어 현장 유형 이미지로 표시합니다.</p>
+                </div>
+              )}
+              {visualMedia.length > 1 && <div className="map-media-thumbnails">{visualMedia.map((item, index) => <button key={item.id} type="button" className={selectedMediaIndex === index ? "active" : ""} onClick={() => setSelectedMediaIndex(index)}>{item.kind === "image" ? "사진" : "영상"} {index + 1}</button>)}</div>}
+            </div>
+            <div className="map-detail-copy">
+              <div className="map-detail-meta"><span>{selected.type}</span><small>{statusText[selected.status]} · {formatAccuracy(selected.accuracy)}</small></div>
+              <h2 id="map-detail-title">{selected.title}</h2>
+              <p className="map-detail-location">⌖ {selected.place}</p>
+              <p className="map-detail-description">{selected.description}</p>
+              <button className={`map-like-button${selectedLike.liked ? " liked" : ""}`} type="button" onClick={() => toggleLike(selected.id)} aria-pressed={selectedLike.liked}><span aria-hidden="true">{selectedLike.liked ? "♥" : "♡"}</span> 좋아요 <b>{selectedLike.count}</b></button>
+            </div>
+          </section>
+        </div>
+      )}
     </main>
   );
 }
