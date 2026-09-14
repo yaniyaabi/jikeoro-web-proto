@@ -330,6 +330,50 @@ footer,footer p{font-size:13px}
   .risk-map-intro>div>p:not(.eyebrow){font-size:17px}.risk-map-header-actions>a{font-size:15px}.map-connection-card>p:not(.eyebrow){font-size:16px}
 }
 
+/* 홈페이지와 쉬운 앱이 같은 순서로 작동하는 3단계 제보 흐름 */
+.description-voice-tools{margin-top:10px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:11px;align-items:center}
+.description-voice-tools button{min-height:48px;border:1px solid #c7d3c8;border-radius:11px;background:#eef4ea;color:var(--ink);padding:10px 15px;font-size:16px;font-weight:900;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap}
+.description-voice-tools button.active{background:var(--ink);border-color:var(--ink);color:#fff}
+.description-voice-tools p{margin:0;color:#657a72;font-size:14px;line-height:1.5}
+.step-two-recorder{margin-top:13px}
+.audio-preview-list{margin-top:10px}
+
+.modal-navigation{display:grid;grid-template-columns:112px minmax(0,1fr);gap:9px;margin-top:14px}
+.modal-navigation .modal-primary{margin-top:0;min-width:0}
+.modal-secondary{min-height:54px;border:1px solid #bdcbc0;border-radius:12px;background:#f5f7f2;color:var(--ink);font-size:16px;font-weight:900;cursor:pointer;padding:12px}
+.modal-primary:disabled{cursor:not-allowed;opacity:.48;box-shadow:none}
+
+.gps-map-block{margin-top:11px}
+.location-picker-map{position:relative;height:250px;border:1px solid #c7d3c8;border-radius:15px;overflow:hidden;background:#e8eee3;isolation:isolate}
+.location-map-canvas{position:absolute;inset:0}
+.location-center-pin{position:absolute;z-index:5;left:50%;top:50%;width:38px;height:38px;border:3px solid #fff;border-radius:50% 50% 50% 8px;background:var(--coral);color:#fff;display:grid;place-items:center;font-size:13px;line-height:1;transform:translate(-50%,-100%) rotate(-45deg);box-shadow:0 8px 18px #16383147;pointer-events:none}
+.location-center-pin::first-letter{transform:rotate(45deg)}
+.location-map-guide{position:absolute;z-index:5;left:50%;bottom:11px;max-width:calc(100% - 30px);margin:0;transform:translateX(-50%);border-radius:999px;background:#fffdf8eb;color:var(--ink);box-shadow:0 5px 18px #17382d1f;padding:8px 13px;font-size:13px;font-weight:850;line-height:1.35;text-align:center;white-space:nowrap;pointer-events:none}
+.location-map-error{position:absolute;inset:0;margin:0;padding:24px;display:grid;place-items:center;color:#a53d31;font-size:15px;font-weight:850;text-align:center}
+.gps-map-meta{margin-top:8px;border-radius:12px;background:#edf3e9;padding:12px 14px;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:4px 12px}
+.gps-map-meta span{font-size:15px;font-weight:900;display:flex;align-items:center;gap:7px}
+.gps-map-meta small{font-size:13px;color:#60746b;grid-column:1/2}
+.gps-map-meta button{grid-column:2/3;grid-row:1/3;border:1px solid #bdcbbf;border-radius:9px;background:#fff;color:var(--ink);font-size:13px;font-weight:850;padding:9px 11px;cursor:pointer}
+.location-dot{width:9px;height:9px;border-radius:50%;background:var(--coral);box-shadow:0 0 0 4px #ff655333}
+
+.report-review{margin-top:15px;border:1px solid #d1dbd0;border-radius:14px;background:#eef3ea;padding:15px 16px}
+.report-review h3{margin:0 0 10px;color:var(--ink);font-size:18px}
+.report-review dl{margin:0}
+.report-review dl>div{display:grid;grid-template-columns:86px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #d4ded3}
+.report-review dt{color:#697d74;font-size:14px}
+.report-review dd{margin:0;color:var(--ink);font-size:15px;font-weight:850;line-height:1.45;overflow-wrap:anywhere}
+.research-consent{margin-top:13px;border:1px solid #c4d0c5;border-radius:13px;background:#fff;display:flex;align-items:flex-start;gap:11px;padding:14px;cursor:pointer}
+.research-consent input{flex:0 0 auto;width:22px;height:22px;margin:1px 0 0;accent-color:var(--ink)}
+.research-consent span{color:var(--ink);font-size:15px;font-weight:800;line-height:1.5}
+
+@media(max-width:720px){
+  .description-voice-tools{grid-template-columns:1fr;gap:7px}.description-voice-tools button{width:100%;font-size:16px}.description-voice-tools p{font-size:14px}
+  .modal-navigation{grid-template-columns:92px minmax(0,1fr)}.modal-secondary{font-size:15px;padding:10px 7px}
+  .location-picker-map{height:228px}.location-map-guide{font-size:12px;white-space:normal;width:max-content}
+  .gps-map-meta{grid-template-columns:1fr}.gps-map-meta small{grid-column:1}.gps-map-meta button{grid-column:1;grid-row:auto;margin-top:5px;min-height:43px}
+  .report-review dl>div{grid-template-columns:72px minmax(0,1fr)}.report-review dd,.research-consent span{font-size:15px}
+}
+
 /* 커진 글자에 맞춰 카드와 섹션의 호흡을 다시 정리합니다. */
 .hero{column-gap:clamp(48px,5vw,84px);padding-left:clamp(44px,6vw,96px);padding-right:clamp(44px,6vw,96px)}
 .hero-copy{max-width:680px}.hero-visual{min-height:610px}

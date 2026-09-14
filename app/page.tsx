@@ -1,6 +1,7 @@
 "use client";
 
 import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import type { Map as MapLibreMap } from "maplibre-gl";
 import { sitePath } from "./lib/site-path";
 
 type Hazard = {
@@ -76,6 +77,19 @@ const filters = ["전체", "단차", "포트홀", "조도", "적치물"] as cons
 type LocationChoice = "gps" | "manual" | null;
 type GpsStatus = "idle" | "loading" | "success" | "error";
 type GpsPoint = { latitude: number; longitude: number; accuracy: number };
+type SpeechRecognitionResultLike = { 0: { transcript: string } };
+type SpeechRecognitionEventLike = { results: ArrayLike<SpeechRecognitionResultLike> };
+type SpeechRecognitionLike = {
+  lang: string;
+  interimResults: boolean;
+  continuous: boolean;
+  start: () => void;
+  stop: () => void;
+  onresult: ((event: SpeechRecognitionEventLike) => void) | null;
+  onerror: (() => void) | null;
+  onend: (() => void) | null;
+};
+type SpeechRecognitionConstructor = new () => SpeechRecognitionLike;
 type MediaKind = "image" | "video" | "audio";
 type MediaAttachment = {
   id: string;
@@ -144,6 +158,72 @@ function SeongsuIllustrationMap({ items, selectedId, onSelect }: { items: Hazard
   );
 }
 
+function LocationPickerMap({ point, onChange }: { point: GpsPoint; onChange: (point: GpsPoint) => void }) {
+  const mapElementRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<MapLibreMap | null>(null);
+  const pointRef = useRef(point);
+  const onChangeRef = useRef(onChange);
+  const [mapError, setMapError] = useState("");
+
+  useEffect(() => { pointRef.current = point; }, [point]);
+  useEffect(() => { onChangeRef.current = onChange; }, [onChange]);
+
+  useEffect(() => {
+    if (!mapElementRef.current || mapRef.current) return;
+    let disposed = false;
+
+    import("maplibre-gl").then((maplibregl) => {
+      if (disposed || !mapElementRef.current) return;
+      try {
+        const map = new maplibregl.Map({
+          container: mapElementRef.current,
+          style: {
+            version: 8,
+            sources: {
+              openStreetMap: {
+                type: "raster",
+                tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
+                tileSize: 256,
+                maxzoom: 19,
+                attribution: "© OpenStreetMap contributors",
+              },
+            },
+            layers: [{ id: "openStreetMap", type: "raster", source: "openStreetMap" }],
+          },
+          center: [pointRef.current.longitude, pointRef.current.latitude],
+          zoom: 17,
+          minZoom: 7,
+          maxZoom: 19,
+          attributionControl: true,
+        });
+        map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
+        map.on("load", () => { setMapError(""); map.resize(); });
+        map.on("moveend", () => {
+          const center = map.getCenter();
+          onChangeRef.current({ ...pointRef.current, latitude: center.lat, longitude: center.lng });
+        });
+        mapRef.current = map;
+      } catch {
+        setMapError("지도를 불러오지 못했어요. 직접 입력을 이용해주세요.");
+      }
+    }).catch(() => setMapError("지도를 불러오지 못했어요. 직접 입력을 이용해주세요."));
+
+    return () => {
+      disposed = true;
+      mapRef.current?.remove();
+      mapRef.current = null;
+    };
+  }, []);
+
+  return (
+    <div className="location-picker-map" aria-label="제보 위치 선택 지도">
+      <div ref={mapElementRef} className="location-map-canvas" />
+      {!mapError && <><span className="location-center-pin" aria-hidden="true">●</span><p className="location-map-guide">지도를 움직여 위험한 곳에 핀을 맞춰주세요.</p></>}
+      {mapError && <p className="location-map-error" role="alert">{mapError}</p>}
+    </div>
+  );
+}
+
 export default function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [filter, setFilter] = useState<(typeof filters)[number]>("전체");
@@ -153,12 +233,18 @@ export default function Home() {
   const [locationChoice, setLocationChoice] = useState<LocationChoice>(null);
   const [gpsStatus, setGpsStatus] = useState<GpsStatus>("idle");
   const [gpsPoint, setGpsPoint] = useState<GpsPoint | null>(null);
+  const [locationMapResetKey, setLocationMapResetKey] = useState(0);
   const [gpsMessage, setGpsMessage] = useState("");
   const [manualAddress, setManualAddress] = useState("");
   const [placeDescription, setPlaceDescription] = useState("");
   const [locationValidation, setLocationValidation] = useState("");
   const [reportType, setReportType] = useState<(typeof filters)[number]>("단차");
   const [reportDescription, setReportDescription] = useState("");
+  const [stepTwoValidation, setStepTwoValidation] = useState("");
+  const [hasResearchConsent, setHasResearchConsent] = useState(false);
+  const [consentValidation, setConsentValidation] = useState("");
+  const [isDictating, setIsDictating] = useState(false);
+  const [dictationMessage, setDictationMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [attachments, setAttachments] = useState<MediaAttachment[]>([]);
@@ -169,6 +255,7 @@ export default function Home() {
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const attachmentsRef = useRef<MediaAttachment[]>([]);
+  const speechRecognitionRef = useRef<SpeechRecognitionLike | null>(null);
 
   const filteredHazards = useMemo(
     () =>
@@ -195,8 +282,10 @@ export default function Home() {
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         if (mediaRecorderRef.current?.state === "recording") mediaRecorderRef.current.stop();
+        speechRecognitionRef.current?.stop();
         mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
         setIsRecording(false);
+        setIsDictating(false);
         setReportOpen(false);
       }
     };
@@ -214,6 +303,7 @@ export default function Home() {
 
   useEffect(() => () => {
     mediaRecorderRef.current?.stop();
+    speechRecognitionRef.current?.stop();
     mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
     attachmentsRef.current.forEach((attachment) => URL.revokeObjectURL(attachment.previewUrl));
   }, []);
@@ -239,6 +329,7 @@ export default function Home() {
   const openReport = () => {
     attachments.forEach((attachment) => URL.revokeObjectURL(attachment.previewUrl));
     mediaRecorderRef.current?.stop();
+    speechRecognitionRef.current?.stop();
     mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
     mediaRecorderRef.current = null;
     mediaStreamRef.current = null;
@@ -250,12 +341,18 @@ export default function Home() {
     setLocationChoice(null);
     setGpsStatus("idle");
     setGpsPoint(null);
+    setLocationMapResetKey(0);
     setGpsMessage("");
     setManualAddress("");
     setPlaceDescription("");
     setLocationValidation("");
     setReportType("단차");
     setReportDescription("");
+    setStepTwoValidation("");
+    setHasResearchConsent(false);
+    setConsentValidation("");
+    setIsDictating(false);
+    setDictationMessage("");
     setSubmitError("");
     setIsSubmitting(false);
     setReportOpen(true);
@@ -263,8 +360,10 @@ export default function Home() {
 
   const closeReport = () => {
     if (mediaRecorderRef.current?.state === "recording") mediaRecorderRef.current.stop();
+    speechRecognitionRef.current?.stop();
     mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
     setIsRecording(false);
+    setIsDictating(false);
     setReportOpen(false);
   };
 
@@ -340,6 +439,59 @@ export default function Home() {
     }
   };
 
+  const toggleDictation = () => {
+    if (isDictating) {
+      speechRecognitionRef.current?.stop();
+      return;
+    }
+    if (isDictating) speechRecognitionRef.current?.stop();
+
+    const recognitionConstructor = (
+      window as Window & {
+        SpeechRecognition?: SpeechRecognitionConstructor;
+        webkitSpeechRecognition?: SpeechRecognitionConstructor;
+      }
+    ).SpeechRecognition ?? (
+      window as Window & { webkitSpeechRecognition?: SpeechRecognitionConstructor }
+    ).webkitSpeechRecognition;
+
+    if (!recognitionConstructor) {
+      setDictationMessage("이 브라우저에서는 말로 글쓰기를 지원하지 않아요. 직접 입력해주세요.");
+      return;
+    }
+
+    if (isRecording) stopRecording();
+    const recognition = new recognitionConstructor();
+    recognition.lang = "ko-KR";
+    recognition.interimResults = false;
+    recognition.continuous = false;
+    recognition.onresult = (event) => {
+      const transcript = event.results[0]?.[0]?.transcript?.trim();
+      if (transcript) {
+        setReportDescription((current) => `${current}${current.trim() ? " " : ""}${transcript}`);
+        setStepTwoValidation("");
+        setDictationMessage("말한 내용을 설명에 입력했어요.");
+      }
+    };
+    recognition.onerror = () => setDictationMessage("음성을 알아듣지 못했어요. 다시 눌러 말해주세요.");
+    recognition.onend = () => { setIsDictating(false); speechRecognitionRef.current = null; };
+    speechRecognitionRef.current = recognition;
+    setDictationMessage("지금 말씀해주세요.");
+    setIsDictating(true);
+    recognition.start();
+  };
+
+  const goToLocationStep = () => {
+    if (!reportDescription.trim()) {
+      setStepTwoValidation("위험한 이유를 글이나 말로 알려주세요.");
+      return;
+    }
+    speechRecognitionRef.current?.stop();
+    if (isRecording) stopRecording();
+    setStepTwoValidation("");
+    setReportStep(3);
+  };
+
   const requestCurrentLocation = () => {
     setLocationChoice("gps");
     setLocationValidation("");
@@ -359,6 +511,7 @@ export default function Home() {
           longitude: position.coords.longitude,
           accuracy: position.coords.accuracy,
         });
+        setLocationMapResetKey((current) => current + 1);
         setGpsStatus("success");
       },
       (error) => {
@@ -381,10 +534,14 @@ export default function Home() {
 
   const submitReport = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const hasGps = gpsStatus === "success" && gpsPoint;
-    const hasManualLocation = manualAddress.trim() || placeDescription.trim();
+    const hasGps = locationChoice === "gps" && gpsStatus === "success" && gpsPoint;
+    const hasManualLocation = locationChoice === "manual" && (manualAddress.trim() || placeDescription.trim());
     if (!hasGps && !hasManualLocation) {
       setLocationValidation("현재 위치를 확인하거나 주소·장소 설명 중 하나를 입력해주세요.");
+      return;
+    }
+    if (!hasResearchConsent) {
+      setConsentValidation("연구 목적의 수집·이용에 동의해야 제보할 수 있어요.");
       return;
     }
     setIsSubmitting(true);
@@ -396,11 +553,11 @@ export default function Home() {
         category: reportType,
         title: reportDescription.trim() || `${reportType} 위험요소를 발견했어요`,
         description: reportDescription,
-        latitude: gpsPoint?.latitude ?? null,
-        longitude: gpsPoint?.longitude ?? null,
-        accuracy: gpsPoint?.accuracy ?? null,
-        address: manualAddress,
-        placeDescription,
+        latitude: locationChoice === "gps" ? gpsPoint?.latitude ?? null : null,
+        longitude: locationChoice === "gps" ? gpsPoint?.longitude ?? null : null,
+        accuracy: locationChoice === "gps" ? gpsPoint?.accuracy ?? null : null,
+        address: locationChoice === "manual" ? manualAddress : "",
+        placeDescription: locationChoice === "manual" ? placeDescription : "",
         media: attachments.map((attachment) => ({
           kind: attachment.kind,
           name: attachment.file.name,
@@ -421,7 +578,7 @@ export default function Home() {
       });
     }
     if (!isLoggedIn && saved.id) window.sessionStorage.setItem("jikeoro-pending-report-id", saved.id);
-    setReportStep(3);
+    setReportStep(4);
   };
 
   return (
@@ -572,7 +729,7 @@ export default function Home() {
         </div>
         <div className="steps-grid">
           <article><span className="step-number">01</span><div className="step-visual camera-visual"><i /><b>＋</b></div><h3>위험요소를 발견해요</h3><p>걷다가 불편하거나 위험하다고 느낀 장소에서 시작합니다.</p></article>
-          <article><span className="step-number">02</span><div className="step-visual voice-visual"><i /><i /><i /><i /><i /></div><h3>사진과 목소리를 남겨요</h3><p>큰 버튼을 눌러 촬영하고, 위험한 이유를 편하게 말해주세요.</p></article>
+          <article><span className="step-number">02</span><div className="step-visual voice-visual"><i /><i /><i /><i /><i /></div><h3>사진·영상과 목소리를 남겨요</h3><p>큰 버튼을 눌러 촬영하고, 위험한 이유를 편하게 말해주세요.</p></article>
           <article><span className="step-number">03</span><div className="step-visual map-visual"><i /><b>✓</b></div><h3>위치정보를 확인해요</h3><p>위치·시간·날씨가 자동으로 기록되고 연구 데이터가 됩니다.</p></article>
         </div>
       </section>
@@ -587,7 +744,7 @@ export default function Home() {
         <div className="project-metrics">
           <div><strong>01</strong><span>성수동<br />시범 생활권</span></div>
           <div><strong>60<span>초</span></strong><span>목표 기록<br />완료 시간</span></div>
-          <div><strong>3<span>종</span></strong><span>사진·음성·텍스트<br />참여 방식</span></div>
+          <div><strong>4<span>종</span></strong><span>사진·영상·음성·텍스트<br />참여 방식</span></div>
           <p>※ 수치는 1차년도 프로토타입의 초기 설계 목표이며 시범운영 결과에 따라 조정됩니다.</p>
         </div>
       </section>
@@ -604,12 +761,12 @@ export default function Home() {
         <div className="modal-backdrop" role="presentation" onMouseDown={(e) => e.target === e.currentTarget && closeReport()}>
           <section className="report-modal" role="dialog" aria-modal="true" aria-labelledby="report-title">
             <button className="modal-close" onClick={closeReport} aria-label="닫기">×</button>
-            {reportStep < 3 && <div className="modal-progress"><span style={{ width: reportStep === 1 ? "50%" : "100%" }} /></div>}
+            {reportStep < 4 && <div className="modal-progress"><span style={{ width: `${(reportStep / 3) * 100}%` }} /></div>}
             {reportStep === 1 && (
               <>
-                <p className="modal-step">1 / 2</p>
+                <p className="modal-step">1 / 3</p>
                 <h2 id="report-title">위험 모습을<br />남겨주세요.</h2>
-                <p className="modal-help">사진이나 영상을 넣고, 필요하면 현장의 소리도 직접 녹음해주세요.</p>
+                <p className="modal-help">사진이나 영상을 촬영하거나 기기에 저장된 자료를 선택해주세요.</p>
                 <div className="media-picker-grid">
                   <label className="media-picker-card">
                     <input type="file" accept="image/*" capture="environment" multiple onChange={(event) => addFiles(event, "image")} />
@@ -624,27 +781,15 @@ export default function Home() {
                     <small>카메라 또는 보관함</small>
                   </label>
                 </div>
-                <div className="voice-recorder">
-                  <div>
-                    <strong>현장 음성</strong>
-                    <small>{isRecording ? `${Math.floor(recordingSeconds / 60)}:${String(recordingSeconds % 60).padStart(2, "0")} 녹음 중` : "버튼을 누르면 바로 녹음돼요."}</small>
-                  </div>
-                  <button className={isRecording ? "recording" : ""} type="button" onClick={isRecording ? stopRecording : startRecording}>
-                    <span aria-hidden="true">{isRecording ? "■" : "●"}</span>{isRecording ? "녹음 끝내기" : "음성 녹음"}
-                  </button>
-                  <label className="audio-file-button">
-                    <input type="file" accept="audio/*" onChange={(event) => addFiles(event, "audio")} />
-                    녹음 파일 선택
-                  </label>
-                </div>
-                {attachments.length > 0 && (
-                  <div className="media-preview-list" aria-label="선택한 사진, 영상, 음성">
-                    {attachments.map((attachment) => (
+                {attachments.some((attachment) => attachment.kind !== "audio") && (
+                  <div className="media-preview-list" aria-label="선택한 사진과 영상">
+                    {attachments.filter((attachment) => attachment.kind !== "audio").map((attachment) => (
                       <article className={`media-preview ${attachment.kind}`} key={attachment.id}>
                         {attachment.kind === "image" && <img src={attachment.previewUrl} alt="선택한 현장 사진 미리보기" />}
+                        {/* 사용자가 방금 선택한 원본 영상의 미리보기이며 자막 파일은 아직 존재하지 않습니다. */}
+                        {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
                         {attachment.kind === "video" && <video src={attachment.previewUrl} controls preload="metadata" aria-label="선택한 현장 영상 미리보기" />}
-                        {attachment.kind === "audio" && <><span className="audio-preview-icon" aria-hidden="true">♪</span><audio src={attachment.previewUrl} controls aria-label="녹음한 현장 음성 미리듣기" /></>}
-                        <div><strong>{attachment.kind === "image" ? "사진" : attachment.kind === "video" ? "영상" : "음성"}</strong><small>{attachment.file.name}</small></div>
+                        <div><strong>{attachment.kind === "image" ? "사진" : "영상"}</strong><small>{attachment.file.name}</small></div>
                         <button type="button" onClick={() => removeAttachment(attachment.id)} aria-label={`${attachment.file.name} 삭제`}>×</button>
                       </article>
                     ))}
@@ -656,8 +801,8 @@ export default function Home() {
               </>
             )}
             {reportStep === 2 && (
-              <form onSubmit={submitReport}>
-                <p className="modal-step">2 / 2</p>
+              <>
+                <p className="modal-step">2 / 3</p>
                 <h2 id="report-title">위험한 이유를<br />알려주세요.</h2>
                 <fieldset>
                   <legend>위험요소 유형</legend>
@@ -665,9 +810,64 @@ export default function Home() {
                     {filters.slice(1).map((item) => <label key={item}><input type="radio" name="hazard" checked={reportType === item} onChange={() => setReportType(item)} /><span>{item}</span></label>)}
                   </div>
                 </fieldset>
+                <label className="text-field">
+                  <span>설명</span>
+                  <textarea
+                    value={reportDescription}
+                    onChange={(event) => { setReportDescription(event.target.value); setStepTwoValidation(""); }}
+                    placeholder="예: 보도블록 높이 차이 때문에 발이 걸릴 것 같아요."
+                    rows={4}
+                  />
+                </label>
+                <div className="description-voice-tools">
+                  <button className={isDictating ? "active" : ""} type="button" onClick={toggleDictation}>
+                    <span aria-hidden="true">{isDictating ? "■" : "🎙"}</span>
+                    {isDictating ? "말하기 끝내기" : "말로 글쓰기"}
+                  </button>
+                  <p aria-live="polite">{dictationMessage || "말한 내용이 설명 칸에 글자로 입력됩니다."}</p>
+                </div>
+                <div className="voice-recorder step-two-recorder">
+                  <div>
+                    <strong>현장음 녹음</strong>
+                    <small>{isRecording ? `${Math.floor(recordingSeconds / 60)}:${String(recordingSeconds % 60).padStart(2, "0")} 녹음 중` : "현장의 소리를 별도 파일로 남길 수 있어요."}</small>
+                  </div>
+                  <button className={isRecording ? "recording" : ""} type="button" onClick={isRecording ? stopRecording : startRecording}>
+                    <span aria-hidden="true">{isRecording ? "■" : "●"}</span>{isRecording ? "녹음 끝내기" : "현장음 녹음"}
+                  </button>
+                  <label className="audio-file-button">
+                    <input type="file" accept="audio/*" onChange={(event) => addFiles(event, "audio")} />
+                    녹음 파일 선택
+                  </label>
+                </div>
+                {attachments.some((attachment) => attachment.kind === "audio") && (
+                  <div className="media-preview-list audio-preview-list" aria-label="선택한 음성">
+                    {attachments.filter((attachment) => attachment.kind === "audio").map((attachment) => (
+                      <article className="media-preview audio" key={attachment.id}>
+                        <span className="audio-preview-icon" aria-hidden="true">♪</span>
+                        {/* 사용자가 방금 녹음하거나 선택한 원본 음성의 미리듣기입니다. */}
+                        {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+                        <audio src={attachment.previewUrl} controls aria-label="녹음한 현장 음성 미리듣기" />
+                        <div><strong>현장음</strong><small>{attachment.file.name}</small></div>
+                        <button type="button" onClick={() => removeAttachment(attachment.id)} aria-label={`${attachment.file.name} 삭제`}>×</button>
+                      </article>
+                    ))}
+                  </div>
+                )}
+                {stepTwoValidation && <p className="location-validation" role="alert">{stepTwoValidation}</p>}
+                {mediaError && <p className="media-error" role="alert">{mediaError}</p>}
+                <div className="modal-navigation">
+                  <button className="modal-secondary" type="button" onClick={() => setReportStep(1)}>← 이전</button>
+                  <button className="modal-primary" type="button" onClick={goToLocationStep}>위치 입력하기 <span>→</span></button>
+                </div>
+              </>
+            )}
+            {reportStep === 3 && (
+              <form onSubmit={submitReport}>
+                <p className="modal-step">3 / 3</p>
+                <h2 id="report-title">위험한 장소를<br />확인해주세요.</h2>
                 <fieldset className="location-fieldset">
                   <legend>위치</legend>
-                  <p className="field-guide">GPS를 사용하거나 알고 있는 주소·장소를 직접 알려주세요.</p>
+                  <p className="field-guide">GPS 지도의 핀을 맞추거나 알고 있는 주소·장소를 직접 알려주세요.</p>
                   <div className="location-methods">
                     <button
                       className={locationChoice === "gps" ? "active" : ""}
@@ -689,11 +889,21 @@ export default function Home() {
                     </button>
                   </div>
 
-                  {locationChoice === "gps" && (
+                  {locationChoice === "gps" && gpsStatus !== "success" && (
                     <div className={`location-result ${gpsStatus}`} aria-live="polite">
                       {gpsStatus === "loading" && <><i className="location-loader" /><div><strong>현재 위치를 확인하고 있어요</strong><small>잠시만 기다려주세요.</small></div></>}
-                      {gpsStatus === "success" && gpsPoint && <><i className="location-dot" /><div><strong>현재 위치를 확인했어요</strong><small>위도 {gpsPoint.latitude.toFixed(5)} · 경도 {gpsPoint.longitude.toFixed(5)} · 오차 약 {Math.round(gpsPoint.accuracy)}m</small></div><button type="button" onClick={requestCurrentLocation}>다시 확인</button></>}
                       {gpsStatus === "error" && <><i className="location-error-icon">!</i><div><strong>위치를 가져오지 못했어요</strong><small>{gpsMessage}</small></div><button type="button" onClick={chooseManualLocation}>직접 입력</button></>}
+                    </div>
+                  )}
+
+                  {locationChoice === "gps" && gpsStatus === "success" && gpsPoint && (
+                    <div className="gps-map-block">
+                      <LocationPickerMap key={locationMapResetKey} point={gpsPoint} onChange={(nextPoint) => { setGpsPoint(nextPoint); setLocationValidation(""); }} />
+                      <div className="gps-map-meta">
+                        <span><i className="location-dot" />선택한 위치</span>
+                        <small>위도 {gpsPoint.latitude.toFixed(5)} · 경도 {gpsPoint.longitude.toFixed(5)}</small>
+                        <button type="button" onClick={requestCurrentLocation}>현재 위치로 돌아가기</button>
+                      </div>
                     </div>
                   )}
 
@@ -725,13 +935,34 @@ export default function Home() {
                   <p className="privacy-note">위치정보는 이 위험 기록의 장소를 확인하는 용도로만 사용됩니다.</p>
                   {locationValidation && <p className="location-validation" role="alert">{locationValidation}</p>}
                 </fieldset>
-                <label className="text-field"><span>설명</span><textarea value={reportDescription} onChange={(event) => setReportDescription(event.target.value)} placeholder="예: 보도블록 높이 차이 때문에 발이 걸릴 것 같아요." rows={3} /></label>
+
+                <section className="report-review" aria-labelledby="report-review-title">
+                  <h3 id="report-review-title">제보내용 확인</h3>
+                  <dl>
+                    <div><dt>위험유형</dt><dd>{reportType}</dd></div>
+                    <div><dt>위치</dt><dd>{locationChoice === "gps" && gpsPoint ? `지도에서 선택한 위치 (${gpsPoint.latitude.toFixed(5)}, ${gpsPoint.longitude.toFixed(5)})` : manualAddress || placeDescription || "위치 입력 전"}</dd></div>
+                    <div><dt>첨부</dt><dd>사진 {attachments.filter((item) => item.kind === "image").length} · 영상 {attachments.filter((item) => item.kind === "video").length} · 음성 {attachments.filter((item) => item.kind === "audio").length}</dd></div>
+                  </dl>
+                </section>
+
                 <div className="auto-info"><span>☀ 27°C 맑음</span><span>날짜·시간 자동저장</span></div>
+                <label className="research-consent">
+                  <input
+                    type="checkbox"
+                    checked={hasResearchConsent}
+                    onChange={(event) => { setHasResearchConsent(event.target.checked); setConsentValidation(""); }}
+                  />
+                  <span>위치와 제보내용을 연구목적으로 수집하는 것에 동의합니다.</span>
+                </label>
+                {consentValidation && <p className="location-validation" role="alert">{consentValidation}</p>}
                 {submitError && <p className="location-validation" role="alert">{submitError}</p>}
-                <button className="modal-primary" type="submit" disabled={isSubmitting}>{isSubmitting ? "저장하고 있어요" : "기록 제출하기"} <span>→</span></button>
+                <div className="modal-navigation">
+                  <button className="modal-secondary" type="button" onClick={() => setReportStep(2)}>← 이전</button>
+                  <button className="modal-primary" type="submit" disabled={isSubmitting || !hasResearchConsent}>{isSubmitting ? "저장하고 있어요" : "제보 완료하기"} <span>→</span></button>
+                </div>
               </form>
             )}
-            {reportStep === 3 && (
+            {reportStep === 4 && (
               <div className="success-state">
                 <span className="success-icon">✓</span>
                 <p className="modal-step">기록 완료</p>
