@@ -376,6 +376,41 @@ footer,footer p{font-size:13px}
   .risk-map-page>.site-header{margin-left:-12px;width:calc(100% + 24px)}
 }
 
+/* 부드러운 평면 감성으로 다시 그린 우리 동네 일러스트 */
+.neighborhood-map::before{display:none}
+.town-map{background:#edf2e9;overflow:hidden}
+.town-land{position:absolute;z-index:0;border-radius:34px;transform:rotate(-7deg)}
+.town-land.land-a{width:34%;height:28%;right:5%;top:7%;background:#dff0d0}
+.town-land.land-b{width:29%;height:22%;left:35%;bottom:20%;background:#f4e4cf}
+.town-stream{position:absolute;z-index:1;left:-5%;right:-5%;bottom:-7%;height:27%;border-radius:48% 52% 0 0;background:#bfe2e5;transform:rotate(-1.5deg);box-shadow:inset 0 8px 0 rgba(255,255,255,.58)}
+.town-stream::before,.town-stream::after{content:"";position:absolute;left:9%;right:8%;border-top:2px solid rgba(255,255,255,.5);border-radius:50%}
+.town-stream::before{top:34%;transform:rotate(1deg)}.town-stream::after{top:55%;left:28%;right:24%;opacity:.55}
+.town-stream>i{position:absolute;left:15%;top:28%;width:9px;height:9px;border-radius:50%;background:#84c6cb;box-shadow:31px 13px 0 #92ccd0,310px -2px 0 #86c5ca,510px 16px 0 #92ccd0}
+.town-stream b{position:absolute;left:64%;top:29%;font-size:12px;letter-spacing:.18em;color:#568e94}.town-stream small{position:absolute;left:64%;top:50%;font-size:7px;letter-spacing:.12em;color:#6da1a6}
+.town-road{position:absolute;z-index:2;display:block;height:18px;border-radius:999px;background:#fffdf8;box-shadow:0 4px 0 rgba(83,108,96,.08),inset 0 0 0 4px rgba(255,255,255,.9)}
+.town-road::after{content:"";position:absolute;left:10px;right:10px;top:50%;border-top:2px dotted #c8d1c6}
+.town-road small{position:absolute;top:-17px;padding:3px 6px;border-radius:5px;background:rgba(246,248,241,.9);color:#4e6d63;font-size:10px;font-weight:900;white-space:nowrap}
+.road-main{left:12%;right:6%;top:34%;transform:rotate(-4deg)}.road-main small{left:45%}
+.road-link{width:64%;left:42%;top:49%;transform:rotate(64deg)}
+.road-riverside{width:61%;left:31%;top:69%;transform:rotate(-10deg)}.road-riverside small{left:56%}
+.town-crosswalk{position:absolute;z-index:3;left:60%;top:47%;width:46px;height:29px;transform:rotate(60deg);background:repeating-linear-gradient(90deg,#fff 0 5px,transparent 5px 9px);filter:drop-shadow(0 2px 1px rgba(30,55,47,.08))}
+.town-park{position:absolute;z-index:3;left:4%;top:11%;width:29%;height:49%;border-radius:47% 39% 44% 34%;background:#bddba9;box-shadow:inset 0 0 0 10px rgba(255,255,255,.25),0 8px 0 rgba(105,148,91,.08)}
+.town-park::before{content:"";position:absolute;inset:16%;border:2px dotted rgba(70,119,67,.34);border-radius:47%}
+.town-park i{position:absolute;width:15px;height:19px;border-radius:55% 45% 52% 48%;background:#68a168;box-shadow:inset -3px -3px 0 rgba(45,110,61,.12)}
+.town-park i:nth-of-type(1){left:17%;top:19%}.town-park i:nth-of-type(2){right:18%;top:23%;transform:scale(.8)}.town-park i:nth-of-type(3){left:27%;bottom:14%;transform:scale(.7)}.town-park i:nth-of-type(4){right:22%;bottom:13%;transform:scale(.9)}
+.town-park b{position:absolute;left:20%;top:42%;font-size:13px;color:#3f7048}.town-park small{position:absolute;left:20%;top:57%;font-size:9px;color:#648a65}
+.town-walk-loop{position:absolute;z-index:4;left:27%;top:20%;width:44%;height:34%;border:9px solid rgba(111,190,116,.27);border-left-color:transparent;border-bottom-color:transparent;border-radius:50%;transform:rotate(8deg)}
+.town-walk-loop::after{content:"";position:absolute;right:-9px;bottom:1px;border-left:12px solid #77b97a;border-top:7px solid transparent;border-bottom:7px solid transparent;transform:rotate(57deg)}
+.town-walk-loop i{position:absolute;right:2%;bottom:-11px;width:10px;height:10px;border-radius:50%;background:#4b9e63;box-shadow:0 0 0 6px rgba(75,158,99,.13)}.town-walk-loop b{position:absolute;right:3%;top:-25px;padding:5px 8px;border-radius:999px;background:#edf7df;color:#477454;font-size:9px;white-space:nowrap}
+.town-buildings{position:absolute;z-index:3;display:flex;align-items:flex-end;gap:8px;transform:rotate(-4deg)}.town-buildings i{display:block;border-radius:7px 7px 4px 4px;border-top:7px solid rgba(255,255,255,.34);box-shadow:0 7px 12px rgba(37,65,54,.12)}
+.buildings-a{right:7%;top:16%}.buildings-a i:nth-child(1){width:52px;height:54px;background:#d7b47e}.buildings-a i:nth-child(2){width:42px;height:42px;background:#df8c72}.buildings-a i:nth-child(3){width:61px;height:65px;background:#9eb3aa}
+.buildings-b{right:8%;bottom:20%;transform:rotate(4deg)}.buildings-b i:nth-child(1){width:35px;height:42px;background:#e5bd72}.buildings-b i:nth-child(2){width:54px;height:58px;background:#b6c8ba}.buildings-b i:nth-child(3){width:45px;height:37px;background:#d9a778}.buildings-b i:nth-child(4){width:32px;height:48px;background:#d9846f}
+.town-community{position:absolute;z-index:5;left:42%;top:46%;width:118px;min-height:70px;padding:12px 10px 10px 42px;border-radius:14px;background:#fff8e9;box-shadow:0 10px 21px rgba(37,65,54,.13);transform:rotate(-3deg);display:flex;flex-direction:column;justify-content:center}
+.town-community>i{position:absolute;left:12px;top:17px;width:25px;height:25px;border-radius:8px;background:var(--mint);display:grid;place-items:center;color:var(--ink);font-style:normal;font-weight:900}.town-community b{font-size:10px}.town-community small{margin-top:4px;color:#7c8d82;font-size:8px}
+.town-shop{position:absolute;z-index:4;right:18%;top:57%;min-width:92px;padding:9px 11px 9px 35px;border-radius:11px;background:#ffe4d8;color:#855747;box-shadow:0 8px 18px rgba(56,75,65,.09);transform:rotate(-4deg)}.town-shop>i{position:absolute;left:10px;top:9px;width:18px;height:19px;border-radius:3px;background:repeating-linear-gradient(90deg,#d58a65 0 5px,#fff2e9 5px 9px) top/100% 6px no-repeat,#d58a65}.town-shop b{font-size:9px;white-space:nowrap}
+.town-map .map-pin{z-index:8}.neighborhood-map .floating-report,.neighborhood-map .map-key{z-index:10}
+@media(max-width:720px){.town-community{transform:scale(.78) rotate(-3deg);transform-origin:left top}.town-shop{transform:scale(.8) rotate(-4deg);transform-origin:right top}.town-park b{font-size:10px}.town-park small,.town-walk-loop b{display:none}}
+
 /* 홈페이지와 쉬운 앱이 같은 순서로 작동하는 3단계 제보 흐름 */
 .description-voice-tools{margin-top:10px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:11px;align-items:center}
 .description-voice-tools button{min-height:48px;border:1px solid #c7d3c8;border-radius:11px;background:#eef4ea;color:var(--ink);padding:10px 15px;font-size:16px;font-weight:900;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap}

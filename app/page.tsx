@@ -28,7 +28,7 @@ const hazards: Hazard[] = [
     time: "오늘 09:42",
     detail: "보행보조기 바퀴가 걸릴 만큼 경계석 높이 차이가 커요.",
     x: "58%",
-    y: "49%",
+    y: "42%",
     tone: "coral",
     latitude: 37.5447,
     longitude: 127.0567,
@@ -142,17 +142,20 @@ async function storeReportMedia(reportId: string, attachments: MediaAttachment[]
 
 function NeighborhoodIllustrationMap({ items, selectedId, onSelect }: { items: Hazard[]; selectedId?: number; onSelect?: (id: number) => void }) {
   return (
-    <div className="illustration-layer" role={onSelect ? "group" : "img"} aria-label="공원과 생활권 골목을 단순화한 우리 동네 일러스트 지도">
-      <span className="district-shape district-a" />
-      <span className="district-shape district-b" />
-      <span className="neighborhood-stream"><b>우리 동네 하천</b><small>NEIGHBORHOOD STREAM</small></span>
-      <span className="neighborhood-park"><i /><i /><i /><b>우리 동네 공원</b><small>NEIGHBORHOOD PARK</small></span>
-      <span className="neighborhood-road street-tree"><small>느티나무길</small></span>
-      <span className="neighborhood-road street-central"><small>중앙로</small></span>
-      <span className="neighborhood-road street-market"><small>시장길</small></span>
-      <span className="metro-line neighborhood-route"><b>길</b><i className="station station-central" /><em className="station-name name-central">중앙역</em><i className="station station-cityhall" /><em className="station-name name-cityhall">시청역</em></span>
-      <span className="factory-cluster" aria-hidden="true"><i /><i /><i /><i /></span>
-      <span className="cafe-zone">공원과 시장을 잇는 생활권 산책로</span>
+    <div className="illustration-layer town-map" role={onSelect ? "group" : "img"} aria-label="공원과 하천, 주택과 상점이 이어진 우리 동네 일러스트 지도">
+      <span className="town-land land-a" aria-hidden="true" />
+      <span className="town-land land-b" aria-hidden="true" />
+      <span className="town-stream"><i /><b>동네 하천</b><small>NEIGHBORHOOD STREAM</small></span>
+      <span className="town-road road-main"><small>우리로</small></span>
+      <span className="town-road road-link" />
+      <span className="town-road road-riverside"><small>물빛길</small></span>
+      <span className="town-crosswalk" aria-hidden="true" />
+      <span className="town-park"><i /><i /><i /><i /><b>우리 동네 공원</b><small>걷고 쉬어가는 녹지</small></span>
+      <span className="town-walk-loop"><i /><b>안심 산책길</b></span>
+      <span className="town-buildings buildings-a" aria-hidden="true"><i /><i /><i /></span>
+      <span className="town-buildings buildings-b" aria-hidden="true"><i /><i /><i /><i /></span>
+      <span className="town-community"><i aria-hidden="true">⌂</i><b>생활지원센터</b><small>주민 쉼터</small></span>
+      <span className="town-shop"><i aria-hidden="true" /><b>동네 상점</b></span>
       {items.map((item) =>
         onSelect ? (
           <button
