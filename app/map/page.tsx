@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Map as MapLibreMap, Marker as MapLibreMarker } from "maplibre-gl";
-import { SiteSidebar } from "../components/site-sidebar";
+import { SiteHeader } from "../components/site-header";
 
 type MapReport = {
   id: string;
@@ -248,8 +248,8 @@ export default function RiskMapPage() {
   const selectedLike = selected ? likes[selected.id] ?? { count: 0, liked: false } : { count: 0, liked: false };
 
   return (
-    <main className="risk-map-page with-site-sidebar">
-      <SiteSidebar active="map" />
+    <main className="risk-map-page">
+      <SiteHeader active="map" inner />
 
       <section className="risk-map-intro">
         <div>

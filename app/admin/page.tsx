@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { SiteSidebar } from "../components/site-sidebar";
+import { SiteHeader } from "../components/site-header";
 import { sitePath } from "../lib/site-path";
 
 type ReportStatus = "received" | "review" | "action" | "completed";
@@ -91,8 +91,8 @@ export default function AdminPage() {
   const counts = statusOrder.reduce((result, key) => ({ ...result, [key]: reports.filter((report) => report.status === key).length }), {} as Record<ReportStatus, number>);
 
   return (
-    <main className="admin-page with-site-sidebar">
-      <SiteSidebar active="admin" />
+    <main className="admin-page">
+      <SiteHeader active="admin" inner />
 
       <section className="admin-main">
         <div className="admin-context-bar"><span className="admin-console-label">관리자 콘솔</span><div className="admin-account"><span>{user?.role === "research_admin" ? "研" : "官"}</span><div><b>{user?.name}</b><small>{user?.role === "research_admin" ? "연구진·관리자" : user?.agency}</small></div><button onClick={logout}>로그아웃</button></div></div>

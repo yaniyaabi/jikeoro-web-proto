@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { SiteSidebar } from "../components/site-sidebar";
+import { SiteHeader } from "../components/site-header";
 import { sitePath } from "../lib/site-path";
 
 type ReportStatus = "received" | "review" | "action" | "completed";
@@ -145,8 +145,8 @@ export default function MyJikeoroPage() {
   }
 
   return (
-    <main className="member-page with-site-sidebar">
-      <SiteSidebar active="my" />
+    <main className="member-page">
+      <SiteHeader active="my" inner />
 
       <section className="member-section standalone" id="my-jikeoro">
         <div className="member-intro">

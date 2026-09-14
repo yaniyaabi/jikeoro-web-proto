@@ -2,7 +2,7 @@
 
 import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import type { Map as MapLibreMap } from "maplibre-gl";
-import { SiteSidebar } from "./components/site-sidebar";
+import { SiteHeader } from "./components/site-header";
 import { sitePath } from "./lib/site-path";
 
 type Hazard = {
@@ -650,8 +650,8 @@ export default function Home() {
   };
 
   return (
-    <main className="with-site-sidebar">
-      <SiteSidebar active="home" />
+    <main>
+      <SiteHeader active="home" />
 
       <section className="hero" id="top">
         <div className="hero-copy">

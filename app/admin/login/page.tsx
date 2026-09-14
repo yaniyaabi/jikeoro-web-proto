@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { SiteSidebar } from "../../components/site-sidebar";
+import { SiteHeader } from "../../components/site-header";
 import { sitePath } from "../../lib/site-path";
 
 type AdminRole = "research_admin" | "agency_staff";
@@ -27,8 +27,8 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <main className="admin-login-page with-site-sidebar">
-      <SiteSidebar active="admin" />
+    <main className="admin-login-page">
+      <SiteHeader active="admin" inner />
       <section className="admin-login-card">
         <p className="eyebrow">OPERATIONS SIGN IN</p>
         <h1>현장의 기록을<br />변화로 연결합니다.</h1>
