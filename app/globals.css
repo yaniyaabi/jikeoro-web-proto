@@ -364,17 +364,24 @@ footer,footer p{font-size:13px}
 
 /* 모든 화면에서 사용하는 상단 메뉴와 현황지도 제보 목록 */
 .risk-map-page>.site-header{position:relative;background:rgba(245,247,240,.96);border-bottom:1px solid #dce4da;backdrop-filter:blur(10px)}
+.region-search{position:relative;max-width:1540px;margin:0 auto 14px;padding:14px 16px;border:1px solid #d3ddd3;border-radius:18px;background:#fbfcf8;box-shadow:0 10px 28px rgba(16,45,42,.06);display:flex;align-items:center;justify-content:space-between;gap:18px}
+.region-search-copy{display:flex;align-items:center;gap:11px;min-width:245px}.region-search-copy>span{width:38px;height:38px;border-radius:12px;background:#e3f6c8;color:var(--ink);display:grid;place-items:center;font-size:22px;font-weight:900}.region-search-copy>div{display:flex;flex-direction:column;gap:3px}.region-search-copy strong{font-size:16px;letter-spacing:-.035em}.region-search-copy small{font-size:12px;color:#687b74;line-height:1.45}
+.region-search form{display:flex;align-items:flex-end;justify-content:flex-end;gap:8px;flex-wrap:wrap}.region-search label{display:flex;flex-direction:column;gap:5px}.region-search label>span{padding-left:3px;font-size:11px;font-weight:900;color:#60746c}.region-search select{width:175px;min-height:44px;border:1px solid #cbd6cc;border-radius:11px;background:#fff;color:var(--ink);padding:0 35px 0 12px;font-size:14px;font-weight:800;cursor:pointer}.region-search select:disabled{cursor:not-allowed;background:#edf1eb;color:#9aa79f}
+.region-search-submit,.region-search-reset{min-height:44px;border-radius:11px;padding:0 17px;font-size:14px;font-weight:900;cursor:pointer}.region-search-submit{border:1px solid var(--ink);background:var(--ink);color:#fff}.region-search-submit:disabled{border-color:#cbd4cc;background:#cbd4cc;cursor:not-allowed}.region-search-reset{border:1px solid #afbeb3;background:#fff;color:var(--ink)}.region-search-error{position:absolute;right:17px;bottom:-24px;margin:0;color:#b94f42;font-size:12px;font-weight:800}
+.map-region-badge{position:absolute;z-index:6;left:18px;top:18px;display:flex;align-items:center;gap:8px;border:1px solid rgba(15,57,52,.14);border-radius:999px;background:rgba(255,255,255,.94);padding:9px 13px;box-shadow:0 8px 23px rgba(16,45,42,.13);pointer-events:none}.map-region-badge b{font-size:11px;color:#668078}.map-region-badge span{font-size:14px;font-weight:950;color:var(--ink)}
 .risk-report-drawer{min-height:0;overflow:hidden}
 .risk-report-list{min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable}
 .risk-report-list::-webkit-scrollbar{width:9px}.risk-report-list::-webkit-scrollbar-track{background:#edf2e9}.risk-report-list::-webkit-scrollbar-thumb{background:#9eb0a6;border:2px solid #edf2e9;border-radius:99px}
 @media(min-width:901px){
   .risk-map-page{padding-left:0;padding-right:0}
-  .risk-map-intro,.risk-map-workspace{width:calc(100% - clamp(36px,6vw,92px))}
-  .risk-map-workspace{height:calc(100svh - 350px);min-height:560px;max-height:760px}
+  .risk-map-intro,.region-search,.risk-map-workspace{width:calc(100% - clamp(36px,6vw,92px))}
+  .risk-map-workspace{height:calc(100svh - 430px);min-height:560px;max-height:760px}
 }
 @media(max-width:900px){
   .risk-map-page>.site-header{margin-left:-12px;width:calc(100% + 24px)}
+  .region-search{align-items:stretch;flex-direction:column;margin-bottom:12px;padding:15px}.region-search form{display:grid;grid-template-columns:1fr 1fr}.region-search label,.region-search select{width:100%}.region-search-submit,.region-search-reset{margin-top:3px}.map-region-badge{left:10px;top:10px}
 }
+@media(max-width:560px){.region-search form{grid-template-columns:1fr}.region-search-copy small{font-size:11px}.region-search select{font-size:16px}.region-search-submit,.region-search-reset{font-size:15px}.map-region-badge b{display:none}}
 
 /* 부드러운 평면 감성으로 다시 그린 우리 동네 일러스트 */
 .neighborhood-map::before{display:none}

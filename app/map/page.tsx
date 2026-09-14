@@ -2,7 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Map as MapLibreMap, Marker as MapLibreMarker } from "maplibre-gl";
+import type { Feature, FeatureCollection, MultiPolygon, Polygon, Position } from "geojson";
 import { SiteHeader } from "../components/site-header";
+import { sitePath } from "../lib/site-path";
 
 type MapReport = {
   id: string;
@@ -30,11 +32,97 @@ type StoredReportMedia = {
 type PreviewMedia = StoredReportMedia & { previewUrl: string };
 type LikeEntry = { count: number; liked: boolean };
 type LikeStore = Record<string, LikeEntry>;
+type MunicipalityProperties = {
+  code: string;
+  name: string;
+  name_eng?: string;
+  base_year?: string;
+};
+type MunicipalityFeature = Feature<Polygon | MultiPolygon, MunicipalityProperties>;
 
 const categories = ["전체", "단차", "포트홀", "조도", "적치물"];
 const toneByType: Record<string, string> = { 단차: "coral", 포트홀: "yellow", 조도: "navy", 적치물: "mint" };
 const statusText: Record<MapReport["status"], string> = { received: "접수", review: "현장 검토", action: "조치 진행", completed: "개선 완료" };
 const LIKES_KEY = "jikeoro-map-likes";
+const provinceNames: Record<string, string> = {
+  "11": "서울특별시", "21": "부산광역시", "22": "대구광역시", "23": "인천광역시",
+  "24": "광주광역시", "25": "대전광역시", "26": "울산광역시", "29": "세종특별자치시",
+  "31": "경기도", "32": "강원특별자치도", "33": "충청북도", "34": "충청남도",
+  "35": "전북특별자치도", "36": "전라남도", "37": "경상북도", "38": "경상남도",
+  "39": "제주특별자치도",
+};
+
+function provinceCode(feature: MunicipalityFeature) {
+  return feature.properties.code.slice(0, 2);
+}
+
+function geometryPolygons(geometry: Polygon | MultiPolygon): Position[][][] {
+  return geometry.type === "Polygon" ? [geometry.coordinates] : geometry.coordinates;
+}
+
+function ringArea(ring: Position[]) {
+  return ring.reduce((area, point, index) => {
+    const next = ring[(index + 1) % ring.length];
+    return area + point[0] * next[1] - next[0] * point[1];
+  }, 0) / 2;
+}
+
+function asClockwise(ring: Position[]) {
+  return ringArea(ring) > 0 ? [...ring].reverse() : ring;
+}
+
+function pointInRing(point: Position, ring: Position[]) {
+  let inside = false;
+  for (let current = 0, previous = ring.length - 1; current < ring.length; previous = current++) {
+    const [x1, y1] = ring[current];
+    const [x2, y2] = ring[previous];
+    const intersects = (y1 > point[1]) !== (y2 > point[1])
+      && point[0] < ((x2 - x1) * (point[1] - y1)) / (y2 - y1) + x1;
+    if (intersects) inside = !inside;
+  }
+  return inside;
+}
+
+function pointInMunicipality(point: Position, feature: MunicipalityFeature) {
+  return geometryPolygons(feature.geometry).some((polygon) => {
+    if (!polygon[0] || !pointInRing(point, polygon[0])) return false;
+    return !polygon.slice(1).some((hole) => pointInRing(point, hole));
+  });
+}
+
+function geometryBounds(feature: MunicipalityFeature) {
+  const positions = geometryPolygons(feature.geometry).flat(2);
+  return positions.reduce(
+    (bounds, [longitude, latitude]) => ({
+      minLongitude: Math.min(bounds.minLongitude, longitude),
+      minLatitude: Math.min(bounds.minLatitude, latitude),
+      maxLongitude: Math.max(bounds.maxLongitude, longitude),
+      maxLatitude: Math.max(bounds.maxLatitude, latitude),
+    }),
+    { minLongitude: 180, minLatitude: 90, maxLongitude: -180, maxLatitude: -90 },
+  );
+}
+
+function boundaryLayerData(feature: MunicipalityFeature): FeatureCollection {
+  const holes = geometryPolygons(feature.geometry)
+    .map((polygon) => polygon[0])
+    .filter(Boolean)
+    .map(asClockwise);
+  return {
+    type: "FeatureCollection",
+    features: [
+      {
+        type: "Feature",
+        properties: { kind: "mask" },
+        geometry: {
+          type: "Polygon",
+          coordinates: [[[-180, -85], [180, -85], [180, 85], [-180, 85], [-180, -85]], ...holes],
+        },
+      },
+      { ...feature, properties: { ...feature.properties, kind: "selected" } },
+    ],
+  };
+}
 
 async function readReportMedia(reportId: string) {
   if (!("indexedDB" in window)) return [] as StoredReportMedia[];
@@ -107,6 +195,11 @@ export default function RiskMapPage() {
   const [mapReady, setMapReady] = useState(false);
   const [dataError, setDataError] = useState("");
   const [mapError, setMapError] = useState("");
+  const [municipalities, setMunicipalities] = useState<MunicipalityFeature[]>([]);
+  const [boundaryError, setBoundaryError] = useState("");
+  const [province, setProvince] = useState("");
+  const [municipality, setMunicipality] = useState("");
+  const [appliedMunicipality, setAppliedMunicipality] = useState("");
   const [selectedMedia, setSelectedMedia] = useState<PreviewMedia[]>([]);
   const [selectedMediaIndex, setSelectedMediaIndex] = useState(0);
   const [mediaLoading, setMediaLoading] = useState(false);
@@ -132,11 +225,40 @@ export default function RiskMapPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const filteredReports = useMemo(
+  useEffect(() => {
+    fetch(sitePath("/data/korea-municipalities-2013.geojson"))
+      .then((response) => response.ok ? response.json() : Promise.reject(new Error("boundary")))
+      .then((data: FeatureCollection<Polygon | MultiPolygon, MunicipalityProperties>) => setMunicipalities(data.features))
+      .catch(() => setBoundaryError("지역 경계 데이터를 불러오지 못했어요."));
+  }, []);
+
+  const selectedBoundary = useMemo(
+    () => municipalities.find((feature) => feature.properties.code === appliedMunicipality) ?? null,
+    [appliedMunicipality, municipalities],
+  );
+  const provinceOptions = useMemo(
+    () => [...new Set(municipalities.map(provinceCode))]
+      .sort()
+      .map((code) => ({ code, name: provinceNames[code] ?? code })),
+    [municipalities],
+  );
+  const municipalityOptions = useMemo(
+    () => municipalities
+      .filter((feature) => provinceCode(feature) === province)
+      .sort((a, b) => a.properties.name.localeCompare(b.properties.name, "ko")),
+    [municipalities, province],
+  );
+  const categoryFilteredReports = useMemo(
     () => filter === "전체" ? reports : reports.filter((report) => report.type === filter),
     [filter, reports],
   );
-  const selected = reports.find((report) => report.id === selectedId) ?? filteredReports[0] ?? null;
+  const filteredReports = useMemo(
+    () => selectedBoundary
+      ? categoryFilteredReports.filter((report) => pointInMunicipality([report.longitude, report.latitude], selectedBoundary))
+      : categoryFilteredReports,
+    [categoryFilteredReports, selectedBoundary],
+  );
+  const selected = filteredReports.find((report) => report.id === selectedId) ?? filteredReports[0] ?? null;
 
   useEffect(() => {
     if (!selected?.id) return;
@@ -248,12 +370,66 @@ export default function RiskMapPage() {
       bounds.extend([report.longitude, report.latitude]);
     });
 
+    if (selectedBoundary) return;
     if (filteredReports.length === 1) {
       map.flyTo({ center: [first.longitude, first.latitude], zoom: 16.5, essential: true });
     } else {
       map.fitBounds(bounds, { padding: 80, maxZoom: 16.5, duration: 700 });
     }
-  }, [filteredReports, mapReady]);
+  }, [filteredReports, mapReady, selectedBoundary]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!mapReady || !map) return;
+
+    ["municipality-outline", "municipality-fill", "municipality-mask"].forEach((layerId) => {
+      if (map.getLayer(layerId)) map.removeLayer(layerId);
+    });
+    if (map.getSource("municipality-boundary")) map.removeSource("municipality-boundary");
+
+    if (!selectedBoundary) {
+      if (reports.length) {
+        const first = reports[0];
+        const bounds = reports.reduce(
+          (nextBounds, report) => nextBounds.extend([report.longitude, report.latitude]),
+          new (mapLibraryRef.current!).LngLatBounds([first.longitude, first.latitude], [first.longitude, first.latitude]),
+        );
+        map.fitBounds(bounds, { padding: 80, maxZoom: 15, duration: 700 });
+      } else {
+        map.flyTo({ center: [127.8, 36.3], zoom: 6.5, essential: true });
+      }
+      return;
+    }
+
+    map.addSource("municipality-boundary", { type: "geojson", data: boundaryLayerData(selectedBoundary) });
+    map.addLayer({
+      id: "municipality-mask",
+      type: "fill",
+      source: "municipality-boundary",
+      filter: ["==", ["get", "kind"], "mask"],
+      paint: { "fill-color": "#6f7773", "fill-opacity": 0.58 },
+    });
+    map.addLayer({
+      id: "municipality-fill",
+      type: "fill",
+      source: "municipality-boundary",
+      filter: ["==", ["get", "kind"], "selected"],
+      paint: { "fill-color": "#b7f06b", "fill-opacity": 0.12 },
+    });
+    map.addLayer({
+      id: "municipality-outline",
+      type: "line",
+      source: "municipality-boundary",
+      filter: ["==", ["get", "kind"], "selected"],
+      paint: { "line-color": "#0f3934", "line-width": 3, "line-opacity": 0.95 },
+    });
+
+    const bounds = geometryBounds(selectedBoundary);
+    map.fitBounds(
+      [[bounds.minLongitude, bounds.minLatitude], [bounds.maxLongitude, bounds.maxLatitude]],
+      { padding: { top: 70, right: 70, bottom: 70, left: 70 }, duration: 800, maxZoom: 13.5 },
+    );
+  }, [mapReady, reports, selectedBoundary]);
 
   const selectReport = (report: MapReport) => {
     setSelectedId(report.id);
@@ -277,6 +453,19 @@ export default function RiskMapPage() {
     });
   };
 
+  const applyRegion = () => {
+    if (!municipality) return;
+    setAppliedMunicipality(municipality);
+    setSelectedId(null);
+  };
+
+  const clearRegion = () => {
+    setProvince("");
+    setMunicipality("");
+    setAppliedMunicipality("");
+    setSelectedId(null);
+  };
+
   const todayCount = reports.filter((report) => new Date(report.createdAt).toDateString() === new Date().toDateString()).length;
   const visualMedia = selectedMedia.filter((item) => item.kind === "image" || item.kind === "video");
   const activeMedia = visualMedia[selectedMediaIndex] ?? visualMedia[0] ?? null;
@@ -293,8 +482,34 @@ export default function RiskMapPage() {
         <dl>
           <div><dt>GPS 기록</dt><dd>{reports.length}<span>건</span></dd></div>
           <div><dt>오늘 등록</dt><dd>{todayCount}<span>건</span></dd></div>
-          <div><dt>표시 범위</dt><dd className="place-metric">전국</dd></div>
+          <div><dt>표시 범위</dt><dd className="place-metric">{selectedBoundary ? `${provinceNames[provinceCode(selectedBoundary)] ?? ""} ${selectedBoundary.properties.name}` : "전국"}</dd></div>
         </dl>
+      </section>
+
+      <section className="region-search" aria-label="시군구 지역 검색">
+        <div className="region-search-copy">
+          <span aria-hidden="true">⌖</span>
+          <div><strong>지역별로 찾아보기</strong><small>시·도와 시·군·구를 선택하면 경계 안의 제보만 보여드려요.</small></div>
+        </div>
+        <form onSubmit={(event) => { event.preventDefault(); applyRegion(); }}>
+          <label>
+            <span>시·도</span>
+            <select value={province} onChange={(event) => { setProvince(event.target.value); setMunicipality(""); }}>
+              <option value="">시·도 선택</option>
+              {provinceOptions.map((option) => <option key={option.code} value={option.code}>{option.name}</option>)}
+            </select>
+          </label>
+          <label>
+            <span>시·군·구</span>
+            <select value={municipality} onChange={(event) => setMunicipality(event.target.value)} disabled={!province}>
+              <option value="">시·군·구 선택</option>
+              {municipalityOptions.map((feature) => <option key={feature.properties.code} value={feature.properties.code}>{feature.properties.name}</option>)}
+            </select>
+          </label>
+          <button className="region-search-submit" type="submit" disabled={!municipality}>지역 보기</button>
+          {selectedBoundary && <button className="region-search-reset" type="button" onClick={clearRegion}>전국 보기</button>}
+        </form>
+        {boundaryError && <p className="region-search-error">{boundaryError}</p>}
       </section>
 
       <section className="risk-map-workspace" aria-label="전국 우리 동네 위험요소 GPS 현황">
@@ -302,6 +517,7 @@ export default function RiskMapPage() {
           <div ref={mapElementRef} className="free-map-canvas" aria-label="무료 공개 지도" />
           {!mapReady && !mapError && <div className="map-loading"><i />현황지도를 불러오는 중</div>}
           {mapError && <div className="map-error-card"><span aria-hidden="true">!</span><strong>{mapError}</strong></div>}
+          {selectedBoundary && <div className="map-region-badge"><b>{provinceNames[provinceCode(selectedBoundary)]}</b><span>{selectedBoundary.properties.name}</span></div>}
           <div className="map-privacy-note"><span /> 신고자 정보 없이 위험 위치만 표시됩니다.</div>
         </div>
 
@@ -318,7 +534,7 @@ export default function RiskMapPage() {
           <div className="risk-report-list">
             {loading && <p className="risk-list-message">위치 기록을 불러오는 중이에요.</p>}
             {!loading && dataError && <p className="risk-list-message error">{dataError}</p>}
-            {!loading && !dataError && !filteredReports.length && <p className="risk-list-message">이 유형으로 등록된 GPS 기록이 아직 없어요.</p>}
+            {!loading && !dataError && !filteredReports.length && <p className="risk-list-message">{selectedBoundary ? `${selectedBoundary.properties.name}에 등록된 GPS 기록이 아직 없어요.` : "이 유형으로 등록된 GPS 기록이 아직 없어요."}</p>}
             {filteredReports.map((report, index) => {
               const reportLike = likes[report.id] ?? { count: 0, liked: false };
               return (
