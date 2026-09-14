@@ -103,24 +103,18 @@ function geometryBounds(feature: MunicipalityFeature) {
   );
 }
 
-function boundaryLayerData(feature: MunicipalityFeature): FeatureCollection {
+function boundaryMaskData(feature: MunicipalityFeature): Feature<Polygon, { kind: "mask" }> {
   const holes = geometryPolygons(feature.geometry)
     .map((polygon) => polygon[0])
     .filter(Boolean)
     .map(asClockwise);
   return {
-    type: "FeatureCollection",
-    features: [
-      {
-        type: "Feature",
-        properties: { kind: "mask" },
-        geometry: {
-          type: "Polygon",
-          coordinates: [[[-180, -85], [180, -85], [180, 85], [-180, 85], [-180, -85]], ...holes],
-        },
-      },
-      { ...feature, properties: { ...feature.properties, kind: "selected" } },
-    ],
+    type: "Feature",
+    properties: { kind: "mask" },
+    geometry: {
+      type: "Polygon",
+      coordinates: [[[-180, -85], [180, -85], [180, 85], [-180, 85], [-180, -85]], ...holes],
+    },
   };
 }
 
@@ -386,6 +380,7 @@ export default function RiskMapPage() {
       if (map.getLayer(layerId)) map.removeLayer(layerId);
     });
     if (map.getSource("municipality-boundary")) map.removeSource("municipality-boundary");
+    if (map.getSource("municipality-mask")) map.removeSource("municipality-mask");
 
     if (!selectedBoundary) {
       if (reports.length) {
@@ -401,34 +396,32 @@ export default function RiskMapPage() {
       return;
     }
 
-    map.addSource("municipality-boundary", { type: "geojson", data: boundaryLayerData(selectedBoundary) });
+    const bounds = geometryBounds(selectedBoundary);
+    map.fitBounds(
+      [[bounds.minLongitude, bounds.minLatitude], [bounds.maxLongitude, bounds.maxLatitude]],
+      { padding: { top: 70, right: 70, bottom: 70, left: 70 }, duration: 800, maxZoom: 13.5 },
+    );
+
+    map.addSource("municipality-mask", { type: "geojson", data: boundaryMaskData(selectedBoundary) });
     map.addLayer({
       id: "municipality-mask",
       type: "fill",
-      source: "municipality-boundary",
-      filter: ["==", ["get", "kind"], "mask"],
-      paint: { "fill-color": "#8d918f", "fill-opacity": 0.82 },
+      source: "municipality-mask",
+      paint: { "fill-color": "#979b99", "fill-opacity": 0.86 },
     });
+    map.addSource("municipality-boundary", { type: "geojson", data: selectedBoundary });
     map.addLayer({
       id: "municipality-fill",
       type: "fill",
       source: "municipality-boundary",
-      filter: ["==", ["get", "kind"], "selected"],
       paint: { "fill-color": "#b7f06b", "fill-opacity": 0.12 },
     });
     map.addLayer({
       id: "municipality-outline",
       type: "line",
       source: "municipality-boundary",
-      filter: ["==", ["get", "kind"], "selected"],
-      paint: { "line-color": "#0f3934", "line-width": 3, "line-opacity": 0.95 },
+      paint: { "line-color": "#0b332f", "line-width": 4, "line-opacity": 1 },
     });
-
-    const bounds = geometryBounds(selectedBoundary);
-    map.fitBounds(
-      [[bounds.minLongitude, bounds.minLatitude], [bounds.maxLongitude, bounds.maxLatitude]],
-      { padding: { top: 70, right: 70, bottom: 70, left: 70 }, duration: 800, maxZoom: 13.5 },
-    );
   }, [mapReady, reports, selectedBoundary]);
 
   const selectReport = (report: MapReport) => {
