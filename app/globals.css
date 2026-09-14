@@ -530,4 +530,5 @@ footer,footer p{font-size:13px}
 
 /* 위험지도는 헤더·본문·푸터가 한 장의 바탕처럼 이어지도록 처리합니다. */
 .risk-map-page>.site-header{background:#f5f7f0;border-bottom-color:transparent}
+.universal-header.member-header{border-bottom-color:transparent}
 .risk-map-workspace{box-shadow:0 12px 24px -20px rgba(16,45,42,.22)}
