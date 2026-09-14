@@ -7,22 +7,17 @@ type HeaderSection = "home" | "map" | "my" | "admin";
 
 export function SiteHeader({ active, inner = false }: { active: HeaderSection; inner?: boolean }) {
   const [sessionRole, setSessionRole] = useState<string | null>(null);
+  const [sessionName, setSessionName] = useState("김지킴");
 
   useEffect(() => {
     fetch("/api/auth/session")
       .then((response) => response.json())
-      .then((data) => setSessionRole(data.authenticated ? data.user?.role ?? null : null))
+      .then((data) => {
+        setSessionRole(data.authenticated ? data.user?.role ?? null : null);
+        if (data.authenticated && data.user?.name) setSessionName(data.user.name);
+      })
       .catch(() => setSessionRole(null));
   }, []);
-
-  const login = async () => {
-    const response = await fetch("/api/auth/demo", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ role: "member" }),
-    }).catch(() => null);
-    if (response?.ok) window.location.href = sitePath("/my/");
-  };
 
   return (
     <header className={`site-header universal-header${inner ? " member-header" : ""}`}>
@@ -40,11 +35,11 @@ export function SiteHeader({ active, inner = false }: { active: HeaderSection; i
       <div className="header-actions">
         <a className="header-cta" href={sitePath("/?report=1")}>위험요소 기록하기</a>
         {sessionRole === "member" ? (
-          <a className="account-button" href={sitePath("/my/")} aria-label="내 지켜로 활동 보기"><span>김</span><b>김지킴</b></a>
+          <a className="account-button" href={sitePath("/my/")} aria-label="내 지켜로 활동 보기"><span>{sessionName.slice(0, 1)}</span><b>{sessionName}</b></a>
         ) : sessionRole === "research_admin" || sessionRole === "agency_staff" ? (
           <a className="login-button" href={sitePath("/admin/")}>관리자</a>
         ) : (
-          <button className="login-button" type="button" onClick={login}>로그인</button>
+          <a className="login-button" href={sitePath("/login/")}>로그인</a>
         )}
       </div>
     </header>

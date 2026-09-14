@@ -1,6 +1,8 @@
 const PAGES_PREFIX = "/jikeoro-web-proto";
 const REPORTS_KEY = "jikeoro-pages-reports";
 const ROLE_KEY = "jikeoro-pages-role";
+const USERS_KEY = "jikeoro-pages-users";
+const USER_KEY = "jikeoro-pages-user";
 
 // Authentication is intentionally scoped to the current tab. The previous
 // localStorage implementation kept a demo role across visits, so returning
@@ -20,12 +22,50 @@ type DemoReport = {
   assigned_agency: string | null;
   response: string | null;
   reporter_name: string | null;
+  reporter_email?: string | null;
   created_at: string;
   updated_at: string;
   observed_at?: string;
   weather?: { temperature: number; code: number; observedAt: string } | null;
   media?: Array<{ kind: "image" | "video" | "audio"; name: string; type: string; size: number }>;
 };
+
+type PrototypeAccount = {
+  id: string;
+  name: string;
+  email: string;
+  passwordHash: string;
+  salt: string;
+  createdAt: string;
+};
+
+type SessionUser = { id: string; name: string; email: string; role: "member" };
+
+function bytesToHex(bytes: Uint8Array) {
+  return Array.from(bytes, (value) => value.toString(16).padStart(2, "0")).join("");
+}
+
+async function hashPassword(password: string, salt: string) {
+  const material = await crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveBits"]);
+  const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt: new TextEncoder().encode(salt), iterations: 120_000 }, material, 256);
+  return bytesToHex(new Uint8Array(bits));
+}
+
+function readAccounts(): PrototypeAccount[] {
+  try {
+    return JSON.parse(window.localStorage.getItem(USERS_KEY) ?? "[]") as PrototypeAccount[];
+  } catch {
+    return [];
+  }
+}
+
+function readSessionUser(): SessionUser | null {
+  try {
+    return JSON.parse(window.sessionStorage.getItem(USER_KEY) ?? "null") as SessionUser | null;
+  } catch {
+    return null;
+  }
+}
 
 const seededReports: DemoReport[] = [
   {
@@ -41,6 +81,7 @@ const seededReports: DemoReport[] = [
     assigned_agency: "대전광역시 도로관리팀",
     response: "현장 확인 일정을 조율하고 있습니다.",
     reporter_name: "김지킴",
+    reporter_email: "member@jikeoro.local",
     created_at: "2026-08-12T00:42:00.000Z",
     updated_at: "2026-08-14T00:42:00.000Z",
   },
@@ -57,6 +98,7 @@ const seededReports: DemoReport[] = [
     assigned_agency: "부산진구 공원녹지과",
     response: "조명 상태를 점검하고 보수 요청을 전달했습니다.",
     reporter_name: "김지킴",
+    reporter_email: "member@jikeoro.local",
     created_at: "2026-08-11T11:18:00.000Z",
     updated_at: "2026-08-14T01:10:00.000Z",
   },
@@ -67,8 +109,8 @@ function readReports(): DemoReport[] {
     const saved = window.localStorage.getItem(REPORTS_KEY);
     const reports = (saved ? JSON.parse(saved) : seededReports) as DemoReport[];
     return reports.map((report) => {
-      if (report.id === "pages-demo-1") return { ...report, address: seededReports[0].address, place_description: seededReports[0].place_description, latitude: seededReports[0].latitude, longitude: seededReports[0].longitude, assigned_agency: seededReports[0].assigned_agency };
-      if (report.id === "pages-demo-2") return { ...report, address: seededReports[1].address, place_description: seededReports[1].place_description, latitude: seededReports[1].latitude, longitude: seededReports[1].longitude, assigned_agency: seededReports[1].assigned_agency };
+      if (report.id === "pages-demo-1") return { ...report, address: seededReports[0].address, place_description: seededReports[0].place_description, latitude: seededReports[0].latitude, longitude: seededReports[0].longitude, assigned_agency: seededReports[0].assigned_agency, reporter_name: seededReports[0].reporter_name, reporter_email: seededReports[0].reporter_email };
+      if (report.id === "pages-demo-2") return { ...report, address: seededReports[1].address, place_description: seededReports[1].place_description, latitude: seededReports[1].latitude, longitude: seededReports[1].longitude, assigned_agency: seededReports[1].assigned_agency, reporter_name: seededReports[1].reporter_name, reporter_email: seededReports[1].reporter_email };
       return report;
     });
   } catch {
@@ -95,23 +137,62 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   if (!url.pathname.startsWith("/api/")) return networkFetch(input, init);
 
   const method = (init?.method ?? "GET").toUpperCase();
-  const role = window.sessionStorage.getItem(ROLE_KEY);
+  const sessionUser = readSessionUser();
+  const role = sessionUser?.role ?? window.sessionStorage.getItem(ROLE_KEY);
 
   if (url.pathname === "/api/auth/session") {
     return json({
       authenticated: Boolean(role),
-      user: role ? { name: role === "member" ? "김지킴" : "배수현 연구원", role } : null,
+      user: sessionUser ?? (role ? { name: role === "member" ? "김지킴" : "배수현 연구원", role } : null),
     });
+  }
+
+  if (url.pathname === "/api/auth/register" && method === "POST") {
+    const body = JSON.parse(String(init?.body ?? "{}"));
+    const name = String(body.name ?? "").trim();
+    const email = String(body.email ?? "").trim().toLowerCase();
+    const password = String(body.password ?? "");
+    if (name.length < 2 || !email.includes("@") || password.length < 8) return json({ error: "이름, 이메일, 8자 이상의 비밀번호를 확인해주세요." }, 400);
+    const accounts = readAccounts();
+    if (accounts.some((account) => account.email === email)) return json({ error: "이미 가입된 이메일입니다. 로그인해주세요." }, 409);
+    const salt = bytesToHex(crypto.getRandomValues(new Uint8Array(16)));
+    const account: PrototypeAccount = {
+      id: `member-${crypto.randomUUID()}`,
+      name,
+      email,
+      salt,
+      passwordHash: await hashPassword(password, salt),
+      createdAt: new Date().toISOString(),
+    };
+    window.localStorage.setItem(USERS_KEY, JSON.stringify([...accounts, account]));
+    const user: SessionUser = { id: account.id, name: account.name, email: account.email, role: "member" };
+    window.sessionStorage.setItem(USER_KEY, JSON.stringify(user));
+    window.sessionStorage.setItem(ROLE_KEY, "member");
+    return json({ ok: true, user }, 201);
+  }
+
+  if (url.pathname === "/api/auth/login" && method === "POST") {
+    const body = JSON.parse(String(init?.body ?? "{}"));
+    const email = String(body.email ?? "").trim().toLowerCase();
+    const password = String(body.password ?? "");
+    const account = readAccounts().find((candidate) => candidate.email === email);
+    if (!account || await hashPassword(password, account.salt) !== account.passwordHash) return json({ error: "이메일 또는 비밀번호가 맞지 않아요." }, 401);
+    const user: SessionUser = { id: account.id, name: account.name, email: account.email, role: "member" };
+    window.sessionStorage.setItem(USER_KEY, JSON.stringify(user));
+    window.sessionStorage.setItem(ROLE_KEY, "member");
+    return json({ ok: true, user });
   }
 
   if (url.pathname === "/api/auth/demo" && method === "POST") {
     const body = JSON.parse(String(init?.body ?? "{}"));
+    window.sessionStorage.removeItem(USER_KEY);
     window.sessionStorage.setItem(ROLE_KEY, body.role ?? "member");
     return json({ ok: true });
   }
 
   if (url.pathname === "/api/auth/logout" && method === "POST") {
     window.sessionStorage.removeItem(ROLE_KEY);
+    window.sessionStorage.removeItem(USER_KEY);
     window.localStorage.removeItem(ROLE_KEY);
     return json({ ok: true });
   }
@@ -131,7 +212,8 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
       status: "received",
       assigned_agency: null,
       response: null,
-      reporter_name: role === "member" ? "김지킴" : null,
+      reporter_name: role === "member" ? sessionUser?.name ?? "김지킴" : null,
+      reporter_email: role === "member" ? sessionUser?.email ?? "member@jikeoro.local" : null,
       created_at: now,
       updated_at: now,
       observed_at: body.observedAt ?? now,
@@ -144,8 +226,10 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   }
 
   if (url.pathname === "/api/reports" && method === "GET") {
+    const accountEmail = sessionUser?.email ?? (role === "member" ? "member@jikeoro.local" : null);
+    const accountReports = accountEmail ? readReports().filter((report) => report.reporter_email === accountEmail) : readReports();
     return json({
-      reports: readReports().map((report) => ({
+      reports: accountReports.map((report) => ({
         id: report.id,
         type: report.category,
         title: report.title,
@@ -168,7 +252,8 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     if (role !== "member") return json({ error: "회원 로그인이 필요합니다." }, 401);
     const body = JSON.parse(String(init?.body ?? "{}"));
     const reports = readReports();
-    const exists = reports.some((report) => report.id === body.id && report.reporter_name === "김지킴");
+    const accountEmail = sessionUser?.email ?? "member@jikeoro.local";
+    const exists = reports.some((report) => report.id === body.id && report.reporter_email === accountEmail);
     if (!exists) return json({ error: "기록을 찾을 수 없거나 삭제 권한이 없습니다." }, 404);
     writeReports(reports.filter((report) => report.id !== body.id));
     return json({ ok: true });
@@ -176,7 +261,7 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
 
   if (url.pathname === "/api/reports/claim" && method === "POST") {
     const body = JSON.parse(String(init?.body ?? "{}"));
-    writeReports(readReports().map((report) => report.id === body.id ? { ...report, reporter_name: "김지킴" } : report));
+    writeReports(readReports().map((report) => report.id === body.id ? { ...report, reporter_name: sessionUser?.name ?? "김지킴", reporter_email: sessionUser?.email ?? "member@jikeoro.local" } : report));
     return json({ ok: true });
   }
 

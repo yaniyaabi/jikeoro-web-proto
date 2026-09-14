@@ -138,6 +138,7 @@ const userReports: UserReport[] = [
 
 export default function MyJikeoroPage() {
   const [authReady, setAuthReady] = useState(false);
+  const [memberName, setMemberName] = useState("김지킴");
   const [reports, setReports] = useState<UserReport[]>(userReports);
   const [activityFilter, setActivityFilter] = useState<ActivityFilter>("all");
   const [selectedReport, setSelectedReport] = useState<UserReport | null>(null);
@@ -164,6 +165,7 @@ export default function MyJikeoroPage() {
           window.location.replace(sitePath("/admin"));
           return;
         }
+        if (session.user?.name) setMemberName(session.user.name);
 
         const pendingReportId = window.sessionStorage.getItem("jikeoro-pending-report-id");
         if (pendingReportId) {
@@ -284,11 +286,11 @@ export default function MyJikeoroPage() {
         <div className="member-intro">
           <div>
             <p className="eyebrow">MY JIKEORO</p>
-            <h1>김지킴님의 기록이<br />동네를 바꾸고 있어요.</h1>
+            <h1>{memberName}님의 기록이<br />동네를 바꾸고 있어요.</h1>
           </div>
           <div className="member-profile">
-            <span className="profile-avatar">김</span>
-            <div><strong>김지킴</strong><small>우리 동네 주민 · 동네지킴이 Lv.2</small></div>
+            <span className="profile-avatar">{memberName.slice(0, 1)}</span>
+            <div><strong>{memberName}</strong><small>우리 동네 주민 · 동네지킴이 Lv.2</small></div>
             <button type="button" onClick={logout}>로그아웃</button>
           </div>
         </div>
@@ -297,7 +299,7 @@ export default function MyJikeoroPage() {
           <article className="impact-card">
             <p>나의 참여 효과</p>
             <strong>{reports.length}<span>건</span></strong>
-            <small>남긴 기록 중 1건이 실제 개선으로 이어졌어요.</small>
+            <small>{reports.length ? `남긴 기록 중 ${reports.filter((report) => report.status === "completed").length}건이 개선 완료됐어요.` : "첫 번째 위험 기록을 남겨 우리 동네를 살펴보세요."}</small>
             <div className="impact-stats">
               <span><b>420</b> 기여 포인트</span>
               <span><b>4주</b> 연속 참여</span>
@@ -361,6 +363,7 @@ export default function MyJikeoroPage() {
                 <span className="member-report-open-hint">상세 보기 <b>→</b></span>
               </article>
             ))}
+            {!visibleReports.length && <p className="empty-member-reports">아직 해당하는 기록이 없어요.<a href={sitePath("/?report=1")}>첫 위험요소 기록하기 →</a></p>}
           </div>
         </div>
         <p className="prototype-auth-note">현재는 로그인·대응 현황을 미리 보여주는 프로토타입입니다. 실제 운영 단계에서는 본인 계정에 저장된 기록만 안전하게 표시됩니다.</p>

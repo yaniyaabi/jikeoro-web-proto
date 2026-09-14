@@ -18,6 +18,7 @@ export default defineConfig({
         home: `${root}/index.html`,
         map: `${root}/map/index.html`,
         my: `${root}/my/index.html`,
+        login: `${root}/login/index.html`,
         admin: `${root}/admin/index.html`,
         adminLogin: `${root}/admin/login/index.html`,
       },
