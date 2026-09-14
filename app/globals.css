@@ -525,5 +525,5 @@ footer,footer p{font-size:13px}
 
 /* 주요 섹션 사이의 호흡: 안내 시작은 넉넉하게, 안내와 지도 사이는 가깝게 */
 .how-section{padding-top:clamp(110px,8vw,136px);padding-bottom:38px}
-.map-section{padding-top:54px}
-@media(max-width:720px){.how-section{padding-top:82px;padding-bottom:28px}.map-section{padding-top:42px}}
+.map-section{padding-top:96px}
+@media(max-width:720px){.how-section{padding-top:82px;padding-bottom:28px}.map-section{padding-top:72px}}
