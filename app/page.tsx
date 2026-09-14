@@ -240,8 +240,76 @@ function LocationPickerMap({ point, onChange }: { point: GpsPoint; onChange: (po
   );
 }
 
+const reportGuideSteps = [
+  {
+    title: "사진이나 영상을 남겨요",
+    description: "위험한 곳이 잘 보이도록 촬영하거나 휴대전화에 저장된 자료를 선택합니다.",
+    details: ["사진은 한 장만 올려도 됩니다.", "영상으로 주변 상황을 함께 남길 수 있습니다.", "자료가 없다면 ‘자료 없이 계속하기’를 눌러도 됩니다."],
+  },
+  {
+    title: "위험한 이유를 알려주세요",
+    description: "위험 종류를 고른 뒤 글, 말하기, 현장음 중 편한 방법으로 설명합니다.",
+    details: ["단차·포트홀·조도·적치물 중 하나를 고릅니다.", "‘말로 글쓰기’를 누르면 말한 내용이 글자로 바뀝니다.", "필요하면 현장의 소리도 따로 녹음할 수 있습니다."],
+  },
+  {
+    title: "위치를 확인해요",
+    description: "현재 위치를 불러온 뒤 지도를 움직여 위험한 장소에 핀을 맞춥니다.",
+    details: ["‘현재 위치 사용’을 눌러 GPS를 켭니다.", "지도 가운데 핀이 위험한 곳에 오도록 지도를 움직입니다.", "GPS가 어렵다면 장소 이름을 직접 적을 수 있습니다."],
+  },
+  {
+    title: "내용을 확인하고 보내요",
+    description: "위험유형, 위치, 첨부자료가 맞는지 마지막으로 확인합니다.",
+    details: ["틀린 내용이 있으면 ‘이전’을 눌러 고칩니다.", "연구목적 수집 동의 내용을 읽고 체크합니다.", "마지막으로 ‘제보 완료하기’를 누르면 끝납니다."],
+  },
+] as const;
+
+function ReportGuidePreview({ step }: { step: number }) {
+  return (
+    <div className="guide-screen" aria-label={`${step}단계 실제 제보 화면 예시`}>
+      <div className="guide-screen-progress"><span style={{ width: `${step * 25}%` }} /></div>
+      <span className="guide-screen-count">{step} / 4</span>
+      {step === 1 && (
+        <>
+          <strong className="guide-screen-title">위험 모습을<br />남겨주세요.</strong>
+          <p>사진이나 영상을 촬영하거나 저장된 자료를 선택해주세요.</p>
+          <div className="guide-media-options"><span><i>＋</i><b>사진 촬영·선택</b></span><span><i>▶</i><b>영상 촬영·선택</b></span></div>
+          <div className="guide-next-button">자료 없이 계속하기 <b>→</b></div>
+        </>
+      )}
+      {step === 2 && (
+        <>
+          <strong className="guide-screen-title">위험한 이유를<br />알려주세요.</strong>
+          <small className="guide-field-label">위험요소 유형</small>
+          <div className="guide-type-options"><b>단차</b><span>포트홀</span><span>조도</span><span>적치물</span></div>
+          <div className="guide-textarea">예: 보도블록 높이 차이 때문에 발이 걸릴 것 같아요.</div>
+          <div className="guide-voice-options"><span>🎙 말로 글쓰기</span><span>● 현장음 녹음</span></div>
+          <div className="guide-next-button">위치 입력하기 <b>→</b></div>
+        </>
+      )}
+      {step === 3 && (
+        <>
+          <strong className="guide-screen-title">위험한 장소를<br />확인해주세요.</strong>
+          <div className="guide-location-options"><b>⌖ 현재 위치 사용</b><span>⌨ 직접 입력</span></div>
+          <div className="guide-map-preview"><i className="road-one" /><i className="road-two" /><span>●</span><small>지도를 움직여 핀을 맞춰주세요</small></div>
+          <div className="guide-location-result"><i />선택한 위치 <small>위도 36.36563 · 경도 127.36227</small></div>
+          <div className="guide-next-button">제보내용 확인하기 <b>→</b></div>
+        </>
+      )}
+      {step === 4 && (
+        <>
+          <strong className="guide-screen-title">제보내용을<br />확인해주세요.</strong>
+          <div className="guide-review"><b>제보내용 확인</b><span><small>위험유형</small> 단차</span><span><small>위치</small> 지도에서 선택한 위치</span><span><small>첨부</small> 사진 1 · 영상 0 · 음성 1</span></div>
+          <div className="guide-consent"><i>✓</i><span>위치와 제보내용의 연구목적 수집에 동의합니다.</span></div>
+          <div className="guide-next-button">제보 완료하기 <b>→</b></div>
+        </>
+      )}
+    </div>
+  );
+}
+
 export default function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [guideStep, setGuideStep] = useState(1);
   const [filter, setFilter] = useState<(typeof filters)[number]>("전체");
   const [selectedId, setSelectedId] = useState(1);
   const [reportOpen, setReportOpen] = useState(false);
@@ -722,6 +790,44 @@ export default function Home() {
         <p>전국 단위 주민참여 연구</p>
       </section>
 
+      <section className="how-section" id="how">
+        <div className="section-heading compact">
+          <div>
+            <p className="eyebrow">쉬운 위험 기록</p>
+            <h2>위험한 길을 발견하면<br />이렇게 알려주세요.</h2>
+          </div>
+          <div className="how-intro">
+            <p>화면에 나오는 큰 버튼을 순서대로 누르면 됩니다.<br className="desktop-break" /> 천천히 따라 해도 약 1분이면 충분해요.</p>
+            <button type="button" onClick={openReport}>위험 기록 시작하기 <span aria-hidden="true">→</span></button>
+          </div>
+        </div>
+        <div className="report-guide">
+          <div className="guide-preview-wrap">
+            <span className="guide-preview-label">실제 제보 화면</span>
+            <ReportGuidePreview step={guideStep} />
+          </div>
+          <div className="guide-copy" aria-live="polite">
+            <span className="guide-step-badge">{guideStep}단계</span>
+            <h3>{reportGuideSteps[guideStep - 1].title}</h3>
+            <p>{reportGuideSteps[guideStep - 1].description}</p>
+            <ol>
+              {reportGuideSteps[guideStep - 1].details.map((detail) => <li key={detail}>{detail}</li>)}
+            </ol>
+            <div className="guide-navigation">
+              <button type="button" onClick={() => setGuideStep((step) => Math.max(1, step - 1))} disabled={guideStep === 1}>← 이전 단계</button>
+              <button type="button" onClick={() => setGuideStep((step) => Math.min(4, step + 1))} disabled={guideStep === 4}>다음 단계 →</button>
+            </div>
+          </div>
+        </div>
+        <div className="guide-step-tabs" role="group" aria-label="위험 기록 안내 단계 선택">
+          {reportGuideSteps.map((item, index) => (
+            <button type="button" className={guideStep === index + 1 ? "active" : ""} aria-pressed={guideStep === index + 1} onClick={() => setGuideStep(index + 1)} key={item.title}>
+              <span>{index + 1}</span><b>{item.title}</b>
+            </button>
+          ))}
+        </div>
+      </section>
+
       <section className="map-section">
         <div className="section-heading" id="map">
           <div>
@@ -766,18 +872,6 @@ export default function Home() {
               <button className="panel-button" onClick={openReport}>나도 기록 남기기 <span>→</span></button>
             </div>
           </aside>
-        </div>
-      </section>
-
-      <section className="how-section" id="how">
-        <div className="section-heading compact">
-          <div><p className="eyebrow">60-SECOND REPORT</p><h2>발견하고, 말하고,<br />변화를 함께 만듭니다.</h2></div>
-          <p>복잡한 설명 없이 사진 한 장과 짧은 목소리면 충분합니다.</p>
-        </div>
-        <div className="steps-grid">
-          <article><span className="step-number">01</span><div className="step-visual camera-visual"><i /><b>＋</b></div><h3>위험요소를 발견해요</h3><p>걷다가 불편하거나 위험하다고 느낀 장소에서 시작합니다.</p></article>
-          <article><span className="step-number">02</span><div className="step-visual voice-visual"><i /><i /><i /><i /><i /></div><h3>사진·영상과 목소리를 남겨요</h3><p>큰 버튼을 눌러 촬영하고, 위험한 이유를 편하게 말해주세요.</p></article>
-          <article><span className="step-number">03</span><div className="step-visual map-visual"><i /><b>✓</b></div><h3>위치정보를 확인해요</h3><p>위치와 시간이 기록되고, GPS 사용 시 날씨도 함께 저장됩니다.</p></article>
         </div>
       </section>
 
