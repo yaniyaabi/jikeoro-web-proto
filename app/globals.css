@@ -500,7 +500,7 @@ footer,footer p{font-size:13px}
 /* 실제 제보 화면을 보며 한 단계씩 익히는 안내 */
 .report-guide{display:grid;grid-template-columns:minmax(420px,.92fr) minmax(0,1.08fr);min-height:600px;border:1px solid #cfdbd1;border-radius:28px;overflow:hidden;background:#fff;box-shadow:0 24px 60px rgba(16,45,42,.08)}
 .guide-preview-wrap{position:relative;display:flex;flex-direction:column;align-items:stretch;gap:14px;padding:34px clamp(30px,4vw,62px) 40px;background:#e5ece5}
-.guide-preview-label{position:static;align-self:flex-start;border-radius:999px;background:rgba(255,255,255,.92);padding:9px 13px;color:#49665c;font-size:14px;font-weight:900;box-shadow:0 6px 16px rgba(16,45,42,.08)}
+.guide-preview-label{position:static;align-self:flex-start;border-radius:999px;background:rgba(255,255,255,.92);padding:9px 13px;color:#49665c;font-size:14px;font-weight:900;box-shadow:0 6px 16px rgba(16,45,42,.08);transform:translate(16px,-8px);margin-bottom:-8px}
 .guide-screen{position:relative;width:min(100%,520px);min-height:500px;border-radius:23px;background:#fbfcf7;padding:45px 34px 28px;box-shadow:0 24px 58px rgba(16,45,42,.22);display:flex;flex-direction:column;overflow:hidden}
 .guide-screen-progress{position:absolute;left:0;right:0;top:0;height:6px;background:#dce5dc}.guide-screen-progress span{display:block;height:100%;background:var(--coral);transition:width .25s}
 .guide-screen-count{color:#6d837a;font-size:14px;font-weight:900;letter-spacing:.1em;margin-bottom:10px}.guide-screen-title{font-size:31px;line-height:1.15;letter-spacing:-.055em}.guide-screen>p{color:var(--ink-soft);font-size:14px;line-height:1.55;margin:13px 0 17px}
@@ -517,8 +517,8 @@ footer,footer p{font-size:13px}
 @media(max-width:720px){.guide-preview-wrap{padding:24px 12px}.guide-preview-label{font-size:12px}.guide-screen{min-height:470px;padding:42px 18px 22px;border-radius:18px}.guide-screen-title{font-size:28px}.guide-media-options>span{min-height:118px}.guide-copy{padding:31px 22px}.guide-copy h3{font-size:32px}.guide-copy>p{font-size:17px}.guide-copy li{font-size:16px}.guide-navigation{display:grid;grid-template-columns:1fr 1fr}.guide-navigation button{padding:10px 8px}.guide-step-tabs{grid-template-columns:1fr;gap:7px}.guide-step-tabs button{min-height:60px}.guide-type-options>*{font-size:11px}.guide-voice-options span{font-size:11px}.guide-map-preview{height:155px}}
 
 /* 위험 유형별로 실제 형태가 바로 읽히는 선명한 벡터 장면 */
-.hazard-photo{position:relative;background:#dfe7de;isolation:isolate}.hazard-illustration-svg{display:block;width:100%;height:100%;object-fit:cover}.hazard-photo .scene-caption{z-index:3;left:16px;top:14px;background:rgba(16,45,42,.92);color:#c6f56c;padding:7px 11px;font-size:13px;box-shadow:0 5px 14px rgba(16,45,42,.16)}
+.hazard-photo{position:relative;background:#dfe7de;isolation:isolate}.hazard-illustration-svg{display:block;width:100%;height:100%}.hazard-photo .scene-caption{z-index:3;left:16px;top:14px;background:rgba(16,45,42,.92);color:#c6f56c;padding:7px 11px;font-size:13px;box-shadow:0 5px 14px rgba(16,45,42,.16)}
 .map-sample-media.hazard-photo{overflow:hidden}.map-sample-media.hazard-photo>p{z-index:4;background:rgba(255,255,255,.92)}
 
 /* 상세 카드 행동 버튼은 문구와 화살표를 한 덩어리로 읽히게 정렬한다. */
-.panel-button{align-items:center;justify-content:center;gap:13px}.panel-button span{display:inline-flex;align-items:center;justify-content:center;font-size:21px;line-height:1;transform:translateY(-1px)}
+.detail-body{padding-bottom:18px}.panel-button{align-items:center;justify-content:center;gap:13px}.panel-button span{display:inline-flex;align-items:center;justify-content:center;font-size:21px;line-height:1;transform:translateY(-1px)}
