@@ -522,3 +522,8 @@ footer,footer p{font-size:13px}
 
 /* 상세 카드 행동 버튼은 문구와 화살표를 한 덩어리로 읽히게 정렬한다. */
 .detail-body{padding-bottom:18px}.panel-button{align-items:center;justify-content:center;gap:13px}.panel-button span{display:inline-flex;align-items:center;justify-content:center;font-size:21px;line-height:1;transform:translateY(-1px)}
+
+/* 주요 섹션 사이의 호흡: 안내 시작은 넉넉하게, 안내와 지도 사이는 가깝게 */
+.how-section{padding-top:clamp(110px,8vw,136px);padding-bottom:38px}
+.map-section{padding-top:54px}
+@media(max-width:720px){.how-section{padding-top:82px;padding-bottom:28px}.map-section{padding-top:42px}}
