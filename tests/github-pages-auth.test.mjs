@@ -4,6 +4,7 @@ import test from "node:test";
 
 const runtimeUrl = new URL("../github-pages/runtime.ts", import.meta.url);
 const myPageUrl = new URL("../app/my/page.tsx", import.meta.url);
+const siteHeaderUrl = new URL("../app/components/site-header.tsx", import.meta.url);
 
 test("GitHub Pages demo authentication requires an explicit login per tab", async () => {
   const runtime = await readFile(runtimeUrl, "utf8");
@@ -37,4 +38,10 @@ test("member participation starts empty and is derived from that member's report
   assert.doesNotMatch(myPage, /<b>420<\/b>/);
   assert.doesNotMatch(myPage, /<b>4주<\/b>/);
   assert.doesNotMatch(myPage, /width: "66%"/);
+});
+
+test("the My Reports navigation item is only rendered for signed-in members", async () => {
+  const siteHeader = await readFile(siteHeaderUrl, "utf8");
+
+  assert.match(siteHeader, /sessionRole === "member" && <a[^>]+>내 기록<\/a>/);
 });

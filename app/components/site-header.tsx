@@ -29,7 +29,7 @@ export function SiteHeader({ active, inner = false }: { active: HeaderSection; i
       <nav className="desktop-nav" aria-label="주요 메뉴">
         <a className={active === "home" ? "active" : ""} href={sitePath("/")}>홈</a>
         <a className={active === "map" ? "active" : ""} href={sitePath("/map/")}>위험지도</a>
-        <a className={active === "my" ? "active" : ""} href={sitePath("/my/")}>내 기록</a>
+        {sessionRole === "member" && <a className={active === "my" ? "active" : ""} href={sitePath("/my/")}>내 기록</a>}
       </nav>
 
       <div className="header-actions">
