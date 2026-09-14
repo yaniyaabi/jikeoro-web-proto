@@ -77,6 +77,8 @@ const filters = ["전체", "단차", "포트홀", "조도", "적치물"] as cons
 type LocationChoice = "gps" | "manual" | null;
 type GpsStatus = "idle" | "loading" | "success" | "error";
 type GpsPoint = { latitude: number; longitude: number; accuracy: number };
+type WeatherStatus = "idle" | "loading" | "success" | "error";
+type WeatherSnapshot = { temperature: number; code: number; observedAt: string };
 type SpeechRecognitionResultLike = { 0: { transcript: string } };
 type SpeechRecognitionEventLike = { results: ArrayLike<SpeechRecognitionResultLike> };
 type SpeechRecognitionLike = {
@@ -97,6 +99,16 @@ type MediaAttachment = {
   file: File;
   previewUrl: string;
 };
+
+function describeWeather(code: number) {
+  if (code === 0) return { icon: "☀", label: "맑음" };
+  if (code <= 3) return { icon: "⛅", label: "구름" };
+  if (code === 45 || code === 48) return { icon: "〰", label: "안개" };
+  if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) return { icon: "☂", label: "비" };
+  if ((code >= 71 && code <= 77) || code === 85 || code === 86) return { icon: "❄", label: "눈" };
+  if (code >= 95) return { icon: "⚡", label: "뇌우" };
+  return { icon: "◌", label: "날씨" };
+}
 
 async function storeReportMedia(reportId: string, attachments: MediaAttachment[]) {
   if (!("indexedDB" in window) || attachments.length === 0) return;
@@ -235,8 +247,10 @@ export default function Home() {
   const [gpsPoint, setGpsPoint] = useState<GpsPoint | null>(null);
   const [locationMapResetKey, setLocationMapResetKey] = useState(0);
   const [gpsMessage, setGpsMessage] = useState("");
-  const [manualAddress, setManualAddress] = useState("");
   const [placeDescription, setPlaceDescription] = useState("");
+  const [weatherStatus, setWeatherStatus] = useState<WeatherStatus>("idle");
+  const [weatherSnapshot, setWeatherSnapshot] = useState<WeatherSnapshot | null>(null);
+  const [reportTime, setReportTime] = useState(() => new Date().toISOString());
   const [locationValidation, setLocationValidation] = useState("");
   const [reportType, setReportType] = useState<(typeof filters)[number]>("단차");
   const [reportDescription, setReportDescription] = useState("");
@@ -301,6 +315,40 @@ export default function Home() {
 
   useEffect(() => { attachmentsRef.current = attachments; }, [attachments]);
 
+  useEffect(() => {
+    if (locationChoice !== "gps" || gpsStatus !== "success" || !gpsPoint) return;
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      setWeatherStatus("loading");
+      const params = new URLSearchParams({
+        latitude: String(gpsPoint.latitude),
+        longitude: String(gpsPoint.longitude),
+        current: "temperature_2m,weather_code",
+        timezone: "Asia/Seoul",
+      });
+      fetch(`https://api.open-meteo.com/v1/forecast?${params}`, { signal: controller.signal })
+        .then((response) => {
+          if (!response.ok) throw new Error("weather request failed");
+          return response.json();
+        })
+        .then((data: { current?: { temperature_2m?: number; weather_code?: number; time?: string } }) => {
+          if (typeof data.current?.temperature_2m !== "number" || typeof data.current?.weather_code !== "number") throw new Error("weather response invalid");
+          setWeatherSnapshot({
+            temperature: data.current.temperature_2m,
+            code: data.current.weather_code,
+            observedAt: data.current.time ?? new Date().toISOString(),
+          });
+          setWeatherStatus("success");
+        })
+        .catch((error: Error) => {
+          if (error.name === "AbortError") return;
+          setWeatherSnapshot(null);
+          setWeatherStatus("error");
+        });
+    }, 550);
+    return () => { window.clearTimeout(timer); controller.abort(); };
+  }, [gpsPoint, gpsStatus, locationChoice]);
+
   useEffect(() => () => {
     mediaRecorderRef.current?.stop();
     speechRecognitionRef.current?.stop();
@@ -343,8 +391,10 @@ export default function Home() {
     setGpsPoint(null);
     setLocationMapResetKey(0);
     setGpsMessage("");
-    setManualAddress("");
     setPlaceDescription("");
+    setWeatherStatus("idle");
+    setWeatherSnapshot(null);
+    setReportTime(new Date().toISOString());
     setLocationValidation("");
     setReportType("단차");
     setReportDescription("");
@@ -489,6 +539,7 @@ export default function Home() {
     speechRecognitionRef.current?.stop();
     if (isRecording) stopRecording();
     setStepTwoValidation("");
+    setReportTime(new Date().toISOString());
     setReportStep(3);
   };
 
@@ -530,12 +581,26 @@ export default function Home() {
   const chooseManualLocation = () => {
     setLocationChoice("manual");
     setLocationValidation("");
+    setWeatherStatus("idle");
+    setWeatherSnapshot(null);
+  };
+
+  const goToReviewStep = () => {
+    const hasGps = locationChoice === "gps" && gpsStatus === "success" && gpsPoint;
+    const hasManualLocation = locationChoice === "manual" && placeDescription.trim();
+    if (!hasGps && !hasManualLocation) {
+      setLocationValidation("현재 위치를 확인하거나 위험한 장소를 직접 입력해주세요.");
+      return;
+    }
+    setLocationValidation("");
+    setReportTime(new Date().toISOString());
+    setReportStep(4);
   };
 
   const submitReport = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const hasGps = locationChoice === "gps" && gpsStatus === "success" && gpsPoint;
-    const hasManualLocation = locationChoice === "manual" && (manualAddress.trim() || placeDescription.trim());
+    const hasManualLocation = locationChoice === "manual" && placeDescription.trim();
     if (!hasGps && !hasManualLocation) {
       setLocationValidation("현재 위치를 확인하거나 주소·장소 설명 중 하나를 입력해주세요.");
       return;
@@ -556,8 +621,10 @@ export default function Home() {
         latitude: locationChoice === "gps" ? gpsPoint?.latitude ?? null : null,
         longitude: locationChoice === "gps" ? gpsPoint?.longitude ?? null : null,
         accuracy: locationChoice === "gps" ? gpsPoint?.accuracy ?? null : null,
-        address: locationChoice === "manual" ? manualAddress : "",
+        address: "",
         placeDescription: locationChoice === "manual" ? placeDescription : "",
+        observedAt: new Date().toISOString(),
+        weather: weatherSnapshot,
         media: attachments.map((attachment) => ({
           kind: attachment.kind,
           name: attachment.file.name,
@@ -578,7 +645,7 @@ export default function Home() {
       });
     }
     if (!isLoggedIn && saved.id) window.sessionStorage.setItem("jikeoro-pending-report-id", saved.id);
-    setReportStep(4);
+    setReportStep(5);
   };
 
   return (
@@ -730,7 +797,7 @@ export default function Home() {
         <div className="steps-grid">
           <article><span className="step-number">01</span><div className="step-visual camera-visual"><i /><b>＋</b></div><h3>위험요소를 발견해요</h3><p>걷다가 불편하거나 위험하다고 느낀 장소에서 시작합니다.</p></article>
           <article><span className="step-number">02</span><div className="step-visual voice-visual"><i /><i /><i /><i /><i /></div><h3>사진·영상과 목소리를 남겨요</h3><p>큰 버튼을 눌러 촬영하고, 위험한 이유를 편하게 말해주세요.</p></article>
-          <article><span className="step-number">03</span><div className="step-visual map-visual"><i /><b>✓</b></div><h3>위치정보를 확인해요</h3><p>위치·시간·날씨가 자동으로 기록되고 연구 데이터가 됩니다.</p></article>
+          <article><span className="step-number">03</span><div className="step-visual map-visual"><i /><b>✓</b></div><h3>위치정보를 확인해요</h3><p>위치와 시간이 기록되고, GPS 사용 시 날씨도 함께 저장됩니다.</p></article>
         </div>
       </section>
 
@@ -761,10 +828,10 @@ export default function Home() {
         <div className="modal-backdrop" role="presentation" onMouseDown={(e) => e.target === e.currentTarget && closeReport()}>
           <section className="report-modal" role="dialog" aria-modal="true" aria-labelledby="report-title">
             <button className="modal-close" onClick={closeReport} aria-label="닫기">×</button>
-            {reportStep < 4 && <div className="modal-progress"><span style={{ width: `${(reportStep / 3) * 100}%` }} /></div>}
+            {reportStep < 5 && <div className="modal-progress"><span style={{ width: `${(reportStep / 4) * 100}%` }} /></div>}
             {reportStep === 1 && (
               <>
-                <p className="modal-step">1 / 3</p>
+                <p className="modal-step">1 / 4</p>
                 <h2 id="report-title">위험 모습을<br />남겨주세요.</h2>
                 <p className="modal-help">사진이나 영상을 촬영하거나 기기에 저장된 자료를 선택해주세요.</p>
                 <div className="media-picker-grid">
@@ -802,7 +869,7 @@ export default function Home() {
             )}
             {reportStep === 2 && (
               <>
-                <p className="modal-step">2 / 3</p>
+                <p className="modal-step">2 / 4</p>
                 <h2 id="report-title">위험한 이유를<br />알려주세요.</h2>
                 <fieldset>
                   <legend>위험요소 유형</legend>
@@ -862,8 +929,8 @@ export default function Home() {
               </>
             )}
             {reportStep === 3 && (
-              <form onSubmit={submitReport}>
-                <p className="modal-step">3 / 3</p>
+              <>
+                <p className="modal-step">3 / 4</p>
                 <h2 id="report-title">위험한 장소를<br />확인해주세요.</h2>
                 <fieldset className="location-fieldset">
                   <legend>위치</legend>
@@ -910,18 +977,7 @@ export default function Home() {
                   {locationChoice === "manual" && (
                     <div className="manual-location-fields">
                       <label className="input-field">
-                        <span>주소 <small>선택</small></span>
-                        <input
-                          type="text"
-                          value={manualAddress}
-                          onChange={(event) => { setManualAddress(event.target.value); setLocationValidation(""); }}
-                          placeholder="예: 서울특별시 성동구 성수이로 82"
-                          autoComplete="street-address"
-                        />
-                      </label>
-                      <div className="manual-divider"><span>또는</span></div>
-                      <label className="input-field">
-                        <span>어디 앞인지 알려주기 <small>선택</small></span>
+                        <span>어디 앞인지 알려주기</span>
                         <input
                           type="text"
                           value={placeDescription}
@@ -929,23 +985,34 @@ export default function Home() {
                           placeholder="예: 성수역 3번 출구 앞 횡단보도"
                         />
                       </label>
-                      <p className="manual-hint">둘 중 하나만 입력해도 괜찮아요.</p>
+                      <p className="manual-hint">건물이나 출입구처럼 찾기 쉬운 기준을 함께 적어주세요.</p>
                     </div>
                   )}
                   <p className="privacy-note">위치정보는 이 위험 기록의 장소를 확인하는 용도로만 사용됩니다.</p>
                   {locationValidation && <p className="location-validation" role="alert">{locationValidation}</p>}
                 </fieldset>
-
+                <div className="modal-navigation">
+                  <button className="modal-secondary" type="button" onClick={() => setReportStep(2)}>← 이전</button>
+                  <button className="modal-primary" type="button" onClick={goToReviewStep}>제보내용 확인하기 <span>→</span></button>
+                </div>
+              </>
+            )}
+            {reportStep === 4 && (
+              <form onSubmit={submitReport}>
+                <p className="modal-step">4 / 4</p>
+                <h2 id="report-title">제보내용을<br />확인해주세요.</h2>
                 <section className="report-review" aria-labelledby="report-review-title">
                   <h3 id="report-review-title">제보내용 확인</h3>
                   <dl>
                     <div><dt>위험유형</dt><dd>{reportType}</dd></div>
-                    <div><dt>위치</dt><dd>{locationChoice === "gps" && gpsPoint ? `지도에서 선택한 위치 (${gpsPoint.latitude.toFixed(5)}, ${gpsPoint.longitude.toFixed(5)})` : manualAddress || placeDescription || "위치 입력 전"}</dd></div>
+                    <div><dt>위치</dt><dd>{locationChoice === "gps" && gpsPoint ? `지도에서 선택한 위치 (${gpsPoint.latitude.toFixed(5)}, ${gpsPoint.longitude.toFixed(5)})` : placeDescription || "위치 입력 전"}</dd></div>
                     <div><dt>첨부</dt><dd>사진 {attachments.filter((item) => item.kind === "image").length} · 영상 {attachments.filter((item) => item.kind === "video").length} · 음성 {attachments.filter((item) => item.kind === "audio").length}</dd></div>
                   </dl>
                 </section>
-
-                <div className="auto-info"><span>☀ 27°C 맑음</span><span>날짜·시간 자동저장</span></div>
+                <div className="auto-info">
+                  {locationChoice === "gps" && <span>{weatherStatus === "loading" ? "날씨 확인 중" : weatherStatus === "success" && weatherSnapshot ? `${describeWeather(weatherSnapshot.code).icon} ${Math.round(weatherSnapshot.temperature)}°C ${describeWeather(weatherSnapshot.code).label}` : "날씨 확인 불가"}</span>}
+                  <span>제보시각 {new Intl.DateTimeFormat("ko-KR", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(reportTime))}</span>
+                </div>
                 <label className="research-consent">
                   <input
                     type="checkbox"
@@ -957,12 +1024,12 @@ export default function Home() {
                 {consentValidation && <p className="location-validation" role="alert">{consentValidation}</p>}
                 {submitError && <p className="location-validation" role="alert">{submitError}</p>}
                 <div className="modal-navigation">
-                  <button className="modal-secondary" type="button" onClick={() => setReportStep(2)}>← 이전</button>
+                  <button className="modal-secondary" type="button" onClick={() => setReportStep(3)}>← 이전</button>
                   <button className="modal-primary" type="submit" disabled={isSubmitting || !hasResearchConsent}>{isSubmitting ? "저장하고 있어요" : "제보 완료하기"} <span>→</span></button>
                 </div>
               </form>
             )}
-            {reportStep === 4 && (
+            {reportStep === 5 && (
               <div className="success-state">
                 <span className="success-icon">✓</span>
                 <p className="modal-step">기록 완료</p>

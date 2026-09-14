@@ -22,6 +22,8 @@ type DemoReport = {
   reporter_name: string | null;
   created_at: string;
   updated_at: string;
+  observed_at?: string;
+  weather?: { temperature: number; code: number; observedAt: string } | null;
   media?: Array<{ kind: "image" | "video" | "audio"; name: string; type: string; size: number }>;
 };
 
@@ -127,6 +129,8 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
       reporter_name: role === "member" ? "김지킴" : null,
       created_at: now,
       updated_at: now,
+      observed_at: body.observedAt ?? now,
+      weather: body.weather ?? null,
       media: Array.isArray(body.media) ? body.media : [],
     };
     const reports = [report, ...readReports()];
