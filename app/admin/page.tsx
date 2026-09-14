@@ -96,7 +96,7 @@ export default function AdminPage() {
 
       <section className="admin-main">
         <div className="admin-context-bar"><span className="admin-console-label">관리자 콘솔</span><div className="admin-account"><span>{user?.role === "research_admin" ? "研" : "官"}</span><div><b>{user?.name}</b><small>{user?.role === "research_admin" ? "연구진·관리자" : user?.agency}</small></div><button onClick={logout}>로그아웃</button></div></div>
-        <div className="admin-title-row"><div><p className="eyebrow">REPORT OPERATIONS</p><h1>성수동 보행위험<br />처리 현황</h1></div><p>{user?.role === "research_admin" ? "전체 기록을 검토하고 담당기관을 연결합니다." : "우리 기관에 배정된 기록을 확인하고 처리 결과를 남깁니다."}</p></div>
+        <div className="admin-title-row"><div><p className="eyebrow">REPORT OPERATIONS</p><h1>전국 보행위험<br />처리 현황</h1></div><p>{user?.role === "research_admin" ? "전체 기록을 검토하고 담당기관을 연결합니다." : "우리 기관에 배정된 기록을 확인하고 처리 결과를 남깁니다."}</p></div>
         <div className="admin-stats">
           {statusOrder.map((key, index) => <button key={key} className={filter === key ? "active" : ""} onClick={() => setFilter(filter === key ? "all" : key)}><span>0{index + 1}</span><b>{counts[key]}</b><small>{statusLabels[key]}</small></button>)}
         </div>
@@ -123,7 +123,7 @@ export default function AdminPage() {
               <div className="admin-description"><small>주민 설명</small><p>{selected.description}</p></div>
               <div className="admin-form-grid">
                 <label><span>처리 상태</span><select value={status} onChange={(event) => setStatus(event.target.value as ReportStatus)}>{statusOrder.map((item) => <option value={item} key={item}>{statusLabels[item]}</option>)}</select></label>
-                <label><span>담당기관</span><input value={agency} onChange={(event) => setAgency(event.target.value)} placeholder="예: 성동구청 도로과" disabled={user?.role === "agency_staff"} /></label>
+                <label><span>담당기관</span><input value={agency} onChange={(event) => setAgency(event.target.value)} placeholder="예: 관할 도로관리과" disabled={user?.role === "agency_staff"} /></label>
               </div>
               <label className="admin-response-field"><span>주민에게 보일 답변</span><textarea rows={5} value={response} onChange={(event) => setResponse(event.target.value)} placeholder="현장 확인 내용과 다음 조치 일정을 적어주세요." /></label>
               {notice && <p className={`admin-notice ${notice.includes("반영") ? "success" : ""}`} role="status">{notice}</p>}

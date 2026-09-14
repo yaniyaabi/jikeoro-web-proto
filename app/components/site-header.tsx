@@ -28,7 +28,7 @@ export function SiteHeader({ active, inner = false }: { active: HeaderSection; i
     <header className={`site-header universal-header${inner ? " member-header" : ""}`}>
       <a className="brand" href={sitePath("/")} aria-label="지켜로 홈">
         <span className="brand-mark" aria-hidden="true">路</span>
-        <span><strong>지켜路</strong><small>우리동네 보행안전 지도</small></span>
+        <span><strong>지켜路</strong><small>우리 동네 보행안전 지도</small></span>
       </a>
 
       <nav className="desktop-nav" aria-label="주요 메뉴">

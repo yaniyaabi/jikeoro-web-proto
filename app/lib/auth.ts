@@ -13,7 +13,7 @@ const COOKIE_NAME = "jikeoro_demo_session";
 const demoSessions: Record<string, SessionUser> = {
   "member-demo-token": { id: "demo-member", name: "김지킴", email: "member@jikeoro.local", role: "member", agency: null },
   "admin-demo-token": { id: "demo-admin", name: "배수현 연구원", email: "research@jikeoro.local", role: "research_admin", agency: "지켜路 연구팀" },
-  "agency-demo-token": { id: "demo-agency", name: "박성동 담당자", email: "road@sd.go.kr", role: "agency_staff", agency: "성동구청 도로과" },
+  "agency-demo-token": { id: "demo-agency", name: "박길동 담당자", email: "road@local.go.kr", role: "agency_staff", agency: "관할 도로관리과" },
 };
 
 const roleTokens: Record<UserRole, string> = {

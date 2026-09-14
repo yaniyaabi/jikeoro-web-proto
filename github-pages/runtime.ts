@@ -33,12 +33,12 @@ const seededReports: DemoReport[] = [
     category: "단차",
     title: "보도 경계석 단차",
     description: "보행보조기 바퀴가 걸릴 만큼 경계석의 높이 차이가 커요.",
-    address: "서울 성동구 성수이로",
-    place_description: "성수역 2번 출구 인근",
-    latitude: 37.5447,
-    longitude: 127.0567,
+    address: "대전광역시 서구 둔산로",
+    place_description: "시청역 2번 출구 인근",
+    latitude: 36.3504,
+    longitude: 127.3845,
     status: "review",
-    assigned_agency: "성동구 도로관리팀",
+    assigned_agency: "대전광역시 도로관리팀",
     response: "현장 확인 일정을 조율하고 있습니다.",
     reporter_name: "김지킴",
     created_at: "2026-08-12T00:42:00.000Z",
@@ -49,12 +49,12 @@ const seededReports: DemoReport[] = [
     category: "조도",
     title: "골목길 가로등 사이가 어두워요",
     description: "야간에 보행로가 잘 보이지 않아요.",
-    address: "서울숲 인근 골목",
-    place_description: "서울숲 남쪽 골목",
-    latitude: 37.5456,
-    longitude: 127.0447,
+    address: "부산광역시 부산진구 시민공원로",
+    place_description: "시민공원 남쪽 골목",
+    latitude: 35.1667,
+    longitude: 129.0556,
     status: "action",
-    assigned_agency: "성동구 공원녹지센터",
+    assigned_agency: "부산진구 공원녹지과",
     response: "조명 상태를 점검하고 보수 요청을 전달했습니다.",
     reporter_name: "김지킴",
     created_at: "2026-08-11T11:18:00.000Z",
@@ -65,7 +65,12 @@ const seededReports: DemoReport[] = [
 function readReports(): DemoReport[] {
   try {
     const saved = window.localStorage.getItem(REPORTS_KEY);
-    return saved ? JSON.parse(saved) : seededReports;
+    const reports = (saved ? JSON.parse(saved) : seededReports) as DemoReport[];
+    return reports.map((report) => {
+      if (report.id === "pages-demo-1") return { ...report, address: seededReports[0].address, place_description: seededReports[0].place_description, latitude: seededReports[0].latitude, longitude: seededReports[0].longitude, assigned_agency: seededReports[0].assigned_agency };
+      if (report.id === "pages-demo-2") return { ...report, address: seededReports[1].address, place_description: seededReports[1].place_description, latitude: seededReports[1].latitude, longitude: seededReports[1].longitude, assigned_agency: seededReports[1].assigned_agency };
+      return report;
+    });
   } catch {
     return seededReports;
   }
@@ -144,7 +149,7 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
         id: report.id,
         type: report.category,
         title: report.title,
-        place: report.place_description ?? report.address ?? "성수동 위치 기록",
+        place: report.place_description ?? report.address ?? "우리 동네 위치 기록",
         status: report.status,
         response: report.response ?? "접수 내용을 확인하고 있습니다.",
         department: report.assigned_agency ?? "지켜路 운영팀",
@@ -168,7 +173,7 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
           latitude: report.latitude,
           longitude: report.longitude,
           accuracy: null,
-          place: report.place_description ?? report.address ?? "성수동 위치 기록",
+          place: report.place_description ?? report.address ?? "우리 동네 위치 기록",
           status: report.status,
           createdAt: report.created_at,
           mediaCount: report.media?.filter((item) => item.kind === "image" || item.kind === "video").length ?? 0,

@@ -5,7 +5,7 @@ export async function GET() {
   const result = await getD1().prepare(
     `SELECT id, category AS type, title, description,
       latitude, longitude, accuracy,
-      COALESCE(address, place_description, '성수동 현장 기록') AS place,
+      COALESCE(address, place_description, '우리 동네 현장 기록') AS place,
       status, created_at AS createdAt
      FROM reports
      WHERE latitude IS NOT NULL AND longitude IS NOT NULL

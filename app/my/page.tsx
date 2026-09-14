@@ -31,34 +31,34 @@ const userReports: UserReport[] = [
     id: 103,
     type: "조도",
     title: "골목길 가로등 사이가 어두워요",
-    place: "성수동 연무장길 골목",
+    place: "우리 동네 골목길",
     submitted: "8월 12일",
     status: "review",
     stage: 2,
     response: "야간 현장 확인 일정이 잡혔어요. 8월 19일까지 결과를 알려드릴게요.",
-    department: "성동구청 도로과",
+    department: "관할 도로관리과",
   },
   {
     id: 98,
     type: "단차",
     title: "약국 앞 보도블록 높이 차이",
-    place: "서울숲길 새봄약국 앞",
+    place: "새봄약국 앞",
     submitted: "8월 4일",
     status: "action",
     stage: 3,
     response: "현장 확인 후 보수 대상으로 분류되어 담당 유지보수팀에 전달됐어요.",
-    department: "성수1가제1동 주민센터",
+    department: "우리 동네 주민센터",
   },
   {
     id: 81,
     type: "적치물",
     title: "상가 입간판이 보행로를 막아요",
-    place: "성수이로 복합문화공간 앞",
+    place: "복합문화공간 앞",
     submitted: "7월 21일",
     status: "completed",
     stage: 4,
     response: "상가 안내와 현장 정비를 마쳤어요. 통행 가능 폭 1.8m를 확보했습니다.",
-    department: "성수2가제3동 주민센터",
+    department: "관할 도로관리기관",
   },
 ];
 
@@ -156,7 +156,7 @@ export default function MyJikeoroPage() {
           </div>
           <div className="member-profile">
             <span className="profile-avatar">김</span>
-            <div><strong>김지킴</strong><small>서울 성동구 성수동 · 동네지킴이 Lv.2</small></div>
+            <div><strong>김지킴</strong><small>우리 동네 주민 · 동네지킴이 Lv.2</small></div>
             <button type="button" onClick={logout}>로그아웃</button>
           </div>
         </div>

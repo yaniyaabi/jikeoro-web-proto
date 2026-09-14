@@ -184,8 +184,8 @@ export default function RiskMapPage() {
             },
             layers: [{ id: "openStreetMap", type: "raster", source: "openStreetMap" }],
           },
-          center: [127.0522, 37.5448],
-          zoom: 14.8,
+          center: [127.8, 36.3],
+          zoom: 6.5,
           minZoom: 5,
           maxZoom: 19,
           attributionControl: true,
@@ -286,18 +286,18 @@ export default function RiskMapPage() {
       <SiteHeader active="map" inner />
       <section className="risk-map-intro">
         <div>
-          <p className="eyebrow">SEONGSU LIVE SAFETY MAP</p>
-          <h1>위험요소 등록<br />현황지도</h1>
+          <p className="eyebrow">NATIONWIDE LIVE SAFETY MAP</p>
+          <h1>우리 동네 위험요소<br />현황지도</h1>
           <p>주민이 위치정보와 함께 남긴 기록만 지도에 표시합니다. 마커를 누르면 현장 내용과 대응 단계를 확인할 수 있어요.</p>
         </div>
         <dl>
           <div><dt>GPS 기록</dt><dd>{reports.length}<span>건</span></dd></div>
           <div><dt>오늘 등록</dt><dd>{todayCount}<span>건</span></dd></div>
-          <div><dt>표시 지역</dt><dd className="place-metric">성수동</dd></div>
+          <div><dt>표시 범위</dt><dd className="place-metric">전국</dd></div>
         </dl>
       </section>
 
-      <section className="risk-map-workspace" aria-label="성수동 위험요소 GPS 현황">
+      <section className="risk-map-workspace" aria-label="전국 우리 동네 위험요소 GPS 현황">
         <div className="risk-map-canvas">
           <div ref={mapElementRef} className="free-map-canvas" aria-label="무료 공개 지도" />
           {!mapReady && !mapError && <div className="map-loading"><i />현황지도를 불러오는 중</div>}

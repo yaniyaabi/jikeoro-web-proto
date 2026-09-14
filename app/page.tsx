@@ -24,7 +24,7 @@ const hazards: Hazard[] = [
     id: 1,
     type: "단차",
     title: "보도 경계석 단차",
-    place: "성수이로 보행로",
+    place: "우리 동네 주민센터 앞",
     time: "오늘 09:42",
     detail: "보행보조기 바퀴가 걸릴 만큼 경계석 높이 차이가 커요.",
     x: "58%",
@@ -37,7 +37,7 @@ const hazards: Hazard[] = [
     id: 2,
     type: "조도",
     title: "야간 조명 부족",
-    place: "서울숲길 골목",
+    place: "중앙시장 옆 골목",
     time: "어제 20:18",
     detail: "가로등 사이 구간이 어두워 바닥 상태를 확인하기 어려워요.",
     x: "37%",
@@ -50,7 +50,7 @@ const hazards: Hazard[] = [
     id: 3,
     type: "포트홀",
     title: "횡단보도 앞 포트홀",
-    place: "뚝섬역 5번 출구 앞",
+    place: "지하철역 5번 출구 앞",
     time: "8월 12일 16:05",
     detail: "횡단보도 진입부 노면이 패여 비가 오면 물이 고입니다.",
     x: "73%",
@@ -63,7 +63,7 @@ const hazards: Hazard[] = [
     id: 4,
     type: "적치물",
     title: "보행로 적치물",
-    place: "연무장길 상가 앞",
+    place: "동네 상가 앞",
     time: "8월 11일 13:27",
     detail: "입간판이 보행 유효폭을 줄여 휠체어 통행이 어렵습니다.",
     x: "64%",
@@ -140,19 +140,19 @@ async function storeReportMedia(reportId: string, attachments: MediaAttachment[]
   });
 }
 
-function SeongsuIllustrationMap({ items, selectedId, onSelect }: { items: Hazard[]; selectedId?: number; onSelect?: (id: number) => void }) {
+function NeighborhoodIllustrationMap({ items, selectedId, onSelect }: { items: Hazard[]; selectedId?: number; onSelect?: (id: number) => void }) {
   return (
-    <div className="illustration-layer" role={onSelect ? "group" : "img"} aria-label="서울숲과 성수동 골목을 단순화한 일러스트 지도">
+    <div className="illustration-layer" role={onSelect ? "group" : "img"} aria-label="공원과 생활권 골목을 단순화한 우리 동네 일러스트 지도">
       <span className="district-shape district-a" />
       <span className="district-shape district-b" />
-      <span className="han-river"><b>한강</b><small>HAN RIVER</small></span>
-      <span className="seoul-forest"><i /><i /><i /><b>서울숲</b><small>SEOUL FOREST</small></span>
-      <span className="seongsu-road street-achasan"><small>아차산로</small></span>
-      <span className="seongsu-road street-seongsui"><small>성수이로</small></span>
-      <span className="seongsu-road street-yeonmujang"><small>연무장길</small></span>
-      <span className="metro-line line-two"><b>2</b><i className="station station-ttukseom" /><em className="station-name name-ttukseom">뚝섬역</em><i className="station station-seongsu" /><em className="station-name name-seongsu">성수역</em></span>
+      <span className="neighborhood-stream"><b>우리 동네 하천</b><small>NEIGHBORHOOD STREAM</small></span>
+      <span className="neighborhood-park"><i /><i /><i /><b>우리 동네 공원</b><small>NEIGHBORHOOD PARK</small></span>
+      <span className="neighborhood-road street-tree"><small>느티나무길</small></span>
+      <span className="neighborhood-road street-central"><small>중앙로</small></span>
+      <span className="neighborhood-road street-market"><small>시장길</small></span>
+      <span className="metro-line neighborhood-route"><b>길</b><i className="station station-central" /><em className="station-name name-central">중앙역</em><i className="station station-cityhall" /><em className="station-name name-cityhall">시청역</em></span>
       <span className="factory-cluster" aria-hidden="true"><i /><i /><i /><i /></span>
-      <span className="cafe-zone">작은 공장과 카페가 이어지는 길</span>
+      <span className="cafe-zone">공원과 시장을 잇는 생활권 산책로</span>
       {items.map((item) =>
         onSelect ? (
           <button
@@ -655,11 +655,11 @@ export default function Home() {
 
       <section className="hero" id="top">
         <div className="hero-copy">
-          <p className="eyebrow">SEONGSU WALKABILITY LAB · YEAR 01</p>
+          <p className="eyebrow">NEIGHBORHOOD WALKABILITY LAB · YEAR 01</p>
           <h1>
             걷다가 발견한 위험,
             <br />
-            <span className="hero-line"><span>성수의 더 나은 길</span>이 됩니다.</span>
+            <span className="hero-line"><span>우리 동네의 더 나은 길</span>이 됩니다.</span>
           </h1>
           <p className="hero-description">
             주민이 직접 기록한 사진과 목소리가 모여 고령자와 모두에게
@@ -678,28 +678,28 @@ export default function Home() {
             <div className="avatar-stack" aria-hidden="true">
               <span>김</span><span>박</span><span>이</span>
             </div>
-            <p><strong>성수동 파일럿 준비 중</strong><br />주민과 연구진이 함께 설계합니다.</p>
+            <p><strong>전국 주민참여 조사 준비 중</strong><br />주민과 연구진이 함께 설계합니다.</p>
           </div>
         </div>
 
-        <div className="hero-visual" aria-label="성수동 보행위험 지도 미리보기">
+        <div className="hero-visual" aria-label="우리 동네 보행위험 지도 미리보기">
           <div className="visual-glow" />
           <div className="dashboard-card">
             <div className="dashboard-topbar">
               <div className="dashboard-heading">
                 <span className="mini-label">LIVE WALKABILITY MAP</span>
-                <strong>성수동 보행안전 현황</strong>
+                <strong>우리 동네 위험지도</strong>
               </div>
               <div className="dashboard-badges" aria-label="시범운영 지표">
                 <div className="insight-badge coral-insight"><b>01</b><span>1차년도<br />시범운영</span></div>
                 <div className="insight-badge dark-insight"><b>92%</b><span>위치정보<br />자동완성</span></div>
               </div>
             </div>
-            <div className="hero-map map-surface seongsu-map">
-              <SeongsuIllustrationMap items={hazards.slice(0, 3)} />
+            <div className="hero-map map-surface neighborhood-map">
+              <NeighborhoodIllustrationMap items={hazards.slice(0, 3)} />
               <div className="floating-report">
                 <span className="report-thumb" aria-hidden="true"><i /><i /></span>
-                <div><small>방금 등록된 기록</small><strong>보도 경계석 단차</strong><span>성수이로 · 2분 전</span></div>
+                <div><small>방금 등록된 기록</small><strong>보도 경계석 단차</strong><span>중앙로 · 2분 전</span></div>
               </div>
             </div>
             <div className="dashboard-bottom">
@@ -716,7 +716,7 @@ export default function Home() {
         <span />
         <p>주민참여 데이터</p>
         <span />
-        <p>성수동 1차년도 파일럿</p>
+        <p>전국 단위 주민참여 연구</p>
       </section>
 
       <section className="map-section">
@@ -742,8 +742,8 @@ export default function Home() {
         </div>
 
         <div className="explorer-card">
-          <div className="explorer-map map-surface seongsu-map">
-            <SeongsuIllustrationMap items={filteredHazards} selectedId={selected.id} onSelect={setSelectedId} />
+          <div className="explorer-map map-surface neighborhood-map">
+            <NeighborhoodIllustrationMap items={filteredHazards} selectedId={selected.id} onSelect={setSelectedId} />
             <div className="map-key"><span><i className="key-high" /> 관찰 필요</span><span><i className="key-new" /> 신규 기록</span></div>
           </div>
 
@@ -780,13 +780,13 @@ export default function Home() {
 
       <section className="project-section" id="project">
         <div className="project-copy">
-          <p className="eyebrow light">YEAR 01 · SEONGSU PILOT</p>
+          <p className="eyebrow light">YEAR 01 · NEIGHBORHOOD PILOT</p>
           <h2>좋은 도시는<br />잘 듣는 것에서 시작합니다.</h2>
           <p>지켜路는 행정 통계만으로는 보이지 않았던 일상의 보행위험을 주민과 고령자의 경험으로 기록하는 참여형 연구 프로젝트입니다.</p>
           <a href="mailto:healthdesignlab@kaist.ac.kr">프로젝트 문의하기 <span>↗</span></a>
         </div>
         <div className="project-metrics">
-          <div><strong>01</strong><span>성수동<br />시범 생활권</span></div>
+          <div><strong>전국</strong><span>우리 동네<br />참여 생활권</span></div>
           <div><strong>60<span>초</span></strong><span>목표 기록<br />완료 시간</span></div>
           <div><strong>4<span>종</span></strong><span>사진·영상·음성·텍스트<br />참여 방식</span></div>
           <p>※ 수치는 1차년도 프로토타입의 초기 설계 목표이며 시범운영 결과에 따라 조정됩니다.</p>
@@ -794,7 +794,7 @@ export default function Home() {
       </section>
 
       <footer>
-        <a className="brand footer-brand" href="#top"><span className="brand-mark">路</span><span><strong>지켜路</strong><small>우리동네 보행안전 지도</small></span></a>
+        <a className="brand footer-brand" href="#top"><span className="brand-mark">路</span><span><strong>지켜路</strong><small>우리 동네 보행안전 지도</small></span></a>
         <p>KAIST Health Design Lab · 1차년도 연구 프로토타입</p>
         <p><a className="admin-entry-link" href={sitePath("/admin/login")}>관리자·기관 로그인</a><br />© 2026 JIKEORO. Prototype for research.</p>
       </footer>
@@ -959,7 +959,7 @@ export default function Home() {
                           type="text"
                           value={placeDescription}
                           onChange={(event) => { setPlaceDescription(event.target.value); setLocationValidation(""); }}
-                          placeholder="예: 성수역 3번 출구 앞 횡단보도"
+                          placeholder="예: 우리 동네 주민센터 앞 횡단보도"
                         />
                       </label>
                       <p className="manual-hint">건물이나 출입구처럼 찾기 쉬운 기준을 함께 적어주세요.</p>
