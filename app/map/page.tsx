@@ -407,7 +407,7 @@ export default function RiskMapPage() {
       type: "fill",
       source: "municipality-boundary",
       filter: ["==", ["get", "kind"], "mask"],
-      paint: { "fill-color": "#6f7773", "fill-opacity": 0.58 },
+      paint: { "fill-color": "#8d918f", "fill-opacity": 0.82 },
     });
     map.addLayer({
       id: "municipality-fill",
