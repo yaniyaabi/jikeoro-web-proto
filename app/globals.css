@@ -483,7 +483,7 @@ footer,footer p{font-size:13px}
 .how-section{padding-top:72px}.steps-grid article{padding-top:52px;padding-bottom:62px}.project-section{margin-top:34px}
 
 @media(max-width:1050px){
-  .hero{padding-left:36px;padding-right:36px}.dashboard-card{width:min(92%,760px)}
+  .hero{grid-template-columns:1fr;min-height:auto;gap:28px;padding:132px 36px 68px}.hero-copy{max-width:760px}.hero h1{font-size:clamp(45px,6vw,58px)}.hero-visual{min-height:560px;margin-top:8px}.dashboard-card{width:min(100%,760px)}
   .steps-grid{grid-template-columns:repeat(2,1fr)}.steps-grid article:nth-child(-n+2){border-bottom:1px solid #cfd8cf}.steps-grid article:nth-child(2){border-right:0}
   .explorer-card{grid-template-columns:minmax(0,1fr) minmax(380px,.7fr)}
 }
