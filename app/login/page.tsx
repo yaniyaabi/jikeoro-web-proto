@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { SiteFooter } from "../components/site-footer";
+import { AccessibilityTools } from "../components/site-header";
 import { sitePath } from "../lib/site-path";
 
 type AuthMode = "login" | "signup";
@@ -81,7 +82,7 @@ export default function MemberLoginPage() {
             <span className="brand-mark" aria-hidden="true">路</span>
             <span><strong>지켜路</strong><small>우리 동네 보행안전 지도</small></span>
           </a>
-          <a href={sitePath("/")}>홈으로 돌아가기</a>
+          <div className="member-auth-header-actions"><AccessibilityTools /><a href={sitePath("/")}>홈으로 돌아가기</a></div>
         </header>
 
         <section className="member-auth-layout">
