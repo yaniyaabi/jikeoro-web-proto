@@ -44,6 +44,8 @@ type EarnedBadge = {
   tone?: "mint" | "navy";
 };
 
+const REWARD_EXCHANGE_MINIMUM = 10_000;
+
 function startOfWeek(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return null;
@@ -204,6 +206,9 @@ export default function MyJikeoroPage() {
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
   const participation = useMemo(() => calculateParticipation(reports), [reports]);
+  const rewardExchangeRemaining = Math.max(0, REWARD_EXCHANGE_MINIMUM - participation.points);
+  const rewardExchangeProgress = Math.min(100, (participation.points / REWARD_EXCHANGE_MINIMUM) * 100);
+  const canExchangeReward = participation.points >= REWARD_EXCHANGE_MINIMUM;
   const visibleReports = reports.filter((report) => {
     if (activityFilter === "completed") return report.status === "completed";
     if (activityFilter === "active") return report.status !== "completed";
@@ -388,6 +393,25 @@ export default function MyJikeoroPage() {
             <small>{participation.badges.length ? "기록과 확인 활동을 이어가면 새로운 배지가 열려요." : "첫 위험 기록을 남기면 ‘첫 발견’ 배지를 받아요."}</small>
           </article>
         </div>
+
+        <section className="reward-exchange" aria-labelledby="reward-exchange-title">
+          <div className="reward-exchange-copy">
+            <p className="eyebrow">MILEAGE REWARD</p>
+            <h2 id="reward-exchange-title">모은 마일리지를<br />우리 동네에서 사용해요.</h2>
+            <p>10,000P부터 온누리상품권 등 지역상품권으로 교환할 수 있도록 준비하고 있어요.</p>
+            <div className="reward-exchange-balance"><span>현재 보유</span><strong>{participation.points.toLocaleString()}P</strong></div>
+          </div>
+          <article className="reward-voucher-card">
+            <div className="reward-voucher-top"><span>온누리상품권</span><b>교환 준비 중</b></div>
+            <div className="reward-voucher-mark"><i>路</i><div><small>교환 시작 기준</small><strong>10,000P</strong></div></div>
+            <div className="reward-exchange-progress" aria-label={`상품권 교환까지 ${Math.round(rewardExchangeProgress)}%`}><i style={{ width: `${rewardExchangeProgress}%` }} /></div>
+            <div className="reward-exchange-bottom">
+              <p>{canExchangeReward ? "교환 가능한 마일리지가 모였어요." : `${rewardExchangeRemaining.toLocaleString()}P를 더 모으면 교환할 수 있어요.`}</p>
+              <button type="button" disabled={!canExchangeReward} aria-describedby="reward-exchange-note">{canExchangeReward ? "교환 신청하기" : "10,000P부터 신청"}</button>
+            </div>
+            <small id="reward-exchange-note">실제 상품권 종류·교환 비율·발급 방식은 운영 전 제휴 정책에 따라 확정됩니다.</small>
+          </article>
+        </section>
 
         <div className="activity-board">
           <div className="activity-heading">
