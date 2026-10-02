@@ -7,7 +7,7 @@ import { SiteHeader } from "../components/site-header";
 import { SiteFooter } from "../components/site-footer";
 import { sitePath } from "../lib/site-path";
 import { HazardIllustration } from "../components/hazard-illustration";
-import { hazardFilters, normalizeHazardCategory } from "../lib/hazard-categories";
+import { hazardCategories, hazardFilters, normalizeHazardCategory } from "../lib/hazard-categories";
 
 type MapReport = {
   id: string;
@@ -45,7 +45,7 @@ type MunicipalityProperties = {
 type MunicipalityFeature = Feature<Polygon | MultiPolygon, MunicipalityProperties>;
 
 const categories = hazardFilters;
-const toneByType: Record<string, string> = { 인도: "coral", 횡단보도: "yellow", 조도: "navy", "날씨 관련 위험": "mint", 기타: "navy" };
+const toneByType: Record<string, string> = { 인도: "coral", 횡단보도: "yellow", 조도: "navy", "날씨 관련 위험": "mint", 기타: "plum" };
 const statusText: Record<MapReport["status"], string> = { received: "접수", review: "현장 검토", action: "조치 진행", completed: "개선 완료" };
 const LIKES_KEY = "jikeoro-map-likes";
 const KOREA_VIEW_BOUNDS: [[number, number], [number, number]] = [[124.2, 32.6], [132.2, 39.1]];
@@ -523,6 +523,22 @@ export default function RiskMapPage() {
           {!mapReady && !mapError && <div className="map-loading"><i />현황지도를 불러오는 중</div>}
           {mapError && <div className="map-error-card"><span aria-hidden="true">!</span><strong>{mapError}</strong></div>}
           {selectedBoundary && <div className="map-region-badge"><b>{provinceNames[provinceCode(selectedBoundary)]}</b><span>{selectedBoundary.properties.name}</span></div>}
+          <aside className={`map-legend${selectedBoundary ? " has-region" : ""}`} aria-label="지도 범례">
+            <div className="map-legend-heading">
+              <strong>지도 범례</strong>
+              <span>마커 색으로 구분해요</span>
+            </div>
+            <ul>
+              {hazardCategories.map((category) => (
+                <li key={category}>
+                  <i className={`map-legend-pin marker-${toneByType[category]}`} aria-hidden="true" />
+                  <span>{category}</span>
+                </li>
+              ))}
+              <li className="map-legend-boundary"><i aria-hidden="true" /><span>선택 지역 경계</span></li>
+            </ul>
+            <small>마커 안 숫자는 오른쪽 목록 순서예요.</small>
+          </aside>
           <div className="map-privacy-note"><span /> 신고자 정보 없이 위험 위치만 표시됩니다.</div>
         </div>
 
