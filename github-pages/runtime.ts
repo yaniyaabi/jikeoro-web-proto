@@ -67,10 +67,17 @@ function readSessionUser(): SessionUser | null {
   }
 }
 
+function normalizeCategory(value?: string | null) {
+  if (value === "단차" || value === "적치물") return "인도";
+  if (value === "포트홀") return "횡단보도";
+  if (["인도", "횡단보도", "조도", "날씨 관련 위험", "기타"].includes(value ?? "")) return value as string;
+  return "기타";
+}
+
 const seededReports: DemoReport[] = [
   {
     id: "pages-demo-1",
-    category: "단차",
+    category: "인도",
     title: "보도 경계석 단차",
     description: "보행보조기 바퀴가 걸릴 만큼 경계석의 높이 차이가 커요.",
     address: "대전광역시 서구 둔산로",
@@ -109,9 +116,9 @@ function readReports(): DemoReport[] {
     const saved = window.localStorage.getItem(REPORTS_KEY);
     const reports = (saved ? JSON.parse(saved) : seededReports) as DemoReport[];
     return reports.map((report) => {
-      if (report.id === "pages-demo-1") return { ...report, address: seededReports[0].address, place_description: seededReports[0].place_description, latitude: seededReports[0].latitude, longitude: seededReports[0].longitude, assigned_agency: seededReports[0].assigned_agency, reporter_name: seededReports[0].reporter_name, reporter_email: seededReports[0].reporter_email };
-      if (report.id === "pages-demo-2") return { ...report, address: seededReports[1].address, place_description: seededReports[1].place_description, latitude: seededReports[1].latitude, longitude: seededReports[1].longitude, assigned_agency: seededReports[1].assigned_agency, reporter_name: seededReports[1].reporter_name, reporter_email: seededReports[1].reporter_email };
-      return report;
+      if (report.id === "pages-demo-1") return { ...report, category: normalizeCategory(report.category), address: seededReports[0].address, place_description: seededReports[0].place_description, latitude: seededReports[0].latitude, longitude: seededReports[0].longitude, assigned_agency: seededReports[0].assigned_agency, reporter_name: seededReports[0].reporter_name, reporter_email: seededReports[0].reporter_email };
+      if (report.id === "pages-demo-2") return { ...report, category: normalizeCategory(report.category), address: seededReports[1].address, place_description: seededReports[1].place_description, latitude: seededReports[1].latitude, longitude: seededReports[1].longitude, assigned_agency: seededReports[1].assigned_agency, reporter_name: seededReports[1].reporter_name, reporter_email: seededReports[1].reporter_email };
+      return { ...report, category: normalizeCategory(report.category) };
     });
   } catch {
     return seededReports;
@@ -202,8 +209,8 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     const now = new Date().toISOString();
     const report: DemoReport = {
       id: `pages-${Date.now()}`,
-      category: body.category ?? body.type ?? "기타",
-      title: body.title ?? `${body.category ?? body.type ?? "위험요소"} 신고`,
+      category: normalizeCategory(body.category ?? body.type),
+      title: body.title ?? `${normalizeCategory(body.category ?? body.type)} 신고`,
       description: body.description ?? "",
       address: body.address ?? null,
       place_description: body.placeDescription ?? null,

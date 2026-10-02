@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { SiteHeader } from "../components/site-header";
 import { SiteFooter } from "../components/site-footer";
 import { sitePath } from "../lib/site-path";
+import { normalizeHazardCategory } from "../lib/hazard-categories";
 
 type ReportStatus = "received" | "review" | "action" | "completed";
 type ActivityFilter = "all" | "active" | "completed";
@@ -173,7 +174,7 @@ const userReports: UserReport[] = [
   },
   {
     id: 98,
-    type: "단차",
+    type: "인도",
     title: "약국 앞 보도블록 높이 차이",
     place: "새봄약국 앞",
     submitted: "8월 4일",
@@ -184,7 +185,7 @@ const userReports: UserReport[] = [
   },
   {
     id: 81,
-    type: "적치물",
+    type: "기타",
     title: "상가 입간판이 보행로를 막아요",
     place: "복합문화공간 앞",
     submitted: "7월 21일",
@@ -248,7 +249,7 @@ export default function MyJikeoroPage() {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
-                category: legacy.type || "단차",
+                category: normalizeHazardCategory(legacy.type),
                 title: legacy.title || "이전에 남긴 위험 기록",
                 description: legacy.title || "DB 연결 전에 남긴 기록을 복구했습니다.",
                 placeDescription: legacy.place || "기록 당시 입력한 위치",
@@ -266,6 +267,7 @@ export default function MyJikeoroPage() {
           const stageByStatus: Record<ReportStatus, number> = { received: 1, review: 2, action: 3, completed: 4 };
           setReports(data.reports.map((report: UserReport & { createdAt: string }) => ({
             ...report,
+            type: normalizeHazardCategory(report.type),
             submitted: new Intl.DateTimeFormat("ko-KR", { month: "long", day: "numeric" }).format(new Date(report.createdAt)),
             stage: stageByStatus[report.status],
             department: report.department || "지켜路 운영팀",

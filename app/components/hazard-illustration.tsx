@@ -1,7 +1,7 @@
-type HazardType = "단차" | "포트홀" | "조도" | "적치물";
+import type { HazardCategory } from "../lib/hazard-categories";
 
-export function HazardIllustration({ type }: { type: HazardType }) {
-  if (type === "단차") {
+export function HazardIllustration({ type }: { type: HazardCategory | string }) {
+  if (type === "인도" || type === "단차") {
     return (
       <svg className="hazard-illustration-svg" viewBox="0 0 640 360" preserveAspectRatio="xMidYMid slice" role="img" aria-label="한쪽 보도판이 들려 높이 차가 생긴 단차 일러스트">
         <rect width="640" height="360" fill="#dfe8df" />
@@ -25,7 +25,7 @@ export function HazardIllustration({ type }: { type: HazardType }) {
     );
   }
 
-  if (type === "포트홀") {
+  if (type === "횡단보도" || type === "포트홀") {
     return (
       <svg className="hazard-illustration-svg" viewBox="0 0 640 360" preserveAspectRatio="xMidYMid slice" role="img" aria-label="도로 표면이 파이고 물이 고인 포트홀 일러스트">
         <rect width="640" height="360" fill="#d9e3dc" />
@@ -71,8 +71,26 @@ export function HazardIllustration({ type }: { type: HazardType }) {
     );
   }
 
+  if (type === "날씨 관련 위험") {
+    return (
+      <svg className="hazard-illustration-svg" viewBox="0 0 640 360" preserveAspectRatio="xMidYMid slice" role="img" aria-label="비와 결빙으로 보행로가 미끄러운 날씨 관련 위험 일러스트">
+        <rect width="640" height="360" fill="#d9e5e7" />
+        <path d="M0 112 640 58v302H0Z" fill="#aabbb5" />
+        <path d="M0 164 640 105v255H0Z" fill="#eef0e8" />
+        <path d="M0 287 640 230" stroke="#c2d0c8" strokeWidth="5" />
+        <path d="M93 28 69 82m121-63-24 54m127-37-26 59m138-76-22 52m124-40-24 54" stroke="#69a6ba" strokeWidth="8" strokeLinecap="round" opacity=".78" />
+        <path d="M116 252c55-30 160-40 246-15 62-19 144-9 179 23-61 51-162 72-261 63-82 6-158-15-201-48 8-9 20-17 37-23Z" fill="#75aebc" opacity=".72" />
+        <path d="M136 261c77-23 167-23 248-2m-203 35c94-18 190-12 266 14" fill="none" stroke="#d9f1f3" strokeWidth="9" strokeLinecap="round" opacity=".82" />
+        <path d="m330 126 14 27 30 4-22 21 6 30-28-14-27 14 5-30-22-21 31-4Z" fill="#fff" stroke="#5c91a4" strokeWidth="4" />
+        <path d="M330 116v98m-43-74 86 50m-86 0 86-50" stroke="#5c91a4" strokeWidth="5" strokeLinecap="round" />
+        <rect x="405" y="201" width="135" height="38" rx="19" fill="#fff" />
+        <text x="472" y="225" textAnchor="middle" fill="#356171" fontSize="15" fontWeight="800">빗물·결빙 주의</text>
+      </svg>
+    );
+  }
+
   return (
-    <svg className="hazard-illustration-svg" viewBox="0 0 640 360" preserveAspectRatio="xMidYMid slice" role="img" aria-label="상자와 입간판이 보행로를 막고 있는 적치물 일러스트">
+    <svg className="hazard-illustration-svg" viewBox="0 0 640 360" preserveAspectRatio="xMidYMid slice" role="img" aria-label="상자와 입간판이 보행로를 막고 있는 기타 위험요소 일러스트">
       <rect width="640" height="360" fill="#dce7dd" />
       <circle cx="82" cy="61" r="74" fill="#d0e7bf" />
       <path d="M0 130 640 80v280H0Z" fill="#b6c6ba" />

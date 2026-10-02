@@ -6,10 +6,11 @@ import { SiteHeader } from "./components/site-header";
 import { SiteFooter } from "./components/site-footer";
 import { HazardIllustration } from "./components/hazard-illustration";
 import { sitePath } from "./lib/site-path";
+import { hazardCategories, hazardFilters, type HazardCategory } from "./lib/hazard-categories";
 
 type Hazard = {
   id: number;
-  type: "단차" | "포트홀" | "조도" | "적치물";
+  type: HazardCategory;
   title: string;
   place: string;
   time: string;
@@ -24,7 +25,7 @@ type Hazard = {
 const hazards: Hazard[] = [
   {
     id: 1,
-    type: "단차",
+    type: "인도",
     title: "보도 경계석 단차",
     place: "우리 동네 주민센터 앞",
     time: "오늘 09:42",
@@ -50,7 +51,7 @@ const hazards: Hazard[] = [
   },
   {
     id: 3,
-    type: "포트홀",
+    type: "횡단보도",
     title: "횡단보도 앞 포트홀",
     place: "지하철역 5번 출구 앞",
     time: "8월 12일 16:05",
@@ -63,7 +64,7 @@ const hazards: Hazard[] = [
   },
   {
     id: 4,
-    type: "적치물",
+    type: "기타",
     title: "보행로 적치물",
     place: "동네 상가 앞",
     time: "8월 11일 13:27",
@@ -74,9 +75,22 @@ const hazards: Hazard[] = [
     latitude: 37.5426,
     longitude: 127.0545,
   },
+  {
+    id: 5,
+    type: "날씨 관련 위험",
+    title: "비 온 뒤 얼어붙은 보행로",
+    place: "우리 동네 공원 북문",
+    time: "1월 8일 08:16",
+    detail: "그늘진 길에 남은 빗물이 얼어 바닥이 매우 미끄러워요.",
+    x: "48%",
+    y: "29%",
+    tone: "mint",
+    latitude: 37.5481,
+    longitude: 127.0512,
+  },
 ];
 
-const filters = ["전체", "단차", "포트홀", "조도", "적치물"] as const;
+const filters = hazardFilters;
 type LocationChoice = "gps" | "manual" | null;
 type GpsStatus = "idle" | "loading" | "success" | "error";
 type GpsPoint = { latitude: number; longitude: number; accuracy: number };
@@ -251,7 +265,7 @@ const reportGuideSteps = [
   {
     title: "위험한 이유를 알려주세요",
     description: "위험 종류를 고른 뒤 글, 말하기, 현장음 중 편한 방법으로 설명합니다.",
-    details: ["단차·포트홀·조도·적치물 중 하나를 고릅니다.", "‘말로 글쓰기’를 누르면 말한 내용이 글자로 바뀝니다.", "필요하면 현장의 소리도 따로 녹음할 수 있습니다."],
+    details: ["인도·횡단보도·조도·날씨 관련 위험·기타 중 하나를 고릅니다.", "‘말로 글쓰기’를 누르면 말한 내용이 글자로 바뀝니다.", "필요하면 현장의 소리도 따로 녹음할 수 있습니다."],
   },
   {
     title: "위치를 확인해요",
@@ -282,7 +296,7 @@ function ReportGuidePreview({ step }: { step: number }) {
         <>
           <strong className="guide-screen-title">위험한 이유를<br />알려주세요.</strong>
           <small className="guide-field-label">위험요소 유형</small>
-          <div className="guide-type-options"><b>단차</b><span>포트홀</span><span>조도</span><span>적치물</span></div>
+          <div className="guide-type-options"><b>인도</b><span>횡단보도</span><span>조도</span><span>날씨 관련 위험</span><span>기타</span></div>
           <div className="guide-textarea">예: 보도블록 높이 차이 때문에 발이 걸릴 것 같아요.</div>
           <div className="guide-voice-options"><span>🎙 말로 글쓰기</span><span>● 현장음 녹음</span></div>
           <div className="guide-next-button">위치 입력하기 <b>→</b></div>
@@ -300,7 +314,7 @@ function ReportGuidePreview({ step }: { step: number }) {
       {step === 4 && (
         <>
           <strong className="guide-screen-title">제보내용을<br />확인해주세요.</strong>
-          <div className="guide-review"><b>제보내용 확인</b><span><small>위험유형</small> 단차</span><span><small>위치</small> 지도에서 선택한 위치</span><span><small>첨부</small> 사진 1 · 영상 0 · 음성 1</span></div>
+          <div className="guide-review"><b>제보내용 확인</b><span><small>위험유형</small> 인도</span><span><small>위치</small> 지도에서 선택한 위치</span><span><small>첨부</small> 사진 1 · 영상 0 · 음성 1</span></div>
           <div className="guide-consent"><i>✓</i><span>위치와 제보내용의 연구목적 수집에 동의합니다.</span></div>
           <div className="guide-next-button">제보 완료하기 <b>→</b></div>
         </>
@@ -326,7 +340,7 @@ export default function Home() {
   const [weatherSnapshot, setWeatherSnapshot] = useState<WeatherSnapshot | null>(null);
   const [reportTime, setReportTime] = useState(() => new Date().toISOString());
   const [locationValidation, setLocationValidation] = useState("");
-  const [reportType, setReportType] = useState<(typeof filters)[number]>("단차");
+  const [reportType, setReportType] = useState<HazardCategory>("인도");
   const [reportDescription, setReportDescription] = useState("");
   const [stepTwoValidation, setStepTwoValidation] = useState("");
   const [hasResearchConsent, setHasResearchConsent] = useState(false);
@@ -470,7 +484,7 @@ export default function Home() {
     setWeatherSnapshot(null);
     setReportTime(new Date().toISOString());
     setLocationValidation("");
-    setReportType("단차");
+    setReportType("인도");
     setReportDescription("");
     setStepTwoValidation("");
     setHasResearchConsent(false);
@@ -869,7 +883,7 @@ export default function Home() {
               <h3>{selected.title}</h3>
               <p>{selected.detail}</p>
               <dl>
-                <div><dt>날씨</dt><dd>맑음 · 27°C</dd></div>
+                <div><dt>날씨</dt><dd>{selected.type === "날씨 관련 위험" ? "비 · 4°C" : "맑음 · 27°C"}</dd></div>
                 <div><dt>기록</dt><dd>사진 + 음성</dd></div>
               </dl>
               <button className="panel-button" onClick={openReport}>나도 기록 남기기 <span>→</span></button>
@@ -947,7 +961,7 @@ export default function Home() {
                 <fieldset>
                   <legend>위험요소 유형</legend>
                   <div className="type-options">
-                    {filters.slice(1).map((item) => <label key={item}><input type="radio" name="hazard" checked={reportType === item} onChange={() => setReportType(item)} /><span>{item}</span></label>)}
+                    {hazardCategories.map((item) => <label key={item}><input type="radio" name="hazard" checked={reportType === item} onChange={() => setReportType(item)} /><span>{item}</span></label>)}
                   </div>
                 </fieldset>
                 <label className="text-field">

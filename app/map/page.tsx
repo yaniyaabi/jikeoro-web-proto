@@ -7,6 +7,7 @@ import { SiteHeader } from "../components/site-header";
 import { SiteFooter } from "../components/site-footer";
 import { sitePath } from "../lib/site-path";
 import { HazardIllustration } from "../components/hazard-illustration";
+import { hazardFilters, normalizeHazardCategory } from "../lib/hazard-categories";
 
 type MapReport = {
   id: string;
@@ -43,8 +44,8 @@ type MunicipalityProperties = {
 };
 type MunicipalityFeature = Feature<Polygon | MultiPolygon, MunicipalityProperties>;
 
-const categories = ["전체", "단차", "포트홀", "조도", "적치물"];
-const toneByType: Record<string, string> = { 단차: "coral", 포트홀: "yellow", 조도: "navy", 적치물: "mint" };
+const categories = hazardFilters;
+const toneByType: Record<string, string> = { 인도: "coral", 횡단보도: "yellow", 조도: "navy", "날씨 관련 위험": "mint", 기타: "navy" };
 const statusText: Record<MapReport["status"], string> = { received: "접수", review: "현장 검토", action: "조치 진행", completed: "개선 완료" };
 const LIKES_KEY = "jikeoro-map-likes";
 const KOREA_VIEW_BOUNDS: [[number, number], [number, number]] = [[124.2, 32.6], [132.2, 39.1]];
@@ -195,7 +196,7 @@ export default function RiskMapPage() {
     fetch("/api/map/reports")
       .then((response) => response.ok ? response.json() : Promise.reject(new Error("data")))
       .then((data) => {
-        const next = (data.reports ?? []) as MapReport[];
+        const next = ((data.reports ?? []) as MapReport[]).map((report) => ({ ...report, type: normalizeHazardCategory(report.type) }));
         setReports(next);
         setSelectedId(next[0]?.id ?? null);
       })
@@ -343,7 +344,7 @@ export default function RiskMapPage() {
     const bounds = new maplibregl.LngLatBounds([first.longitude, first.latitude], [first.longitude, first.latitude]);
     filteredReports.forEach((report, index) => {
       const tone = toneByType[report.type] ?? "navy";
-      const safeType = categories.includes(report.type) ? report.type : "위험";
+      const safeType = categories.includes(report.type as (typeof categories)[number]) ? report.type : "위험";
       const element = document.createElement("button");
       element.type = "button";
       element.className = `free-risk-marker marker-${tone}`;

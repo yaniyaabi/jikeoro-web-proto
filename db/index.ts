@@ -30,6 +30,8 @@ export function ensureDatabase() {
       `CREATE INDEX IF NOT EXISTS idx_report_history_report_created ON report_status_history(report_id, created_at)`,
       `CREATE TABLE IF NOT EXISTS admin_audit_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, actor_user_id TEXT NOT NULL REFERENCES users(id), report_id TEXT REFERENCES reports(id), action TEXT NOT NULL, detail TEXT NOT NULL, created_at TEXT NOT NULL)`,
       `CREATE INDEX IF NOT EXISTS idx_admin_audit_actor_created ON admin_audit_logs(actor_user_id, created_at)`,
+      `UPDATE reports SET category = '인도' WHERE category IN ('단차','적치물')`,
+      `UPDATE reports SET category = '횡단보도' WHERE category = '포트홀'`,
     ];
     await d1.batch(schemaStatements.map((statement) => d1.prepare(statement)));
 
@@ -38,8 +40,8 @@ export function ensureDatabase() {
       d1.prepare(`INSERT INTO users (id,email,name,role,agency,created_at) VALUES (?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET name = excluded.name`).bind("demo-admin", "research@jikeoro.local", "배수현 연구원", "research_admin", "지켜路 연구팀", "2026-07-01T09:00:00.000Z"),
       d1.prepare(`INSERT OR IGNORE INTO users (id,email,name,role,agency,created_at) VALUES (?,?,?,?,?,?)`).bind("demo-agency", "road@local.go.kr", "박길동 담당자", "agency_staff", "관할 도로관리과", "2026-07-01T09:00:00.000Z"),
       d1.prepare(`INSERT OR IGNORE INTO reports (id,user_id,category,title,description,address,place_description,status,assigned_agency,response,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).bind("rpt-103", "demo-member", "조도", "골목길 가로등 사이가 어두워요", "가로등 사이 구간이 어두워 바닥 상태를 확인하기 어렵습니다.", null, "우리 동네 시장길 골목", "review", "관할 도로관리과", "야간 현장 확인 일정이 잡혔어요. 8월 19일까지 결과를 알려드릴게요.", "2026-08-12T11:00:00.000Z", "2026-08-14T02:00:00.000Z"),
-      d1.prepare(`INSERT OR IGNORE INTO reports (id,user_id,category,title,description,address,place_description,status,assigned_agency,response,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).bind("rpt-98", "demo-member", "단차", "약국 앞 보도블록 높이 차이", "보행보조기 바퀴가 걸릴 수 있는 높이 차이가 있습니다.", null, "새봄약국 앞", "action", "우리 동네 주민센터", "현장 확인 후 보수 대상으로 분류되어 담당 유지보수팀에 전달됐어요.", "2026-08-04T08:30:00.000Z", "2026-08-10T03:00:00.000Z"),
-      d1.prepare(`INSERT OR IGNORE INTO reports (id,user_id,category,title,description,address,place_description,status,assigned_agency,response,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).bind("rpt-81", "demo-member", "적치물", "상가 입간판이 보행로를 막아요", "입간판 때문에 보행 유효폭이 좁아졌습니다.", null, "복합문화공간 앞", "completed", "관할 생활도로 담당기관", "상가 안내와 현장 정비를 마쳤어요. 통행 가능 폭 1.8m를 확보했습니다.", "2026-07-21T06:00:00.000Z", "2026-07-29T05:00:00.000Z"),
+      d1.prepare(`INSERT OR IGNORE INTO reports (id,user_id,category,title,description,address,place_description,status,assigned_agency,response,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).bind("rpt-98", "demo-member", "인도", "약국 앞 보도블록 높이 차이", "보행보조기 바퀴가 걸릴 수 있는 높이 차이가 있습니다.", null, "새봄약국 앞", "action", "우리 동네 주민센터", "현장 확인 후 보수 대상으로 분류되어 담당 유지보수팀에 전달됐어요.", "2026-08-04T08:30:00.000Z", "2026-08-10T03:00:00.000Z"),
+      d1.prepare(`INSERT OR IGNORE INTO reports (id,user_id,category,title,description,address,place_description,status,assigned_agency,response,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).bind("rpt-81", "demo-member", "인도", "상가 입간판이 보행로를 막아요", "입간판 때문에 보행 유효폭이 좁아졌습니다.", null, "복합문화공간 앞", "completed", "관할 생활도로 담당기관", "상가 안내와 현장 정비를 마쳤어요. 통행 가능 폭 1.8m를 확보했습니다.", "2026-07-21T06:00:00.000Z", "2026-07-29T05:00:00.000Z"),
     ];
     await d1.batch(seedStatements);
   })();
