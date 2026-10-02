@@ -69,3 +69,21 @@ test("the role-specific navigation item is rendered in the shared account menu p
   assert.match(siteHeader, /sessionRole === "research_admin" && <a[^>]+>관리자 콘솔<\/a>/);
   assert.match(siteHeader, /sessionRole === "agency_staff" && <a[^>]+>기관 콘솔<\/a>/);
 });
+
+test("administrator and agency report details include evidence and field context", async () => {
+  const runtime = await readFile(runtimeUrl, "utf8");
+  const adminPage = await readFile(new URL("../app/admin/page.tsx", import.meta.url), "utf8");
+  const reportsApi = await readFile(new URL("../app/api/reports/route.ts", import.meta.url), "utf8");
+
+  assert.match(adminPage, /사진·영상·음성/);
+  assert.match(adminPage, /readReportMedia/);
+  assert.match(adminPage, /제보 시각/);
+  assert.match(adminPage, /접수 시각/);
+  assert.match(adminPage, /describeWeather/);
+  assert.match(adminPage, /위치 좌표/);
+  assert.match(runtime, /observed_at/);
+  assert.match(runtime, /weather:/);
+  assert.match(runtime, /media:/);
+  assert.match(reportsApi, /weather_json/);
+  assert.match(reportsApi, /media_json/);
+});

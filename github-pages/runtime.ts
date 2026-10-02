@@ -150,6 +150,9 @@ const seededReports: DemoReport[] = [
     reporter_email: "member@jikeoro.local",
     created_at: "2026-08-12T00:42:00.000Z",
     updated_at: "2026-08-14T00:42:00.000Z",
+    observed_at: "2026-08-12T00:38:00.000Z",
+    weather: { temperature: 27, code: 1, observedAt: "2026-08-12T00:38:00.000Z" },
+    media: [{ kind: "image", name: "보도-경계석-현장.jpg", type: "image/jpeg", size: 842_100 }],
   },
   {
     id: "pages-demo-2",
@@ -167,6 +170,9 @@ const seededReports: DemoReport[] = [
     reporter_email: "member@jikeoro.local",
     created_at: "2026-08-11T11:18:00.000Z",
     updated_at: "2026-08-14T01:10:00.000Z",
+    observed_at: "2026-08-11T11:12:00.000Z",
+    weather: { temperature: 24, code: 0, observedAt: "2026-08-11T11:12:00.000Z" },
+    media: [{ kind: "video", name: "어두운-골목길.mp4", type: "video/mp4", size: 3_420_000 }],
   },
   {
     id: "pages-demo-3",
@@ -184,6 +190,12 @@ const seededReports: DemoReport[] = [
     reporter_email: "member@jikeoro.local",
     created_at: "2026-08-14T03:20:00.000Z",
     updated_at: "2026-08-14T03:20:00.000Z",
+    observed_at: "2026-08-14T03:17:00.000Z",
+    weather: { temperature: 29, code: 2, observedAt: "2026-08-14T03:17:00.000Z" },
+    media: [
+      { kind: "image", name: "횡단보도-현장.jpg", type: "image/jpeg", size: 734_200 },
+      { kind: "audio", name: "현장설명.webm", type: "audio/webm", size: 214_500 },
+    ],
   },
 ];
 

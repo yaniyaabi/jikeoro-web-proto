@@ -23,6 +23,9 @@ export const reports = sqliteTable("reports", {
   status: text("status", { enum: ["received", "review", "action", "completed"] }).notNull(),
   assignedAgency: text("assigned_agency"),
   response: text("response"),
+  observedAt: text("observed_at"),
+  weatherJson: text("weather_json"),
+  mediaJson: text("media_json"),
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),
 }, (table) => [

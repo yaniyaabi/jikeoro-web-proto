@@ -3,12 +3,17 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { SiteHeader } from "../components/site-header";
 import { SiteFooter } from "../components/site-footer";
+import { HazardIllustration } from "../components/hazard-illustration";
 import { sitePath } from "../lib/site-path";
 
 type ReportStatus = "received" | "review" | "action" | "completed";
 type StaffRole = "research_admin" | "agency_staff";
 type AdminUser = { id?: string; name: string; email?: string; role: StaffRole; agency: string | null };
 type StaffAccount = { id: string; name: string; loginId: string; role: StaffRole; agency: string; active: boolean; createdAt: string };
+type WeatherSnapshot = { temperature: number; code: number; observedAt?: string };
+type MediaMetadata = { kind: "image" | "video" | "audio"; name: string; type?: string; size?: number };
+type StoredReportMedia = MediaMetadata & { id: string; reportId: string; blob: Blob };
+type ReportMediaPreview = StoredReportMedia & { previewUrl: string };
 type AdminReport = {
   id: string;
   category: string;
@@ -20,12 +25,55 @@ type AdminReport = {
   assigned_agency: string | null;
   response: string | null;
   reporter_name: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  accuracy?: number | null;
+  observed_at?: string | null;
+  weather?: WeatherSnapshot | null;
+  media?: MediaMetadata[];
   created_at: string;
   updated_at: string;
 };
 
 const statusLabels: Record<ReportStatus, string> = { received: "신규 접수", review: "검토 중", action: "조치 중", completed: "개선 완료" };
 const statusOrder: ReportStatus[] = ["received", "review", "action", "completed"];
+
+function describeWeather(code: number) {
+  if (code === 0) return "맑음";
+  if (code <= 3) return "구름";
+  if (code === 45 || code === 48) return "안개";
+  if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) return "비";
+  if ((code >= 71 && code <= 77) || code === 85 || code === 86) return "눈";
+  if (code >= 95) return "뇌우";
+  return "날씨 기록";
+}
+
+function formatReportDate(value?: string | null) {
+  if (!value) return "기록 없음";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "기록 없음";
+  return new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium", timeStyle: "short" }).format(date);
+}
+
+async function readReportMedia(reportId: string) {
+  if (!("indexedDB" in window)) return [] as StoredReportMedia[];
+  return new Promise<StoredReportMedia[]>((resolve) => {
+    const request = window.indexedDB.open("jikeoro-media", 1);
+    request.onupgradeneeded = () => {
+      const database = request.result;
+      if (!database.objectStoreNames.contains("media")) database.createObjectStore("media", { keyPath: "id" });
+    };
+    request.onerror = () => resolve([]);
+    request.onsuccess = () => {
+      const database = request.result;
+      const transaction = database.transaction("media", "readonly");
+      const getAll = transaction.objectStore("media").getAll();
+      getAll.onsuccess = () => resolve((getAll.result as StoredReportMedia[]).filter((item) => item.reportId === reportId));
+      getAll.onerror = () => resolve([]);
+      transaction.oncomplete = () => database.close();
+    };
+  });
+}
 
 export default function AdminPage() {
   const [user, setUser] = useState<AdminUser | null>(null);
@@ -44,6 +92,8 @@ export default function AdminPage() {
   const [savingAccountId, setSavingAccountId] = useState("");
   const [accountDraft, setAccountDraft] = useState({ name: "", loginId: "", password: "", role: "agency_staff" as StaffRole, agency: "" });
   const [ready, setReady] = useState(false);
+  const [detailMedia, setDetailMedia] = useState<ReportMediaPreview[]>([]);
+  const [detailMediaLoading, setDetailMediaLoading] = useState(false);
 
   const loadReports = async () => {
     const apiResponse = await fetch("/api/admin/reports");
@@ -58,7 +108,10 @@ export default function AdminPage() {
     setReady(true);
   };
 
-  useEffect(() => { loadReports().catch(() => window.location.replace(sitePath("/admin/login/"))); }, []);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadReports().catch(() => window.location.replace(sitePath("/admin/login/")));
+  }, []);
 
   useEffect(() => {
     if (user?.role !== "research_admin") return;
@@ -76,11 +129,35 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!selected) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setStatus(selected.status);
     setAgency(selected.assigned_agency ?? "");
     setResponse(selected.response ?? "");
     setNotice("");
-  }, [selected?.id]);
+  }, [selected]);
+
+  useEffect(() => {
+    let active = true;
+    const previewUrls: string[] = [];
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setDetailMedia([]);
+    if (!selected) return () => undefined;
+    setDetailMediaLoading(true);
+    readReportMedia(selected.id).then((items) => {
+      if (!active) return;
+      const previews = items.map((item) => {
+        const previewUrl = URL.createObjectURL(item.blob);
+        previewUrls.push(previewUrl);
+        return { ...item, previewUrl };
+      });
+      setDetailMedia(previews);
+      setDetailMediaLoading(false);
+    });
+    return () => {
+      active = false;
+      previewUrls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [selected]);
 
   const saveReport = async () => {
     if (!selected) return;
@@ -190,6 +267,33 @@ export default function AdminPage() {
                 <div className="admin-detail-top"><div><span className={`status-chip status-${selected.status}`}>{statusLabels[selected.status]}</span><small>{selected.id}</small></div><p>제보자 {selected.reporter_name || "익명"} · {new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium" }).format(new Date(selected.created_at))}</p></div>
                 <h2>{selected.title}</h2><p className="admin-location">⌖ {selected.address || selected.place_description || "위치 확인 중"}</p>
                 <div className="admin-description"><small>주민 설명</small><p>{selected.description}</p></div>
+                <section className="admin-evidence-section" aria-labelledby="admin-evidence-title">
+                  <div className="admin-evidence-heading"><div><small>현장 첨부자료</small><h3 id="admin-evidence-title">사진·영상·음성</h3></div><span>{detailMedia.length || selected.media?.length || 0}개</span></div>
+                  {detailMediaLoading && <p className="admin-media-message">첨부자료를 불러오고 있어요.</p>}
+                  {!detailMediaLoading && detailMedia.length > 0 && <div className="admin-media-gallery">
+                    {detailMedia.map((media, index) => <figure className={`admin-media-item media-${media.kind}`} key={media.id}>
+                      {media.kind === "image" && <img src={media.previewUrl} alt={`${selected.title} 현장 사진 ${index + 1}`} />}
+                      {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+                      {media.kind === "video" && <video src={media.previewUrl} controls preload="metadata" />}
+                      {media.kind === "audio" && <div className="admin-audio-preview"><span>●</span><audio src={media.previewUrl} controls><track kind="captions" /></audio></div>}
+                      <figcaption><b>{media.kind === "image" ? "사진" : media.kind === "video" ? "영상" : "음성"}</b><span>{media.name}</span></figcaption>
+                    </figure>)}
+                  </div>}
+                  {!detailMediaLoading && detailMedia.length === 0 && (selected.media?.length ?? 0) > 0 && <div className="admin-media-metadata">
+                    <div className="admin-evidence-placeholder"><HazardIllustration type={selected.category} /><span>현장 첨부자료 {selected.media?.length}개</span></div>
+                    <ul>{selected.media?.map((media, index) => <li key={`${media.name}-${index}`}><b>{media.kind === "image" ? "사진" : media.kind === "video" ? "영상" : "음성"}</b><span>{media.name}</span></li>)}</ul>
+                    <p>현재 프로토타입에서는 원본 파일이 제보에 사용한 브라우저에 보관됩니다. 클라우드 연결 후에는 다른 기기에서도 바로 재생됩니다.</p>
+                  </div>}
+                  {!detailMediaLoading && detailMedia.length === 0 && !(selected.media?.length ?? 0) && <p className="admin-media-message">이 기록에는 첨부자료가 없어요.</p>}
+                </section>
+                <dl className="admin-report-facts">
+                  <div><dt>위험유형</dt><dd>{selected.category}</dd></div>
+                  <div><dt>제보 시각</dt><dd>{formatReportDate(selected.observed_at || selected.created_at)}</dd></div>
+                  <div><dt>날씨</dt><dd>{selected.weather ? `${describeWeather(selected.weather.code)} · ${Math.round(selected.weather.temperature)}°C` : "날씨 기록 없음"}</dd></div>
+                  <div><dt>위치</dt><dd>{selected.address || selected.place_description || "위치 확인 중"}</dd></div>
+                  {(selected.latitude != null && selected.longitude != null) && <div><dt>위치 좌표</dt><dd>{selected.latitude.toFixed(5)}, {selected.longitude.toFixed(5)}{selected.accuracy ? ` · 오차 약 ${Math.round(selected.accuracy)}m` : ""}</dd></div>}
+                  <div><dt>접수 시각</dt><dd>{formatReportDate(selected.created_at)}</dd></div>
+                </dl>
                 <div className="admin-form-grid">
                   <label><span>처리 상태</span><select value={status} onChange={(event) => setStatus(event.target.value as ReportStatus)}>{statusOrder.map((item) => <option value={item} key={item}>{statusLabels[item]}</option>)}</select></label>
                   <label><span>담당기관</span><input value={agency} onChange={(event) => setAgency(event.target.value)} placeholder="예: 관할 도로관리과" disabled={user?.role === "agency_staff"} /></label>

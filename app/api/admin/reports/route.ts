@@ -3,6 +3,11 @@ import { getSessionUser, isAdminRole } from "../../../lib/auth";
 
 const validStatuses = ["received", "review", "action", "completed"];
 
+function parseStoredJson(value: unknown) {
+  if (typeof value !== "string" || !value) return value ?? null;
+  try { return JSON.parse(value); } catch { return null; }
+}
+
 export async function GET(request: Request) {
   const user = getSessionUser(request);
   if (!user || !isAdminRole(user.role)) return Response.json({ error: "관리자 권한이 필요합니다." }, { status: 403 });
@@ -12,7 +17,15 @@ export async function GET(request: Request) {
     ? d1.prepare(`SELECT r.*, u.name AS reporter_name FROM reports r LEFT JOIN users u ON u.id = r.user_id WHERE r.assigned_agency = ? ORDER BY r.updated_at DESC`).bind(user.agency)
     : d1.prepare(`SELECT r.*, u.name AS reporter_name FROM reports r LEFT JOIN users u ON u.id = r.user_id ORDER BY r.updated_at DESC`);
   const result = await query.all();
-  return Response.json({ user, reports: result.results });
+  return Response.json({
+    user,
+    reports: result.results.map((report) => ({
+      ...report,
+      observed_at: report.observed_at ?? report.created_at,
+      weather: parseStoredJson(report.weather_json),
+      media: parseStoredJson(report.media_json) ?? [],
+    })),
+  });
 }
 
 export async function PATCH(request: Request) {

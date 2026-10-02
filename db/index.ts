@@ -22,7 +22,7 @@ export function ensureDatabase() {
     const schemaStatements = [
       `CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY NOT NULL, email TEXT NOT NULL, name TEXT NOT NULL, role TEXT NOT NULL CHECK(role IN ('member','research_admin','agency_staff')), agency TEXT, created_at TEXT NOT NULL)`,
       `CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email)`,
-      `CREATE TABLE IF NOT EXISTS reports (id TEXT PRIMARY KEY NOT NULL, user_id TEXT REFERENCES users(id), category TEXT NOT NULL, title TEXT NOT NULL, description TEXT NOT NULL, latitude REAL, longitude REAL, accuracy REAL, address TEXT, place_description TEXT, status TEXT NOT NULL CHECK(status IN ('received','review','action','completed')), assigned_agency TEXT, response TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL)`,
+      `CREATE TABLE IF NOT EXISTS reports (id TEXT PRIMARY KEY NOT NULL, user_id TEXT REFERENCES users(id), category TEXT NOT NULL, title TEXT NOT NULL, description TEXT NOT NULL, latitude REAL, longitude REAL, accuracy REAL, address TEXT, place_description TEXT, status TEXT NOT NULL CHECK(status IN ('received','review','action','completed')), assigned_agency TEXT, response TEXT, observed_at TEXT, weather_json TEXT, media_json TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL)`,
       `CREATE INDEX IF NOT EXISTS idx_reports_user_id ON reports(user_id)`,
       `CREATE INDEX IF NOT EXISTS idx_reports_status_updated_at ON reports(status, updated_at)`,
       `CREATE INDEX IF NOT EXISTS idx_reports_assigned_agency ON reports(assigned_agency)`,
@@ -34,6 +34,15 @@ export function ensureDatabase() {
       `UPDATE reports SET category = '횡단보도' WHERE category = '포트홀'`,
     ];
     await d1.batch(schemaStatements.map((statement) => d1.prepare(statement)));
+
+    const reportColumns = await d1.prepare(`PRAGMA table_info(reports)`).all<{ name: string }>();
+    const existingColumns = new Set(reportColumns.results.map((column) => column.name));
+    const reportMigrations = [
+      ["observed_at", `ALTER TABLE reports ADD COLUMN observed_at TEXT`],
+      ["weather_json", `ALTER TABLE reports ADD COLUMN weather_json TEXT`],
+      ["media_json", `ALTER TABLE reports ADD COLUMN media_json TEXT`],
+    ].filter(([column]) => !existingColumns.has(column));
+    if (reportMigrations.length) await d1.batch(reportMigrations.map(([, statement]) => d1.prepare(statement)));
 
     const seedStatements = [
       d1.prepare(`INSERT OR IGNORE INTO users (id,email,name,role,agency,created_at) VALUES (?,?,?,?,?,?)`).bind("demo-member", "member@jikeoro.local", "김지킴", "member", null, "2026-07-01T09:00:00.000Z"),
