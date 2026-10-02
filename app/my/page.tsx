@@ -40,12 +40,12 @@ type StoredReportMedia = {
 type ReportMediaPreview = StoredReportMedia & { previewUrl: string };
 
 const REWARD_EXCHANGE_MINIMUM = 10_000;
-const REWARD_FORM_URL = "https://docs.google.com/forms/d/e/FORM_ID/viewform";
+const REWARD_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSd6PApYqiWa-HbE5LyGA8bKAecQshSCMu38oAD6E1xlUOWRVQ/viewform";
 const REWARD_FORM_ENTRIES = {
-  name: "entry.NAME",
-  email: "entry.EMAIL",
-  phone: "entry.PHONE",
-  points: "entry.POINTS",
+  name: "entry.1605426205",
+  email: "entry.1819571806",
+  phone: "entry.1254984587",
+  points: "entry.103413830",
 };
 
 function startOfWeek(value: string) {
@@ -429,7 +429,7 @@ export default function MyJikeoroPage() {
           </div>
           <article className="reward-voucher-card">
             <div className="reward-voucher-top"><span>디지털 온누리상품권</span><b>교환 준비 중</b></div>
-            <div className="reward-voucher-mark"><i><img src={sitePath("/onnuri-logo.svg")} alt="온누리상품권" /></i><div><small>교환 시작 기준</small><strong>10,000P</strong></div></div>
+            <div className="reward-voucher-mark"><i><img src={sitePath("/onnuri-logo-3d.png")} alt="디지털 온누리상품권" /></i><div><small>교환 시작 기준</small><strong>10,000P</strong></div></div>
             <div className="reward-exchange-progress" aria-label={`상품권 교환까지 ${Math.round(rewardExchangeProgress)}%`}><i style={{ width: `${rewardExchangeProgress}%` }} /></div>
             <div className="reward-exchange-bottom">
               <p>{canExchangeReward ? "교환 가능한 마일리지가 모였어요." : `${rewardExchangeRemaining.toLocaleString()}P를 더 모으면 교환할 수 있어요.`}</p>
@@ -489,7 +489,7 @@ export default function MyJikeoroPage() {
         <div className="reward-form-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && setRewardFormOpen(false)}>
           <section className="reward-form-modal" role="dialog" aria-modal="true" aria-labelledby="reward-form-title">
             <button className="reward-form-close" type="button" onClick={() => setRewardFormOpen(false)} aria-label="교환 신청 닫기">×</button>
-            <img className="reward-form-logo" src={sitePath("/onnuri-logo.svg")} alt="디지털 온누리상품권" />
+            <img className="reward-form-logo" src={sitePath("/onnuri-logo-3d.png")} alt="디지털 온누리상품권" />
             <p className="eyebrow">10,000P REWARD</p>
             <h2 id="reward-form-title">상품권 교환을 신청할까요?</h2>
             <p>회원 정보와 연락처가 입력된 Google Form이 열립니다. 내용을 확인해 제출하면 담당자가 확인 후 휴대전화로 보내드려요.</p>
