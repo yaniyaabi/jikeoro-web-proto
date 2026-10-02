@@ -1,7 +1,7 @@
 import { ensureDatabase } from "../../../../db";
 import { createDemoSessionCookie, type UserRole } from "../../../lib/auth";
 
-const allowedRoles: UserRole[] = ["member", "research_admin", "agency_staff"];
+const allowedRoles: UserRole[] = ["member"];
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null) as { role?: UserRole } | null;

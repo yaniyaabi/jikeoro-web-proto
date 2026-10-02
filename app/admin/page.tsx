@@ -205,8 +205,8 @@ export default function AdminPage() {
             <div className="staff-card-heading"><span>권한 부여</span><h2>로그인 계정을 발급하세요.</h2><p>사용할 아이디와 비밀번호를 직접 정하고 역할과 소속 기관을 지정합니다.</p></div>
             <div className="staff-create-fields">
               <label><span>이름</span><input value={accountDraft.name} onChange={(event) => setAccountDraft((current) => ({ ...current, name: event.target.value }))} placeholder="예: 김한길 담당자" required /></label>
-              <label><span>로그인 아이디</span><input value={accountDraft.loginId} onChange={(event) => setAccountDraft((current) => ({ ...current, loginId: event.target.value }))} placeholder="예: daejeon01" minLength={4} maxLength={30} pattern="[A-Za-z0-9._-]+" required /></label>
-              <label><span>로그인 비밀번호</span><input type="password" minLength={8} value={accountDraft.password} onChange={(event) => setAccountDraft((current) => ({ ...current, password: event.target.value }))} placeholder="8자 이상" required /></label>
+              <label><span>로그인 아이디</span><input value={accountDraft.loginId} onChange={(event) => setAccountDraft((current) => ({ ...current, loginId: event.target.value }))} placeholder="예: daejeon01 또는 name@agency.kr" minLength={4} maxLength={50} pattern="[A-Za-z0-9@._-]+" required /></label>
+              <label><span>로그인 비밀번호</span><input type="password" minLength={4} value={accountDraft.password} onChange={(event) => setAccountDraft((current) => ({ ...current, password: event.target.value }))} placeholder="4자 이상" required /></label>
               <label><span>권한</span><select value={accountDraft.role} onChange={(event) => setAccountDraft((current) => ({ ...current, role: event.target.value as StaffRole }))}><option value="agency_staff">기관 담당자</option><option value="research_admin">연구원 관리자</option></select></label>
               <label className="staff-agency-field"><span>소속 기관·조직</span><input value={accountDraft.agency} onChange={(event) => setAccountDraft((current) => ({ ...current, agency: event.target.value }))} placeholder="예: 대전광역시 도로관리과" required /></label>
             </div>

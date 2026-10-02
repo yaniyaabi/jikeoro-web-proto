@@ -65,8 +65,8 @@ type SessionUser = {
 };
 
 const seededStaffAccounts: PrototypeStaffAccount[] = [
-  { id: "staff-demo-admin", name: "배수현 연구원", loginId: "jikeoro-admin", role: "research_admin", agency: "지켜路 연구팀", active: true, createdAt: "2026-07-01T09:00:00.000Z" },
-  { id: "staff-demo-agency", name: "박길동 담당자", loginId: "daejeon-road", role: "agency_staff", agency: "대전광역시 도로관리팀", active: true, createdAt: "2026-07-01T09:00:00.000Z" },
+  { id: "staff-demo-admin", name: "배수현 연구원", loginId: "yaniyaabi@kaist.ac.kr", salt: "6a696b656f726f2d61646d696e2d32303236", passwordHash: "17c02c53234e9298ae9e2097a2612939f3a5dff9451075161059a2c480dbe835", role: "research_admin", agency: "지켜路 연구팀", active: true, createdAt: "2026-07-01T09:00:00.000Z" },
+  { id: "staff-demo-agency", name: "서울 기관 담당자", loginId: "seoul@kaist.ac.kr", salt: "6a696b656f726f2d6167656e63792d3236", passwordHash: "6b42017a758eceead94d85d68b16bb15f44aa57755dc96fb22cd0b113cfaaf6e", role: "agency_staff", agency: "서울특별시 도로관리과", active: true, createdAt: "2026-07-01T09:00:00.000Z" },
 ];
 
 function bytesToHex(bytes: Uint8Array) {
@@ -91,10 +91,12 @@ function readStaffAccounts(): PrototypeStaffAccount[] {
   try {
     const saved = window.localStorage.getItem(STAFF_USERS_KEY);
     if (!saved) return seededStaffAccounts;
-    return (JSON.parse(saved) as Array<PrototypeStaffAccount & { email?: string }>).map((account) => ({
+    const savedAccounts = (JSON.parse(saved) as Array<PrototypeStaffAccount & { email?: string }>).map((account) => ({
       ...account,
       loginId: account.loginId || account.email || "",
     }));
+    const customAccounts = savedAccounts.filter((account) => !seededStaffAccounts.some((seeded) => seeded.id === account.id));
+    return [...seededStaffAccounts, ...customAccounts];
   } catch {
     return seededStaffAccounts;
   }
@@ -166,12 +168,32 @@ const seededReports: DemoReport[] = [
     created_at: "2026-08-11T11:18:00.000Z",
     updated_at: "2026-08-14T01:10:00.000Z",
   },
+  {
+    id: "pages-demo-3",
+    category: "횡단보도",
+    title: "횡단보도 신호 시간이 짧아요",
+    description: "보행 신호가 짧아 어르신이 건너는 중에 신호가 바뀝니다.",
+    address: "서울특별시 종로구 종로",
+    place_description: "종로3가역 1번 출구 앞",
+    latitude: 37.5704,
+    longitude: 126.992,
+    status: "received",
+    assigned_agency: "서울특별시 도로관리과",
+    response: "현장 신호 운영 시간을 확인하고 있습니다.",
+    reporter_name: "김지킴",
+    reporter_email: "member@jikeoro.local",
+    created_at: "2026-08-14T03:20:00.000Z",
+    updated_at: "2026-08-14T03:20:00.000Z",
+  },
 ];
 
 function readReports(): DemoReport[] {
   try {
     const saved = window.localStorage.getItem(REPORTS_KEY);
-    const reports = (saved ? JSON.parse(saved) : seededReports) as DemoReport[];
+    const savedReports = (saved ? JSON.parse(saved) : []) as DemoReport[];
+    const reports = saved
+      ? [...seededReports.filter((seeded) => !savedReports.some((report) => report.id === seeded.id)), ...savedReports]
+      : seededReports;
     return reports.map((report) => {
       if (report.id === "pages-demo-1") return { ...report, category: normalizeCategory(report.category), address: seededReports[0].address, place_description: seededReports[0].place_description, latitude: seededReports[0].latitude, longitude: seededReports[0].longitude, assigned_agency: seededReports[0].assigned_agency, reporter_name: seededReports[0].reporter_name, reporter_email: seededReports[0].reporter_email };
       if (report.id === "pages-demo-2") return { ...report, category: normalizeCategory(report.category), address: seededReports[1].address, place_description: seededReports[1].place_description, latitude: seededReports[1].latitude, longitude: seededReports[1].longitude, assigned_agency: seededReports[1].assigned_agency, reporter_name: seededReports[1].reporter_name, reporter_email: seededReports[1].reporter_email };
@@ -263,12 +285,9 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
 
   if (url.pathname === "/api/auth/demo" && method === "POST") {
     const body = JSON.parse(String(init?.body ?? "{}"));
-    const role = body.role ?? "member";
-    const user: SessionUser = role === "research_admin"
-      ? { id: "staff-demo-admin", name: "배수현 연구원", loginId: "jikeoro-admin", role, agency: "지켜路 연구팀" }
-      : role === "agency_staff"
-        ? { id: "staff-demo-agency", name: "박길동 담당자", loginId: "daejeon-road", role, agency: "대전광역시 도로관리팀" }
-        : { id: "demo-member", name: "김지킴", email: "member@jikeoro.local", role: "member", agency: null };
+    if (body.role !== "member") return json({ error: "운영 계정은 발급된 아이디와 비밀번호로 로그인해주세요." }, 403);
+    const role = "member";
+    const user: SessionUser = { id: "demo-member", name: "김지킴", email: "member@jikeoro.local", role, agency: null };
     window.sessionStorage.setItem(USER_KEY, JSON.stringify(user));
     window.sessionStorage.setItem(ROLE_KEY, role);
     return json({ ok: true, user });
@@ -413,7 +432,7 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     const password = String(body.password ?? "");
     const accountRole: StaffRole = body.role === "research_admin" ? "research_admin" : "agency_staff";
     const agency = String(body.agency ?? "").trim();
-    if (name.length < 2 || !/^[a-z0-9._-]{4,30}$/.test(loginId) || password.length < 8 || !agency) return json({ error: "이름, 영문·숫자 4자 이상의 로그인 아이디, 8자 이상의 비밀번호와 소속 기관을 확인해주세요." }, 400);
+    if (name.length < 2 || !/^[a-z0-9@._-]{4,50}$/.test(loginId) || password.length < 4 || !agency) return json({ error: "이름, 영문·숫자 4자 이상의 로그인 아이디, 4자 이상의 비밀번호와 소속 기관을 확인해주세요." }, 400);
     const accounts = readStaffAccounts();
     if (accounts.some((account) => account.loginId.toLowerCase() === loginId)) return json({ error: "이미 사용 중인 로그인 아이디입니다." }, 409);
     const salt = bytesToHex(crypto.getRandomValues(new Uint8Array(16)));
