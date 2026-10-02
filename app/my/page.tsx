@@ -39,12 +39,6 @@ type StoredReportMedia = {
 
 type ReportMediaPreview = StoredReportMedia & { previewUrl: string };
 
-type EarnedBadge = {
-  symbol: string;
-  label: string;
-  tone?: "mint" | "navy";
-};
-
 const REWARD_EXCHANGE_MINIMUM = 10_000;
 
 function startOfWeek(value: string) {
@@ -82,18 +76,12 @@ function calculateParticipation(reports: UserReport[]) {
     streakWeeks += 1;
   }
 
-  const badges: EarnedBadge[] = [];
-  if (reports.length >= 1) badges.push({ symbol: "1", label: "첫 발견" });
-  if (reports.length >= 3) badges.push({ symbol: "路", label: "동네지킴이", tone: "mint" });
-  if (reports.some((report) => report.type === "조도")) badges.push({ symbol: "☾", label: "밤길 관찰자", tone: "navy" });
-
   return {
     completedCount,
     points,
     streakWeeks,
     missionProgress,
     missionCompleted,
-    badges,
     level: reports.length === 0 ? 0 : Math.floor((reports.length - 1) / 3) + 1,
   };
 }
@@ -380,19 +368,6 @@ export default function MyJikeoroPage() {
               <strong>{participation.missionProgress} / 3곳 완료</strong>
               <a href={sitePath("/?report=1")}>{participation.missionCompleted ? "미션 완료 ✓" : participation.missionProgress ? "한 곳 더 기록하기 →" : "첫 조명 기록하기 →"}</a>
             </div>
-          </article>
-          <article className="badge-card">
-            <p>내가 모은 배지</p>
-            {participation.badges.length ? (
-              <div className="badge-row">
-                {participation.badges.map((badge) => (
-                  <span key={badge.label}><i className={badge.tone ? `badge-${badge.tone}` : ""}>{badge.symbol}</i><b>{badge.label}</b></span>
-                ))}
-              </div>
-            ) : (
-              <div className="empty-badges"><i>＋</i><strong>아직 모은 배지가 없어요.</strong></div>
-            )}
-            <small>{participation.badges.length ? "기록과 확인 활동을 이어가면 새로운 배지가 열려요." : "첫 위험 기록을 남기면 ‘첫 발견’ 배지를 받아요."}</small>
           </article>
         </div>
 
