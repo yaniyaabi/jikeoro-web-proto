@@ -192,6 +192,7 @@ export default function RiskMapPage() {
   const [loading, setLoading] = useState(true);
   const [mapReady, setMapReady] = useState(false);
   const [mapZoom, setMapZoom] = useState(6.5);
+  const [legendOpen, setLegendOpen] = useState(true);
   const [dataError, setDataError] = useState("");
   const [mapError, setMapError] = useState("");
   const [municipalities, setMunicipalities] = useState<MunicipalityFeature[]>([]);
@@ -585,21 +586,23 @@ export default function RiskMapPage() {
           {!mapReady && !mapError && <div className="map-loading"><i />현황지도를 불러오는 중</div>}
           {mapError && <div className="map-error-card"><span aria-hidden="true">!</span><strong>{mapError}</strong></div>}
           {selectedBoundary && <div className="map-region-badge"><b>{provinceNames[provinceCode(selectedBoundary)]}</b><span>{selectedBoundary.properties.name}</span></div>}
-          <aside className={`map-legend${selectedBoundary ? " has-region" : ""}`} aria-label="지도 범례">
+          <aside className={`map-legend${selectedBoundary ? " has-region" : ""}${legendOpen ? "" : " collapsed"}`} aria-label="지도 범례">
             <div className="map-legend-heading">
-              <strong>지도 범례</strong>
-              <span>마커 색으로 구분해요</span>
+              <div><strong>지도 범례</strong><span>마커 색으로 구분해요</span></div>
+              <button type="button" onClick={() => setLegendOpen((value) => !value)} aria-expanded={legendOpen} aria-controls="risk-map-legend-content">{legendOpen ? "접기" : "펼치기"}<b aria-hidden="true">{legendOpen ? "−" : "+"}</b></button>
             </div>
-            <ul>
-              {hazardCategories.map((category) => (
-                <li key={category}>
-                  <img className="map-legend-pin" src={sitePath(`/icons/${hazardPinFiles[category]}`)} alt="" />
-                  <span>{category}</span>
-                </li>
-              ))}
-              <li className="map-legend-boundary"><i aria-hidden="true" /><span>선택 지역 경계</span></li>
-            </ul>
-            <small>{provinceChartMode ? "도넛 가운데 숫자는 시·도별 전체 제보 수예요." : "핀 색으로 위험 유형을 구분할 수 있어요."}</small>
+            <div id="risk-map-legend-content" className="map-legend-content" hidden={!legendOpen}>
+              <ul>
+                {hazardCategories.map((category) => (
+                  <li key={category}>
+                    <img className="map-legend-pin" src={sitePath(`/icons/${hazardPinFiles[category]}`)} alt="" />
+                    <span>{category}</span>
+                  </li>
+                ))}
+                <li className="map-legend-boundary"><i aria-hidden="true" /><span>선택 지역 경계</span></li>
+              </ul>
+              <small>{provinceChartMode ? "도넛 가운데 숫자는 시·도별 전체 제보 수예요." : "핀 색으로 위험 유형을 구분할 수 있어요."}</small>
+            </div>
           </aside>
           {provinceChartMode && <div className="map-zoom-hint"><span aria-hidden="true">＋</span> 도넛을 누르거나 지도를 확대하면 개별 위치가 보여요.</div>}
           <div className="map-privacy-note"><span /> 신고자 정보 없이 위험 위치만 표시됩니다.</div>

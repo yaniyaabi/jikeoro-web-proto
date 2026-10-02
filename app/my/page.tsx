@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { SiteHeader } from "../components/site-header";
 import { SiteFooter } from "../components/site-footer";
 import { sitePath } from "../lib/site-path";
@@ -40,6 +40,13 @@ type StoredReportMedia = {
 type ReportMediaPreview = StoredReportMedia & { previewUrl: string };
 
 const REWARD_EXCHANGE_MINIMUM = 10_000;
+const REWARD_FORM_URL = "https://docs.google.com/forms/d/e/FORM_ID/viewform";
+const REWARD_FORM_ENTRIES = {
+  name: "entry.NAME",
+  email: "entry.EMAIL",
+  phone: "entry.PHONE",
+  points: "entry.POINTS",
+};
 
 function startOfWeek(value: string) {
   const date = new Date(value);
@@ -187,6 +194,7 @@ const userReports: UserReport[] = [
 export default function MyJikeoroPage() {
   const [authReady, setAuthReady] = useState(false);
   const [memberName, setMemberName] = useState("김지킴");
+  const [memberEmail, setMemberEmail] = useState("member@jikeoro.local");
   const [reports, setReports] = useState<UserReport[]>(userReports);
   const [activityFilter, setActivityFilter] = useState<ActivityFilter>("all");
   const [selectedReport, setSelectedReport] = useState<UserReport | null>(null);
@@ -194,6 +202,9 @@ export default function MyJikeoroPage() {
   const [detailMediaLoading, setDetailMediaLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
+  const [rewardFormOpen, setRewardFormOpen] = useState(false);
+  const [rewardPhone, setRewardPhone] = useState("");
+  const [rewardFormError, setRewardFormError] = useState("");
   const participation = useMemo(() => calculateParticipation(reports), [reports]);
   const rewardExchangeRemaining = Math.max(0, REWARD_EXCHANGE_MINIMUM - participation.points);
   const rewardExchangeProgress = Math.min(100, (participation.points / REWARD_EXCHANGE_MINIMUM) * 100);
@@ -218,6 +229,7 @@ export default function MyJikeoroPage() {
           return;
         }
         if (session.user?.name) setMemberName(session.user.name);
+        if (session.user?.email) setMemberEmail(session.user.email);
 
         const pendingReportId = window.sessionStorage.getItem("jikeoro-pending-report-id");
         if (pendingReportId) {
@@ -298,9 +310,46 @@ export default function MyJikeoroPage() {
     return () => window.removeEventListener("keydown", closeOnEscape);
   }, [selectedReport, deleting]);
 
+  useEffect(() => {
+    if (!rewardFormOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setRewardFormOpen(false);
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [rewardFormOpen]);
+
   const logout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
     window.location.href = sitePath("/");
+  };
+
+  const openRewardForm = () => {
+    setRewardPhone(window.localStorage.getItem("jikeoro-reward-phone") ?? "");
+    setRewardFormError("");
+    setRewardFormOpen(true);
+  };
+
+  const submitRewardForm = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const normalizedPhone = rewardPhone.replace(/\D/g, "");
+    if (normalizedPhone.length < 10 || normalizedPhone.length > 11) {
+      setRewardFormError("휴대전화 번호를 정확히 입력해주세요.");
+      return;
+    }
+    if (REWARD_FORM_URL.includes("FORM_ID")) {
+      setRewardFormError("신청 양식을 연결하는 중입니다. 잠시 후 다시 시도해주세요.");
+      return;
+    }
+    window.localStorage.setItem("jikeoro-reward-phone", rewardPhone.trim());
+    const formUrl = new URL(REWARD_FORM_URL);
+    formUrl.searchParams.set("usp", "pp_url");
+    formUrl.searchParams.set(REWARD_FORM_ENTRIES.name, memberName);
+    formUrl.searchParams.set(REWARD_FORM_ENTRIES.email, memberEmail);
+    formUrl.searchParams.set(REWARD_FORM_ENTRIES.phone, rewardPhone.trim());
+    formUrl.searchParams.set(REWARD_FORM_ENTRIES.points, `${participation.points}P`);
+    window.open(formUrl.toString(), "_blank", "noopener,noreferrer");
+    setRewardFormOpen(false);
   };
 
   const deleteSelectedReport = async () => {
@@ -380,13 +429,13 @@ export default function MyJikeoroPage() {
           </div>
           <article className="reward-voucher-card">
             <div className="reward-voucher-top"><span>디지털 온누리상품권</span><b>교환 준비 중</b></div>
-            <div className="reward-voucher-mark"><i>온</i><div><small>교환 시작 기준</small><strong>10,000P</strong></div></div>
+            <div className="reward-voucher-mark"><i><img src={sitePath("/onnuri-logo.svg")} alt="온누리상품권" /></i><div><small>교환 시작 기준</small><strong>10,000P</strong></div></div>
             <div className="reward-exchange-progress" aria-label={`상품권 교환까지 ${Math.round(rewardExchangeProgress)}%`}><i style={{ width: `${rewardExchangeProgress}%` }} /></div>
             <div className="reward-exchange-bottom">
               <p>{canExchangeReward ? "교환 가능한 마일리지가 모였어요." : `${rewardExchangeRemaining.toLocaleString()}P를 더 모으면 교환할 수 있어요.`}</p>
-              <button type="button" disabled={!canExchangeReward} aria-describedby="reward-exchange-note">{canExchangeReward ? "교환 신청하기" : "10,000P부터 신청"}</button>
+              <button type="button" disabled={!canExchangeReward} aria-describedby="reward-exchange-note" onClick={openRewardForm}>{canExchangeReward ? "교환 신청하기" : "10,000P부터 신청"}</button>
             </div>
-            <small id="reward-exchange-note">실제 상품권 종류·교환 비율·발급 방식은 운영 전 제휴 정책에 따라 확정됩니다.</small>
+            <small id="reward-exchange-note">신청서를 보내면 담당자가 확인한 뒤 입력한 휴대전화로 상품권을 발송합니다.</small>
           </article>
         </section>
 
@@ -435,6 +484,25 @@ export default function MyJikeoroPage() {
         </div>
         <p className="prototype-auth-note">현재는 로그인·대응 현황을 미리 보여주는 프로토타입입니다. 실제 운영 단계에서는 본인 계정에 저장된 기록만 안전하게 표시됩니다.</p>
       </section>
+
+      {rewardFormOpen && (
+        <div className="reward-form-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && setRewardFormOpen(false)}>
+          <section className="reward-form-modal" role="dialog" aria-modal="true" aria-labelledby="reward-form-title">
+            <button className="reward-form-close" type="button" onClick={() => setRewardFormOpen(false)} aria-label="교환 신청 닫기">×</button>
+            <img className="reward-form-logo" src={sitePath("/onnuri-logo.svg")} alt="디지털 온누리상품권" />
+            <p className="eyebrow">10,000P REWARD</p>
+            <h2 id="reward-form-title">상품권 교환을 신청할까요?</h2>
+            <p>회원 정보와 연락처가 입력된 Google Form이 열립니다. 내용을 확인해 제출하면 담당자가 확인 후 휴대전화로 보내드려요.</p>
+            <form onSubmit={submitRewardForm}>
+              <div className="reward-applicant-summary"><span><small>이름</small><strong>{memberName}</strong></span><span><small>이메일</small><strong>{memberEmail}</strong></span></div>
+              <label><span>상품권 받을 휴대전화 번호</span><input type="tel" inputMode="tel" autoComplete="tel" value={rewardPhone} onChange={(event) => { setRewardPhone(event.target.value); setRewardFormError(""); }} placeholder="010-1234-5678" /></label>
+              {rewardFormError && <p className="reward-form-error" role="alert">{rewardFormError}</p>}
+              <button type="submit">Google Form에서 신청 계속하기 <span>→</span></button>
+            </form>
+            <small>Google Form 제출 전까지 포인트는 차감되지 않습니다.</small>
+          </section>
+        </div>
+      )}
 
       {selectedReport && (
         <div className="member-detail-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && !deleting && setSelectedReport(null)}>

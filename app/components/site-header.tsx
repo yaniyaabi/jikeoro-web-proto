@@ -62,6 +62,7 @@ export function AccessibilityTools() {
 export function SiteHeader({ active, inner = false }: { active: HeaderSection; inner?: boolean }) {
   const [sessionRole, setSessionRole] = useState<string | null>(null);
   const [sessionName, setSessionName] = useState("김지킴");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     fetch("/api/auth/session")
@@ -72,6 +73,24 @@ export function SiteHeader({ active, inner = false }: { active: HeaderSection; i
       })
       .catch(() => setSessionRole(null));
   }, []);
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const closeMenu = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMobileMenuOpen(false);
+    };
+    const closeOnWideScreen = () => {
+      if (window.innerWidth > 1050) setMobileMenuOpen(false);
+    };
+    window.addEventListener("keydown", closeMenu);
+    window.addEventListener("resize", closeOnWideScreen);
+    return () => {
+      window.removeEventListener("keydown", closeMenu);
+      window.removeEventListener("resize", closeOnWideScreen);
+    };
+  }, [mobileMenuOpen]);
+
+  const closeMobileMenu = () => setMobileMenuOpen(false);
 
   return (
     <header className={`site-header universal-header${inner ? " member-header" : ""}`}>
@@ -100,7 +119,22 @@ export function SiteHeader({ active, inner = false }: { active: HeaderSection; i
         ) : (
           <a className="login-button" href={sitePath("/login/")}>로그인</a>
         )}
+        <button className={`mobile-menu-toggle${mobileMenuOpen ? " open" : ""}`} type="button" onClick={() => setMobileMenuOpen((value) => !value)} aria-expanded={mobileMenuOpen} aria-controls="mobile-site-menu" aria-label={mobileMenuOpen ? "메뉴 닫기" : "메뉴 열기"}>
+          <span aria-hidden="true" /><span aria-hidden="true" /><span aria-hidden="true" />
+        </button>
       </div>
+
+      {mobileMenuOpen && <button className="mobile-menu-backdrop" type="button" onClick={closeMobileMenu} aria-label="메뉴 닫기" />}
+      <nav id="mobile-site-menu" className={`mobile-site-menu${mobileMenuOpen ? " open" : ""}`} aria-label="모바일 주요 메뉴" aria-hidden={!mobileMenuOpen}>
+        <div className="mobile-site-menu-heading"><strong>메뉴</strong><span>원하는 화면으로 이동하세요.</span></div>
+        <a className={active === "home" ? "active" : ""} href={sitePath("/")} onClick={closeMobileMenu}><span>홈</span><b>→</b></a>
+        <a className={active === "map" ? "active" : ""} href={sitePath("/map/")} onClick={closeMobileMenu}><span>위험지도</span><b>→</b></a>
+        <a className="report" href={sitePath("/?report=1")} onClick={closeMobileMenu}><span>위험요소 기록하기</span><b>＋</b></a>
+        {sessionRole === "member" && <a className={active === "my" ? "active" : ""} href={sitePath("/my/")} onClick={closeMobileMenu}><span>내 기록 · {sessionName}</span><b>→</b></a>}
+        {sessionRole === "research_admin" && <a className={active === "admin" ? "active" : ""} href={sitePath("/admin/")} onClick={closeMobileMenu}><span>관리자 콘솔</span><b>→</b></a>}
+        {sessionRole === "agency_staff" && <a className={active === "admin" ? "active" : ""} href={sitePath("/admin/")} onClick={closeMobileMenu}><span>기관 콘솔</span><b>→</b></a>}
+        {!sessionRole && <a href={sitePath("/login/")} onClick={closeMobileMenu}><span>로그인 · 회원가입</span><b>→</b></a>}
+      </nav>
     </header>
   );
 }
