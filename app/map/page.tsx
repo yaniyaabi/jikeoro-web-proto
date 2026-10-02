@@ -46,8 +46,10 @@ type MunicipalityFeature = Feature<Polygon | MultiPolygon, MunicipalityPropertie
 
 const categories = hazardFilters;
 const toneByType: Record<string, string> = { 인도: "coral", 횡단보도: "yellow", 조도: "navy", "날씨 관련 위험": "mint", 기타: "plum" };
+const colorByType: Record<string, string> = { 인도: "#ff654f", 횡단보도: "#e0a515", 조도: "#163f47", "날씨 관련 위험": "#4d9d68", 기타: "#816b91" };
 const statusText: Record<MapReport["status"], string> = { received: "접수", review: "현장 검토", action: "조치 진행", completed: "개선 완료" };
 const LIKES_KEY = "jikeoro-map-likes";
+const PROVINCE_CHART_MAX_ZOOM = 8.2;
 const KOREA_VIEW_BOUNDS: [[number, number], [number, number]] = [[124.2, 32.6], [132.2, 39.1]];
 const provinceNames: Record<string, string> = {
   "11": "서울특별시", "21": "부산광역시", "22": "대구광역시", "23": "인천광역시",
@@ -56,6 +58,25 @@ const provinceNames: Record<string, string> = {
   "35": "전북특별자치도", "36": "전라남도", "37": "경상북도", "38": "경상남도",
   "39": "제주특별자치도",
 };
+const provinceCenters: Record<string, [number, number]> = {
+  "11": [126.98, 37.57], "21": [129.08, 35.18], "22": [128.6, 35.87], "23": [126.71, 37.46],
+  "24": [126.85, 35.16], "25": [127.38, 36.35], "26": [129.31, 35.54], "29": [127.29, 36.48],
+  "31": [127.2, 37.42], "32": [128.18, 37.73], "33": [127.7, 36.82], "34": [126.82, 36.52],
+  "35": [127.1, 35.72], "36": [126.9, 34.87], "37": [128.78, 36.48], "38": [128.25, 35.28],
+  "39": [126.54, 33.38],
+};
+
+function donutGradient(counts: Record<string, number>, total: number) {
+  let offset = 0;
+  const stops = hazardCategories.flatMap((category) => {
+    const count = counts[category] ?? 0;
+    if (!count) return [];
+    const start = offset;
+    offset += (count / total) * 100;
+    return `${colorByType[category]} ${start.toFixed(2)}% ${offset.toFixed(2)}%`;
+  });
+  return `conic-gradient(${stops.join(", ")})`;
+}
 
 function provinceCode(feature: MunicipalityFeature) {
   return feature.properties.code.slice(0, 2);
@@ -170,6 +191,7 @@ export default function RiskMapPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [mapReady, setMapReady] = useState(false);
+  const [mapZoom, setMapZoom] = useState(6.5);
   const [dataError, setDataError] = useState("");
   const [mapError, setMapError] = useState("");
   const [municipalities, setMunicipalities] = useState<MunicipalityFeature[]>([]);
@@ -306,9 +328,11 @@ export default function RiskMapPage() {
         map.on("load", () => {
           if (loadTimer) window.clearTimeout(loadTimer);
           setMapError("");
+          setMapZoom(map.getZoom());
           setMapReady(true);
           map.resize();
         });
+        map.on("zoomend", () => setMapZoom(map.getZoom()));
         loadTimer = window.setTimeout(() => {
           if (!map.loaded()) setMapError("무료 지도를 불러오지 못했어요. 인터넷 연결을 확인해 주세요.");
         }, 12000);
@@ -340,8 +364,54 @@ export default function RiskMapPage() {
     markersRef.current = [];
     if (!filteredReports.length) return;
 
-    const first = filteredReports[0];
-    const bounds = new maplibregl.LngLatBounds([first.longitude, first.latitude], [first.longitude, first.latitude]);
+    const showProvinceCharts = !selectedBoundary && mapZoom < PROVINCE_CHART_MAX_ZOOM;
+    if (showProvinceCharts) {
+      const groups = new Map<string, { feature: MunicipalityFeature; reports: MapReport[] }>();
+      filteredReports.forEach((report) => {
+        const feature = provinceBoundaries.find((candidate) => pointInMunicipality([report.longitude, report.latitude], candidate));
+        if (!feature) return;
+        const code = feature.properties.code;
+        const current = groups.get(code) ?? { feature, reports: [] };
+        current.reports.push(report);
+        groups.set(code, current);
+      });
+
+      groups.forEach(({ feature, reports: provinceReports }, code) => {
+        const counts = Object.fromEntries(hazardCategories.map((category) => [category, 0])) as Record<string, number>;
+        provinceReports.forEach((report) => { counts[report.type] = (counts[report.type] ?? 0) + 1; });
+        const total = provinceReports.length;
+        const featureBounds = geometryBounds(feature);
+        const center = provinceCenters[code] ?? [
+          (featureBounds.minLongitude + featureBounds.maxLongitude) / 2,
+          (featureBounds.minLatitude + featureBounds.maxLatitude) / 2,
+        ] as [number, number];
+        const element = document.createElement("button");
+        const size = Math.min(76, 52 + Math.sqrt(total) * 6);
+        const countSummary = hazardCategories
+          .filter((category) => counts[category])
+          .map((category) => `${category} ${counts[category]}건`)
+          .join(", ");
+        element.type = "button";
+        element.className = "province-donut-marker";
+        element.style.width = `${size}px`;
+        element.style.height = `${size}px`;
+        element.style.background = donutGradient(counts, total);
+        element.style.zIndex = "4";
+        element.setAttribute("aria-label", `${provinceNames[code] ?? feature.properties.name} 제보 ${total}건. ${countSummary}. 눌러서 확대하기`);
+        const totalLabel = document.createElement("b");
+        totalLabel.textContent = String(total);
+        const nameLabel = document.createElement("span");
+        nameLabel.textContent = provinceNames[code]?.replace(/특별자치도|특별자치시|광역시|특별시|도$/u, "") ?? feature.properties.name;
+        element.append(totalLabel, nameLabel);
+        element.addEventListener("click", () => {
+          map.flyTo({ center, zoom: PROVINCE_CHART_MAX_ZOOM + 1, duration: 900, essential: true });
+        });
+        const marker = new maplibregl.Marker({ element, anchor: "center" }).setLngLat(center).addTo(map);
+        markersRef.current.push(marker);
+      });
+      return;
+    }
+
     filteredReports.forEach((report, index) => {
       const tone = toneByType[report.type] ?? "navy";
       const safeType = categories.includes(report.type as (typeof categories)[number]) ? report.type : "위험";
@@ -361,16 +431,8 @@ export default function RiskMapPage() {
         .setLngLat([report.longitude, report.latitude])
         .addTo(map);
       markersRef.current.push(marker);
-      bounds.extend([report.longitude, report.latitude]);
     });
-
-    if (selectedBoundary) return;
-    if (filteredReports.length === 1) {
-      map.flyTo({ center: [first.longitude, first.latitude], zoom: 16.5, essential: true });
-    } else {
-      map.fitBounds(bounds, { padding: 80, maxZoom: 16.5, duration: 700 });
-    }
-  }, [filteredReports, mapReady, selectedBoundary]);
+  }, [filteredReports, mapReady, mapZoom, provinceBoundaries, selectedBoundary]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -466,6 +528,7 @@ export default function RiskMapPage() {
   const todayCount = reports.filter((report) => new Date(report.createdAt).toDateString() === new Date().toDateString()).length;
   const visualMedia = selectedMedia.filter((item) => item.kind === "image" || item.kind === "video");
   const activeMedia = visualMedia[selectedMediaIndex] ?? visualMedia[0] ?? null;
+  const provinceChartMode = !selectedBoundary && mapZoom < PROVINCE_CHART_MAX_ZOOM;
 
   return (
     <>
@@ -475,7 +538,7 @@ export default function RiskMapPage() {
         <div>
           <p className="eyebrow">NATIONWIDE LIVE SAFETY MAP</p>
           <h1>우리 동네 위험요소<br />현황지도</h1>
-          <p>주민이 위치정보와 함께 남긴 기록만 지도에 표시합니다. 마커를 누르면 현장 내용과 대응 단계를 확인할 수 있어요.</p>
+          <p>전국에서는 시·도별 위험 분포를 보고, 지도를 확대하면 개별 제보 위치와 대응 단계를 확인할 수 있어요.</p>
         </div>
         <dl>
           <div><dt>GPS 기록</dt><dd>{reports.length}<span>건</span></dd></div>
@@ -537,8 +600,9 @@ export default function RiskMapPage() {
               ))}
               <li className="map-legend-boundary"><i aria-hidden="true" /><span>선택 지역 경계</span></li>
             </ul>
-            <small>마커 안 숫자는 오른쪽 목록 순서예요.</small>
+            <small>{provinceChartMode ? "도넛 가운데 숫자는 시·도별 전체 제보 수예요." : "마커 안 숫자는 오른쪽 목록 순서예요."}</small>
           </aside>
+          {provinceChartMode && <div className="map-zoom-hint"><span aria-hidden="true">＋</span> 도넛을 누르거나 지도를 확대하면 개별 위치가 보여요.</div>}
           <div className="map-privacy-note"><span /> 신고자 정보 없이 위험 위치만 표시됩니다.</div>
         </div>
 
