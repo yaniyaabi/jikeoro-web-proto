@@ -89,7 +89,7 @@ function calculateParticipation(reports: UserReport[]) {
     streakWeeks,
     missionProgress,
     missionCompleted,
-    level: reports.length === 0 ? 0 : Math.floor((reports.length - 1) / 3) + 1,
+    level: Math.floor(points / 1_000),
   };
 }
 
