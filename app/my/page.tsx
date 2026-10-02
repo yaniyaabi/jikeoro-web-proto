@@ -379,8 +379,8 @@ export default function MyJikeoroPage() {
             <div className="reward-exchange-balance"><span>현재 보유</span><strong>{participation.points.toLocaleString()}P</strong></div>
           </div>
           <article className="reward-voucher-card">
-            <div className="reward-voucher-top"><span>온누리상품권</span><b>교환 준비 중</b></div>
-            <div className="reward-voucher-mark"><i>路</i><div><small>교환 시작 기준</small><strong>10,000P</strong></div></div>
+            <div className="reward-voucher-top"><span>디지털 온누리상품권</span><b>교환 준비 중</b></div>
+            <div className="reward-voucher-mark"><i>온</i><div><small>교환 시작 기준</small><strong>10,000P</strong></div></div>
             <div className="reward-exchange-progress" aria-label={`상품권 교환까지 ${Math.round(rewardExchangeProgress)}%`}><i style={{ width: `${rewardExchangeProgress}%` }} /></div>
             <div className="reward-exchange-bottom">
               <p>{canExchangeReward ? "교환 가능한 마일리지가 모였어요." : `${rewardExchangeRemaining.toLocaleString()}P를 더 모으면 교환할 수 있어요.`}</p>
