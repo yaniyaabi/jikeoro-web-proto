@@ -181,9 +181,9 @@ function NeighborhoodIllustrationMap({ items, selectedId, onSelect }: { items: H
             style={{ left: item.x, top: item.y }}
             onClick={() => onSelect(item.id)}
             aria-label={`${item.place} ${item.title} 보기`}
-          ><img src={sitePath(`/icons/${hazardPinFiles[item.type]}`)} alt="" /><span>{item.id}</span></button>
+          ><img src={sitePath(`/icons/${hazardPinFiles[item.type]}`)} alt="" /></button>
         ) : (
-          <span key={item.id} className={`map-pin asset-map-pin pin-${item.tone}`} style={{ left: item.x, top: item.y }} aria-hidden="true"><img src={sitePath(`/icons/${hazardPinFiles[item.type]}`)} alt="" /><span>{item.id}</span></span>
+          <span key={item.id} className={`map-pin asset-map-pin pin-${item.tone}`} style={{ left: item.x, top: item.y }} aria-hidden="true"><img src={sitePath(`/icons/${hazardPinFiles[item.type]}`)} alt="" /></span>
         ),
       )}
     </div>

@@ -412,7 +412,7 @@ export default function RiskMapPage() {
       return;
     }
 
-    filteredReports.forEach((report, index) => {
+    filteredReports.forEach((report) => {
       const tone = toneByType[report.type] ?? "navy";
       const safeType = categories.includes(report.type as (typeof categories)[number]) ? report.type : "위험";
       const element = document.createElement("button");
@@ -422,9 +422,6 @@ export default function RiskMapPage() {
       element.style.backgroundImage = `url(${sitePath(`/icons/${hazardPinFiles[category]}`)})`;
       element.style.zIndex = "4";
       element.setAttribute("aria-label", `${safeType} 위험요소`);
-      const label = document.createElement("b");
-      label.textContent = String(index + 1);
-      element.appendChild(label);
       element.addEventListener("click", () => {
         setSelectedId(report.id);
         map.flyTo({ center: [report.longitude, report.latitude], zoom: 16.8, duration: 850, essential: true });
@@ -602,7 +599,7 @@ export default function RiskMapPage() {
               ))}
               <li className="map-legend-boundary"><i aria-hidden="true" /><span>선택 지역 경계</span></li>
             </ul>
-            <small>{provinceChartMode ? "도넛 가운데 숫자는 시·도별 전체 제보 수예요." : "마커 안 숫자는 오른쪽 목록 순서예요."}</small>
+            <small>{provinceChartMode ? "도넛 가운데 숫자는 시·도별 전체 제보 수예요." : "핀 색으로 위험 유형을 구분할 수 있어요."}</small>
           </aside>
           {provinceChartMode && <div className="map-zoom-hint"><span aria-hidden="true">＋</span> 도넛을 누르거나 지도를 확대하면 개별 위치가 보여요.</div>}
           <div className="map-privacy-note"><span /> 신고자 정보 없이 위험 위치만 표시됩니다.</div>
