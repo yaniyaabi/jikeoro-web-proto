@@ -279,16 +279,32 @@ const reportGuideSteps = [
   },
 ] as const;
 
+function MediaOptionVisual({ kind }: { kind: "image" | "video" }) {
+  const image = kind === "image";
+  return (
+    <>
+      <img className="provided-media-icon" src={sitePath(image ? "/icons/camera.png" : "/icons/video.png")} alt="" />
+      <strong>{image ? "사진 촬영·선택" : "영상 촬영·선택"}</strong>
+      <small>{image ? "카메라 또는 사진첩" : "카메라 또는 보관함"}</small>
+    </>
+  );
+}
+
 function ReportGuidePreview({ step }: { step: number }) {
   return (
     <div className="guide-screen" aria-label={`${step}단계 실제 제보 화면 예시`}>
       <div className="guide-screen-progress"><span style={{ width: `${step * 25}%` }} /></div>
+      <span className="guide-screen-close" aria-hidden="true">×</span>
       <span className="guide-screen-count">{step} / 4</span>
       {step === 1 && (
         <>
           <strong className="guide-screen-title">위험 모습을<br />남겨주세요.</strong>
-          <p>사진이나 영상을 촬영하거나 저장된 자료를 선택해주세요.</p>
-          <div className="guide-media-options"><span><i>＋</i><b>사진 촬영·선택</b></span><span><i>▶</i><b>영상 촬영·선택</b></span></div>
+          <p>사진이나 영상을 촬영하거나 기기에 저장된 자료를 선택해주세요.</p>
+          <div className="guide-media-options">
+            <span><MediaOptionVisual kind="image" /></span>
+            <span><MediaOptionVisual kind="video" /></span>
+          </div>
+          <p className="guide-media-privacy">얼굴과 차량번호가 보이면 제출 전에 확인해주세요. 파일은 이 기기에 안전하게 보관됩니다.</p>
           <div className="guide-next-button">자료 없이 계속하기 <b>→</b></div>
         </>
       )}
@@ -951,15 +967,11 @@ export default function Home() {
                 <div className="media-picker-grid">
                   <label className="media-picker-card">
                     <input type="file" accept="image/*" capture="environment" multiple onChange={(event) => addFiles(event, "image")} />
-                    <img className="provided-media-icon" src={sitePath("/icons/camera.png")} alt="" />
-                    <strong>사진 촬영·선택</strong>
-                    <small>카메라 또는 사진첩</small>
+                    <MediaOptionVisual kind="image" />
                   </label>
                   <label className="media-picker-card">
                     <input type="file" accept="video/*" capture="environment" multiple onChange={(event) => addFiles(event, "video")} />
-                    <img className="provided-media-icon" src={sitePath("/icons/video.png")} alt="" />
-                    <strong>영상 촬영·선택</strong>
-                    <small>카메라 또는 보관함</small>
+                    <MediaOptionVisual kind="video" />
                   </label>
                 </div>
                 {attachments.some((attachment) => attachment.kind !== "audio") && (
