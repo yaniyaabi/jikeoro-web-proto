@@ -2,6 +2,7 @@ const PAGES_PREFIX = "/jikeoro-web-proto";
 const REPORTS_KEY = "jikeoro-pages-reports";
 const ROLE_KEY = "jikeoro-pages-role";
 const USERS_KEY = "jikeoro-pages-users";
+const STAFF_USERS_KEY = "jikeoro-pages-staff-users";
 const USER_KEY = "jikeoro-pages-user";
 
 // Authentication is intentionally scoped to the current tab. The previous
@@ -39,7 +40,32 @@ type PrototypeAccount = {
   createdAt: string;
 };
 
-type SessionUser = { id: string; name: string; email: string; role: "member" };
+type StaffRole = "research_admin" | "agency_staff";
+
+type PrototypeStaffAccount = {
+  id: string;
+  name: string;
+  email: string;
+  passwordHash?: string;
+  salt?: string;
+  role: StaffRole;
+  agency: string;
+  active: boolean;
+  createdAt: string;
+};
+
+type SessionUser = {
+  id: string;
+  name: string;
+  email: string;
+  role: "member" | StaffRole;
+  agency: string | null;
+};
+
+const seededStaffAccounts: PrototypeStaffAccount[] = [
+  { id: "staff-demo-admin", name: "배수현 연구원", email: "research@jikeoro.local", role: "research_admin", agency: "지켜路 연구팀", active: true, createdAt: "2026-07-01T09:00:00.000Z" },
+  { id: "staff-demo-agency", name: "박길동 담당자", email: "road@local.go.kr", role: "agency_staff", agency: "대전광역시 도로관리팀", active: true, createdAt: "2026-07-01T09:00:00.000Z" },
+];
 
 function bytesToHex(bytes: Uint8Array) {
   return Array.from(bytes, (value) => value.toString(16).padStart(2, "0")).join("");
@@ -57,6 +83,31 @@ function readAccounts(): PrototypeAccount[] {
   } catch {
     return [];
   }
+}
+
+function readStaffAccounts(): PrototypeStaffAccount[] {
+  try {
+    const saved = window.localStorage.getItem(STAFF_USERS_KEY);
+    return saved ? JSON.parse(saved) as PrototypeStaffAccount[] : seededStaffAccounts;
+  } catch {
+    return seededStaffAccounts;
+  }
+}
+
+function writeStaffAccounts(accounts: PrototypeStaffAccount[]) {
+  window.localStorage.setItem(STAFF_USERS_KEY, JSON.stringify(accounts));
+}
+
+function publicStaffAccount(account: PrototypeStaffAccount) {
+  return {
+    id: account.id,
+    name: account.name,
+    email: account.email,
+    role: account.role,
+    agency: account.agency,
+    active: account.active,
+    createdAt: account.createdAt,
+  };
 }
 
 function readSessionUser(): SessionUser | null {
@@ -172,7 +223,7 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
       createdAt: new Date().toISOString(),
     };
     window.localStorage.setItem(USERS_KEY, JSON.stringify([...accounts, account]));
-    const user: SessionUser = { id: account.id, name: account.name, email: account.email, role: "member" };
+    const user: SessionUser = { id: account.id, name: account.name, email: account.email, role: "member", agency: null };
     window.sessionStorage.setItem(USER_KEY, JSON.stringify(user));
     window.sessionStorage.setItem(ROLE_KEY, "member");
     return json({ ok: true, user }, 201);
@@ -184,17 +235,37 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     const password = String(body.password ?? "");
     const account = readAccounts().find((candidate) => candidate.email === email);
     if (!account || await hashPassword(password, account.salt) !== account.passwordHash) return json({ error: "이메일 또는 비밀번호가 맞지 않아요." }, 401);
-    const user: SessionUser = { id: account.id, name: account.name, email: account.email, role: "member" };
+    const user: SessionUser = { id: account.id, name: account.name, email: account.email, role: "member", agency: null };
     window.sessionStorage.setItem(USER_KEY, JSON.stringify(user));
     window.sessionStorage.setItem(ROLE_KEY, "member");
     return json({ ok: true, user });
   }
 
+  if (url.pathname === "/api/auth/admin-login" && method === "POST") {
+    const body = JSON.parse(String(init?.body ?? "{}"));
+    const email = String(body.email ?? "").trim().toLowerCase();
+    const password = String(body.password ?? "");
+    const account = readStaffAccounts().find((candidate) => candidate.email === email);
+    if (!account || !account.active || !account.salt || !account.passwordHash || await hashPassword(password, account.salt) !== account.passwordHash) {
+      return json({ error: "이메일 또는 비밀번호를 확인해주세요. 사용 중지된 계정은 로그인할 수 없습니다." }, 401);
+    }
+    const user: SessionUser = { id: account.id, name: account.name, email: account.email, role: account.role, agency: account.agency || null };
+    window.sessionStorage.setItem(USER_KEY, JSON.stringify(user));
+    window.sessionStorage.setItem(ROLE_KEY, account.role);
+    return json({ ok: true, user });
+  }
+
   if (url.pathname === "/api/auth/demo" && method === "POST") {
     const body = JSON.parse(String(init?.body ?? "{}"));
-    window.sessionStorage.removeItem(USER_KEY);
-    window.sessionStorage.setItem(ROLE_KEY, body.role ?? "member");
-    return json({ ok: true });
+    const role = body.role ?? "member";
+    const user: SessionUser = role === "research_admin"
+      ? { id: "staff-demo-admin", name: "배수현 연구원", email: "research@jikeoro.local", role, agency: "지켜路 연구팀" }
+      : role === "agency_staff"
+        ? { id: "staff-demo-agency", name: "박길동 담당자", email: "road@local.go.kr", role, agency: "대전광역시 도로관리팀" }
+        : { id: "demo-member", name: "김지킴", email: "member@jikeoro.local", role: "member", agency: null };
+    window.sessionStorage.setItem(USER_KEY, JSON.stringify(user));
+    window.sessionStorage.setItem(ROLE_KEY, role);
+    return json({ ok: true, user });
   }
 
   if (url.pathname === "/api/auth/logout" && method === "POST") {
@@ -293,7 +364,10 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   }
 
   if (url.pathname === "/api/admin/reports" && method === "PATCH") {
+    if (role !== "research_admin" && role !== "agency_staff") return json({ error: "운영 계정 로그인이 필요합니다." }, 403);
     const body = JSON.parse(String(init?.body ?? "{}"));
+    const current = readReports().find((report) => report.id === body.id);
+    if (role === "agency_staff" && current?.assigned_agency !== sessionUser?.agency) return json({ error: "우리 기관에 배정된 기록만 처리할 수 있습니다." }, 403);
     const reports = readReports().map((report) =>
       report.id === body.id
         ? {
@@ -310,10 +384,63 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   }
 
   if (url.pathname === "/api/admin/reports") {
+    if (role !== "research_admin" && role !== "agency_staff") return json({ error: "운영 계정 로그인이 필요합니다." }, 403);
+    const reports = role === "agency_staff"
+      ? readReports().filter((report) => report.assigned_agency === sessionUser?.agency)
+      : readReports();
     return json({
-      user: { name: "배수현 연구원", role: role ?? "research_admin", agency: null },
-      reports: readReports(),
+      user: sessionUser,
+      reports,
     });
+  }
+
+  if (url.pathname === "/api/admin/accounts" && method === "GET") {
+    if (role !== "research_admin") return json({ error: "연구원 관리자만 계정을 관리할 수 있습니다." }, 403);
+    return json({ accounts: readStaffAccounts().map(publicStaffAccount) });
+  }
+
+  if (url.pathname === "/api/admin/accounts" && method === "POST") {
+    if (role !== "research_admin") return json({ error: "연구원 관리자만 계정을 만들 수 있습니다." }, 403);
+    const body = JSON.parse(String(init?.body ?? "{}"));
+    const name = String(body.name ?? "").trim();
+    const email = String(body.email ?? "").trim().toLowerCase();
+    const password = String(body.password ?? "");
+    const accountRole: StaffRole = body.role === "research_admin" ? "research_admin" : "agency_staff";
+    const agency = String(body.agency ?? "").trim();
+    if (name.length < 2 || !email.includes("@") || password.length < 8 || !agency) return json({ error: "이름, 이메일, 8자 이상의 초기 비밀번호와 소속 기관을 확인해주세요." }, 400);
+    const accounts = readStaffAccounts();
+    if (accounts.some((account) => account.email === email) || readAccounts().some((account) => account.email === email)) return json({ error: "이미 사용 중인 이메일입니다." }, 409);
+    const salt = bytesToHex(crypto.getRandomValues(new Uint8Array(16)));
+    const account: PrototypeStaffAccount = {
+      id: `staff-${crypto.randomUUID()}`,
+      name,
+      email,
+      salt,
+      passwordHash: await hashPassword(password, salt),
+      role: accountRole,
+      agency,
+      active: true,
+      createdAt: new Date().toISOString(),
+    };
+    writeStaffAccounts([...accounts, account]);
+    return json({ account: publicStaffAccount(account) }, 201);
+  }
+
+  if (url.pathname === "/api/admin/accounts" && method === "PATCH") {
+    if (role !== "research_admin") return json({ error: "연구원 관리자만 권한을 변경할 수 있습니다." }, 403);
+    const body = JSON.parse(String(init?.body ?? "{}"));
+    const accountRole: StaffRole = body.role === "research_admin" ? "research_admin" : "agency_staff";
+    const agency = String(body.agency ?? "").trim();
+    if (!agency) return json({ error: "소속 기관을 입력해주세요." }, 400);
+    let updated: PrototypeStaffAccount | null = null;
+    const accounts = readStaffAccounts().map((account) => {
+      if (account.id !== body.id) return account;
+      updated = { ...account, role: accountRole, agency, active: body.active !== false };
+      return updated;
+    });
+    if (!updated) return json({ error: "계정을 찾을 수 없습니다." }, 404);
+    writeStaffAccounts(accounts);
+    return json({ account: publicStaffAccount(updated) });
   }
 
   return json({ error: "GitHub Pages demo endpoint" }, 404);

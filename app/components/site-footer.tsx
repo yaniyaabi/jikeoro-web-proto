@@ -14,7 +14,7 @@ export function SiteFooter({ showAdminLink = false }: SiteFooterProps) {
         <span><strong>지켜路</strong><small>우리 동네 보행안전 지도</small></span>
       </a>
       <p>
-        {showAdminLink && <><a className="admin-entry-link" href={sitePath("/admin/login")}>관리자·기관 로그인</a><br /></>}
+        {showAdminLink && <><a className="admin-entry-link" href={sitePath("/admin/login/")}>관리자·기관 로그인</a><br /></>}
         © 2026 JIKEORO. KAIST HDL.
       </p>
     </footer>
