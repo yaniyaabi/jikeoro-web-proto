@@ -1,14 +1,42 @@
 import type { HazardCategory } from "../lib/hazard-categories";
-import { sitePath } from "../lib/site-path";
 
 export function HazardIllustration({ type }: { type: HazardCategory | string }) {
   if (type === "인도" || type === "단차") {
     return (
-      <img
-        className="hazard-illustration-svg hazard-illustration-photo"
-        src={sitePath("/images/sidewalk-curb-hazard-v2.webp")}
-        alt="보행보조기 바퀴가 걸릴 수 있는 높은 보도 경계석 현장"
-      />
+      <svg className="hazard-illustration-svg" viewBox="0 0 640 360" preserveAspectRatio="xMidYMid slice" role="img" aria-label="보행보조기 바퀴가 걸릴 수 있는 높은 보도 경계석 일러스트">
+        <rect width="640" height="360" fill="#dfe8df" />
+        <circle cx="568" cy="54" r="88" fill="#d1e9bf" />
+        <circle cx="615" cy="98" r="54" fill="#c6e1b4" opacity=".9" />
+
+        <path d="M0 93 640 38v142L0 239Z" fill="#b9c9bf" />
+        <path d="M0 115 640 61v31L0 147Z" fill="#f8f5eb" />
+        <path d="M0 147 640 92v188L0 360Z" fill="#eee5d4" />
+        <path d="M0 287 640 217v143H0Z" fill="#b7a184" />
+
+        <path d="M0 147 352 117l288-25v126l-288 36L0 287Z" fill="#f3ecdd" />
+        <path d="M352 117 640 92v31l-288 36Z" fill="#fffdf6" />
+        <path d="M352 159 640 123v95l-288 36Z" fill="#d19373" />
+        <path d="M352 159 640 123" fill="none" stroke="#ff6655" strokeWidth="8" strokeLinecap="round" />
+        <path d="M0 147 352 117v42L0 201Z" fill="#e4d7c1" />
+
+        <path d="M88 175 320 147M39 223l248-39M37 272l225-44" fill="none" stroke="#fffdf8" strokeWidth="5" opacity=".9" />
+        <path d="M175 132 147 306M291 121 266 272" fill="none" stroke="#d6c8b1" strokeWidth="4" />
+
+        <circle cx="302" cy="242" r="42" fill="#153c38" stroke="#fff" strokeWidth="9" />
+        <circle cx="302" cy="242" r="16" fill="#aef05d" />
+        <circle cx="186" cy="269" r="27" fill="#153c38" stroke="#fff" strokeWidth="7" />
+        <circle cx="186" cy="269" r="9" fill="#aef05d" />
+        <path d="M182 235h86l37-80m-37 80-60-84m60 84 55-70m-115-14h76m39 14h39" fill="none" stroke="#153c38" strokeWidth="11" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M221 151 196 97h82" fill="none" stroke="#153c38" strokeWidth="11" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M213 105h70" stroke="#153c38" strokeWidth="18" strokeLinecap="round" />
+        <path d="M234 159h66l-9 47h-43Z" fill="#9ddc68" stroke="#153c38" strokeWidth="7" strokeLinejoin="round" />
+
+        <path d="M397 145v72" stroke="#ff6655" strokeWidth="5" strokeLinecap="round" />
+        <path d="m387 156 10-11 10 11m-20 50 10 11 10-11" fill="none" stroke="#ff6655" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+        <rect x="414" y="151" width="126" height="38" rx="19" fill="#fffaf0" />
+        <circle cx="436" cy="170" r="6" fill="#ff6655" />
+        <text x="483" y="176" textAnchor="middle" fill="#9a4d41" fontSize="16" fontWeight="850">높은 경계석</text>
+      </svg>
     );
   }
 
