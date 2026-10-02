@@ -761,11 +761,18 @@ export default function Home() {
               위험지도 둘러보기 <span aria-hidden="true">↗</span>
             </a>
           </div>
-          <div className="hero-note">
-            <div className="avatar-stack" aria-hidden="true">
-              <span>김</span><span>박</span><span>이</span>
+          <div className="hero-support-row">
+            <div className="hero-note">
+              <div className="avatar-stack" aria-hidden="true">
+                <span>김</span><span>박</span><span>이</span>
+              </div>
+              <p><strong>전국 주민참여 조사 준비 중</strong><br />주민과 연구진이 함께 설계합니다.</p>
             </div>
-            <p><strong>전국 주민참여 조사 준비 중</strong><br />주민과 연구진이 함께 설계합니다.</p>
+            <a className="hero-app-download" href="https://yaniyaabi.github.io/jikeoro-senior-app-proto/" target="_blank" rel="noreferrer">
+              <span className="hero-app-icon" aria-hidden="true">↓</span>
+              <span className="hero-app-copy"><strong>지켜路 앱 설치하기</strong><small>브라우저 메뉴에서 ‘홈 화면에 추가’</small></span>
+              <i aria-hidden="true">↗</i>
+            </a>
           </div>
         </div>
 
