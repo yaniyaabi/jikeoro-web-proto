@@ -32,6 +32,8 @@ test("research administrators can create staff accounts with role-based access",
   assert.match(adminPage, /로그인 비밀번호/);
   assert.match(adminPage, /연구원 관리자/);
   assert.match(adminPage, /기관 담당자/);
+  assert.match(adminPage, /filter === "all" \? "active"/);
+  assert.match(adminPage, /<small>전체<\/small>/);
   assert.match(adminLogin, /운영 콘솔 로그인/);
   assert.doesNotMatch(adminLogin, /프로토타입 빠른 체험/);
   assert.match(runtime, /loginId: "yaniyaabi@kaist\.ac\.kr"/);

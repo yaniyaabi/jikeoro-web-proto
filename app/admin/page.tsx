@@ -244,6 +244,7 @@ export default function AdminPage() {
 
         {view === "reports" ? <>
           <div className="admin-stats">
+            <button className={filter === "all" ? "active" : ""} onClick={() => setFilter("all")}><span>ALL</span><b>{reports.length}</b><small>전체</small></button>
             {statusOrder.map((key, index) => <button key={key} className={filter === key ? "active" : ""} onClick={() => setFilter(filter === key ? "all" : key)}><span>0{index + 1}</span><b>{counts[key]}</b><small>{statusLabels[key]}</small></button>)}
           </div>
 
