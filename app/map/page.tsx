@@ -7,7 +7,7 @@ import { SiteHeader } from "../components/site-header";
 import { SiteFooter } from "../components/site-footer";
 import { sitePath } from "../lib/site-path";
 import { HazardIllustration } from "../components/hazard-illustration";
-import { hazardCategories, hazardFilters, normalizeHazardCategory } from "../lib/hazard-categories";
+import { hazardCategories, hazardFilters, hazardPinFiles, normalizeHazardCategory } from "../lib/hazard-categories";
 
 type MapReport = {
   id: string;
@@ -418,6 +418,8 @@ export default function RiskMapPage() {
       const element = document.createElement("button");
       element.type = "button";
       element.className = `free-risk-marker marker-${tone}`;
+      const category = normalizeHazardCategory(report.type);
+      element.style.backgroundImage = `url(${sitePath(`/icons/${hazardPinFiles[category]}`)})`;
       element.style.zIndex = "4";
       element.setAttribute("aria-label", `${safeType} 위험요소`);
       const label = document.createElement("b");
@@ -594,7 +596,7 @@ export default function RiskMapPage() {
             <ul>
               {hazardCategories.map((category) => (
                 <li key={category}>
-                  <i className={`map-legend-pin marker-${toneByType[category]}`} aria-hidden="true" />
+                  <img className="map-legend-pin" src={sitePath(`/icons/${hazardPinFiles[category]}`)} alt="" />
                   <span>{category}</span>
                 </li>
               ))}

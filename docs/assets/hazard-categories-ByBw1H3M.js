@@ -1,1 +1,0 @@
-var e=[`인도`,`횡단보도`,`조도`,`날씨 관련 위험`,`기타`],t=[`전체`,...e];function n(t){return t===`단차`||t===`적치물`?`인도`:t===`포트홀`?`횡단보도`:e.includes(t)?t:`기타`}export{t as n,n as r,e as t};

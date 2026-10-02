@@ -6,7 +6,7 @@ import { SiteHeader } from "./components/site-header";
 import { SiteFooter } from "./components/site-footer";
 import { HazardIllustration } from "./components/hazard-illustration";
 import { sitePath } from "./lib/site-path";
-import { hazardCategories, hazardFilters, type HazardCategory } from "./lib/hazard-categories";
+import { hazardCategories, hazardFilters, hazardIconFiles, hazardPinFiles, type HazardCategory } from "./lib/hazard-categories";
 
 type Hazard = {
   id: number;
@@ -177,13 +177,13 @@ function NeighborhoodIllustrationMap({ items, selectedId, onSelect }: { items: H
           <button
             type="button"
             key={item.id}
-            className={`map-pin pin-${item.tone}${selectedId === item.id ? " selected" : ""}`}
+            className={`map-pin asset-map-pin pin-${item.tone}${selectedId === item.id ? " selected" : ""}`}
             style={{ left: item.x, top: item.y }}
             onClick={() => onSelect(item.id)}
             aria-label={`${item.place} ${item.title} 보기`}
-          ><span>{item.id}</span></button>
+          ><img src={sitePath(`/icons/${hazardPinFiles[item.type]}`)} alt="" /><span>{item.id}</span></button>
         ) : (
-          <span key={item.id} className={`map-pin pin-${item.tone}`} style={{ left: item.x, top: item.y }} aria-hidden="true"><span>{item.id}</span></span>
+          <span key={item.id} className={`map-pin asset-map-pin pin-${item.tone}`} style={{ left: item.x, top: item.y }} aria-hidden="true"><img src={sitePath(`/icons/${hazardPinFiles[item.type]}`)} alt="" /><span>{item.id}</span></span>
         ),
       )}
     </div>
@@ -947,13 +947,13 @@ export default function Home() {
                 <div className="media-picker-grid">
                   <label className="media-picker-card">
                     <input type="file" accept="image/*" capture="environment" multiple onChange={(event) => addFiles(event, "image")} />
-                    <span className="upload-icon" aria-hidden="true">＋</span>
+                    <img className="provided-media-icon" src={sitePath("/icons/camera.png")} alt="" />
                     <strong>사진 촬영·선택</strong>
                     <small>카메라 또는 사진첩</small>
                   </label>
                   <label className="media-picker-card">
                     <input type="file" accept="video/*" capture="environment" multiple onChange={(event) => addFiles(event, "video")} />
-                    <span className="upload-icon video-icon" aria-hidden="true">▶</span>
+                    <img className="provided-media-icon" src={sitePath("/icons/video.png")} alt="" />
                     <strong>영상 촬영·선택</strong>
                     <small>카메라 또는 보관함</small>
                   </label>
@@ -984,7 +984,7 @@ export default function Home() {
                 <fieldset>
                   <legend>위험요소 유형</legend>
                   <div className="type-options">
-                    {hazardCategories.map((item) => <label key={item}><input type="radio" name="hazard" checked={reportType === item} onChange={() => setReportType(item)} /><span>{item}</span></label>)}
+                    {hazardCategories.map((item) => <label key={item}><input type="radio" name="hazard" checked={reportType === item} onChange={() => setReportType(item)} /><span className="hazard-type-option"><img src={sitePath(`/icons/${hazardIconFiles[item]}`)} alt="" />{item}</span></label>)}
                   </div>
                 </fieldset>
                 <label className="text-field">
@@ -997,9 +997,8 @@ export default function Home() {
                   />
                 </label>
                 <div className="description-voice-tools">
-                  <button className={isDictating ? "active" : ""} type="button" onClick={toggleDictation}>
-                    <span aria-hidden="true">{isDictating ? "■" : "🎙"}</span>
-                    {isDictating ? "말하기 끝내기" : "말로 글쓰기"}
+                  <button className={`provided-control-button${isDictating ? " active" : ""}`} type="button" onClick={toggleDictation} aria-label={isDictating ? "말하기 끝내기" : "말로 글쓰기"}>
+                    <img src={sitePath(`/icons/${isDictating ? "speech-dark.png" : "speech-light.png"}`)} alt="" />
                   </button>
                   <p aria-live="polite">{dictationMessage || "말한 내용이 설명 칸에 글자로 입력됩니다."}</p>
                 </div>
@@ -1008,8 +1007,8 @@ export default function Home() {
                     <strong>현장음 녹음</strong>
                     <small>{isRecording ? `${Math.floor(recordingSeconds / 60)}:${String(recordingSeconds % 60).padStart(2, "0")} 녹음 중` : "현장의 소리를 별도 파일로 남길 수 있어요."}</small>
                   </div>
-                  <button className={isRecording ? "recording" : ""} type="button" onClick={isRecording ? stopRecording : startRecording}>
-                    <span aria-hidden="true">{isRecording ? "■" : "●"}</span>{isRecording ? "녹음 끝내기" : "현장음 녹음"}
+                  <button className={`provided-control-button${isRecording ? " recording" : ""}`} type="button" onClick={isRecording ? stopRecording : startRecording} aria-label={isRecording ? "녹음 끝내기" : "현장음 녹음"}>
+                    <img src={sitePath(`/icons/${isRecording ? "record-stop.png" : "ambient-record.png"}`)} alt="" />
                   </button>
                   <label className="audio-file-button">
                     <input type="file" accept="audio/*" onChange={(event) => addFiles(event, "audio")} />
@@ -1020,7 +1019,7 @@ export default function Home() {
                   <div className="media-preview-list audio-preview-list" aria-label="선택한 음성">
                     {attachments.filter((attachment) => attachment.kind === "audio").map((attachment) => (
                       <article className="media-preview audio" key={attachment.id}>
-                        <span className="audio-preview-icon" aria-hidden="true">♪</span>
+                        <img className="audio-preview-label" src={sitePath("/icons/record-play.png")} alt="녹음내용 듣기" />
                         {/* 사용자가 방금 녹음하거나 선택한 원본 음성의 미리듣기입니다. */}
                         {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
                         <audio src={attachment.previewUrl} controls aria-label="녹음한 현장 음성 미리듣기" />
@@ -1046,23 +1045,21 @@ export default function Home() {
                   <legend>위치</legend>
                   <p className="field-guide">GPS 지도의 핀을 맞추거나 알고 있는 주소·장소를 직접 알려주세요.</p>
                   <div className="location-methods">
-                    <button
-                      className={locationChoice === "gps" ? "active" : ""}
+                    <button className={`provided-control-button${locationChoice === "gps" ? " active" : ""}`}
                       type="button"
                       onClick={requestCurrentLocation}
                       aria-pressed={locationChoice === "gps"}
                     >
-                      <span aria-hidden="true">⌖</span>
-                      현재 위치 사용
+                      <img src={sitePath(`/icons/${locationChoice === "gps" ? "location-current-dark.png" : "location-current-light.png"}`)} alt="" />
+                      <span className="sr-only">현재 위치 사용</span>
                     </button>
-                    <button
-                      className={locationChoice === "manual" ? "active" : ""}
+                    <button className={`provided-control-button${locationChoice === "manual" ? " active" : ""}`}
                       type="button"
                       onClick={chooseManualLocation}
                       aria-pressed={locationChoice === "manual"}
                     >
-                      <span aria-hidden="true">⌨</span>
-                      직접 입력
+                      <img src={sitePath(`/icons/${locationChoice === "manual" ? "location-manual-dark.png" : "location-manual-light.png"}`)} alt="" />
+                      <span className="sr-only">직접 입력</span>
                     </button>
                   </div>
 
