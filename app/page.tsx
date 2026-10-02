@@ -837,7 +837,6 @@ export default function Home() {
         </div>
         <div className="report-guide">
           <div className="guide-preview-wrap">
-            <span className="guide-preview-label">실제 제보 화면</span>
             <ReportGuidePreview step={guideStep} />
           </div>
           <div className="guide-copy" aria-live="polite">
