@@ -997,8 +997,9 @@ export default function Home() {
                   />
                 </label>
                 <div className="description-voice-tools">
-                  <button className={`provided-control-button${isDictating ? " active" : ""}`} type="button" onClick={toggleDictation} aria-label={isDictating ? "말하기 끝내기" : "말로 글쓰기"}>
-                    <img src={sitePath(`/icons/${isDictating ? "speech-dark.png" : "speech-light.png"}`)} alt="" />
+                  <button className={isDictating ? "active" : ""} type="button" onClick={toggleDictation}>
+                    <span aria-hidden="true">{isDictating ? "■" : "🎙"}</span>
+                    {isDictating ? "말하기 끝내기" : "말로 글쓰기"}
                   </button>
                   <p aria-live="polite">{dictationMessage || "말한 내용이 설명 칸에 글자로 입력됩니다."}</p>
                 </div>
@@ -1007,8 +1008,8 @@ export default function Home() {
                     <strong>현장음 녹음</strong>
                     <small>{isRecording ? `${Math.floor(recordingSeconds / 60)}:${String(recordingSeconds % 60).padStart(2, "0")} 녹음 중` : "현장의 소리를 별도 파일로 남길 수 있어요."}</small>
                   </div>
-                  <button className={`provided-control-button${isRecording ? " recording" : ""}`} type="button" onClick={isRecording ? stopRecording : startRecording} aria-label={isRecording ? "녹음 끝내기" : "현장음 녹음"}>
-                    <img src={sitePath(`/icons/${isRecording ? "record-stop.png" : "ambient-record.png"}`)} alt="" />
+                  <button className={isRecording ? "recording" : ""} type="button" onClick={isRecording ? stopRecording : startRecording}>
+                    <span aria-hidden="true">{isRecording ? "■" : "●"}</span>{isRecording ? "녹음 끝내기" : "현장음 녹음"}
                   </button>
                   <label className="audio-file-button">
                     <input type="file" accept="audio/*" onChange={(event) => addFiles(event, "audio")} />
@@ -1019,7 +1020,7 @@ export default function Home() {
                   <div className="media-preview-list audio-preview-list" aria-label="선택한 음성">
                     {attachments.filter((attachment) => attachment.kind === "audio").map((attachment) => (
                       <article className="media-preview audio" key={attachment.id}>
-                        <img className="audio-preview-label" src={sitePath("/icons/record-play.png")} alt="녹음내용 듣기" />
+                        <span className="audio-preview-icon" aria-hidden="true">♪</span>
                         {/* 사용자가 방금 녹음하거나 선택한 원본 음성의 미리듣기입니다. */}
                         {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
                         <audio src={attachment.previewUrl} controls aria-label="녹음한 현장 음성 미리듣기" />
@@ -1045,21 +1046,23 @@ export default function Home() {
                   <legend>위치</legend>
                   <p className="field-guide">GPS 지도의 핀을 맞추거나 알고 있는 주소·장소를 직접 알려주세요.</p>
                   <div className="location-methods">
-                    <button className={`provided-control-button${locationChoice === "gps" ? " active" : ""}`}
+                    <button
+                      className={locationChoice === "gps" ? "active" : ""}
                       type="button"
                       onClick={requestCurrentLocation}
                       aria-pressed={locationChoice === "gps"}
                     >
-                      <img src={sitePath(`/icons/${locationChoice === "gps" ? "location-current-dark.png" : "location-current-light.png"}`)} alt="" />
-                      <span className="sr-only">현재 위치 사용</span>
+                      <span aria-hidden="true">⌖</span>
+                      현재 위치 사용
                     </button>
-                    <button className={`provided-control-button${locationChoice === "manual" ? " active" : ""}`}
+                    <button
+                      className={locationChoice === "manual" ? "active" : ""}
                       type="button"
                       onClick={chooseManualLocation}
                       aria-pressed={locationChoice === "manual"}
                     >
-                      <img src={sitePath(`/icons/${locationChoice === "manual" ? "location-manual-dark.png" : "location-manual-light.png"}`)} alt="" />
-                      <span className="sr-only">직접 입력</span>
+                      <span aria-hidden="true">⌨</span>
+                      직접 입력
                     </button>
                   </div>
 
