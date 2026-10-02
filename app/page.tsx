@@ -768,11 +768,6 @@ export default function Home() {
               </div>
               <p><strong>전국 주민참여 조사 준비 중</strong><br />주민과 연구진이 함께 설계합니다.</p>
             </div>
-            <a className="hero-app-download" href="https://yaniyaabi.github.io/jikeoro-senior-app-proto/" target="_blank" rel="noreferrer">
-              <span className="hero-app-icon" aria-hidden="true">↓</span>
-              <span className="hero-app-copy"><strong>지켜路 앱 설치하기</strong><small>브라우저 메뉴에서 ‘홈 화면에 추가’</small></span>
-              <i aria-hidden="true">↗</i>
-            </a>
           </div>
         </div>
 
@@ -848,6 +843,27 @@ export default function Home() {
               <span>{index + 1}</span><b>{item.title}</b>
             </button>
           ))}
+        </div>
+      </section>
+
+      <section className="app-download-section" aria-labelledby="app-download-title">
+        <div className="app-download-card">
+          <div className="app-download-mark" aria-hidden="true"><span>路</span></div>
+          <div className="app-download-content">
+            <p className="eyebrow">JIKEORO MOBILE APP</p>
+            <h2 id="app-download-title">휴대전화에서도<br />더 편하게 기록하세요.</h2>
+            <p>사진 촬영부터 처리 현황과 마일리지 확인까지, 지켜路 앱에서 그대로 이어집니다.</p>
+            <div className="app-download-steps" aria-label="앱 설치 방법">
+              <span><b>1</b> 앱 페이지 열기</span><i aria-hidden="true">→</i>
+              <span><b>2</b> 브라우저 메뉴</span><i aria-hidden="true">→</i>
+              <span><b>3</b> 홈 화면에 추가</span>
+            </div>
+          </div>
+          <a className="app-download-button" href="https://yaniyaabi.github.io/jikeoro-senior-app-proto/" target="_blank" rel="noreferrer">
+            <span aria-hidden="true">↓</span>
+            <div><small>지켜路 모바일 앱</small><strong>설치 화면 열기</strong></div>
+            <i aria-hidden="true">↗</i>
+          </a>
         </div>
       </section>
 
