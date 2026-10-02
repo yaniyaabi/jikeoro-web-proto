@@ -608,6 +608,15 @@ html[data-site-contrast="high"]{--ink:#001b17;--ink-soft:#18342e;--paper:#fff;--
 @media(max-width:980px){.reward-exchange{grid-template-columns:1fr;gap:28px}.reward-voucher-card{width:100%}}
 @media(max-width:720px){.reward-exchange{margin-top:10px;padding:26px 20px;border-radius:20px}.reward-exchange-copy h2{font-size:34px}.reward-exchange-copy>p:not(.eyebrow){font-size:13px}.reward-voucher-card{padding:20px}.reward-exchange-bottom{align-items:flex-start;flex-direction:column}.reward-exchange-bottom button{width:100%}.reward-voucher-mark{margin:24px 0 21px}}
 
+/* 온누리상품권을 연상시키는 따뜻한 주황색 보상 영역 */
+.reward-exchange{background:linear-gradient(125deg,#fff9f1 0 42%,#ffe4bd 100%);border-color:#f1bd79}
+.reward-exchange:before{border-color:rgba(205,92,24,.18)}
+.reward-exchange-copy>p:not(.eyebrow){color:#76543f}.reward-exchange-balance span{color:#8a6044}.reward-exchange-balance strong{color:#b74218}
+.reward-voucher-card{background:linear-gradient(135deg,#d84a1b 0%,#ef7120 55%,#f29a2e 100%);box-shadow:0 20px 42px rgba(190,73,18,.25)}
+.reward-voucher-top>b{background:#fff2df;color:#a73c17}.reward-voucher-mark>i{background:#fff0c6;color:#a63813}.reward-voucher-mark small{color:#ffe0ca}.reward-voucher-mark strong{color:#fff}
+.reward-exchange-progress{background:rgba(112,36,11,.32)}.reward-exchange-progress>i{background:linear-gradient(90deg,#fff1b8,#ffe08a)}
+.reward-exchange-bottom p{color:#fff2e4}.reward-exchange-bottom button{background:#fff4df;color:#9d3513}.reward-exchange-bottom button:disabled{background:rgba(255,255,255,.3);color:#fff4e9}.reward-voucher-card>small{border-top-color:rgba(255,255,255,.25);color:#ffe6d2}
+
 /* 확정된 다섯 개의 큰 위험 카테고리 */
 .type-options{grid-template-columns:repeat(5,1fr)}
 .guide-type-options{grid-template-columns:repeat(5,1fr)}
