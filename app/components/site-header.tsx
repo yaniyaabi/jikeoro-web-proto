@@ -84,6 +84,8 @@ export function SiteHeader({ active, inner = false }: { active: HeaderSection; i
         <a className={active === "home" ? "active" : ""} href={sitePath("/")}>홈</a>
         <a className={active === "map" ? "active" : ""} href={sitePath("/map/")}>위험지도</a>
         {sessionRole === "member" && <a className={active === "my" ? "active" : ""} href={sitePath("/my/")}>내 기록</a>}
+        {sessionRole === "research_admin" && <a className={active === "admin" ? "active" : ""} href={sitePath("/admin/")}>관리자 콘솔</a>}
+        {sessionRole === "agency_staff" && <a className={active === "admin" ? "active" : ""} href={sitePath("/admin/")}>기관 콘솔</a>}
       </nav>
 
       <div className="header-actions">
@@ -91,8 +93,10 @@ export function SiteHeader({ active, inner = false }: { active: HeaderSection; i
         <a className="header-cta" href={sitePath("/?report=1")}>위험요소 기록하기</a>
         {sessionRole === "member" ? (
           <a className="account-button" href={sitePath("/my/")} aria-label="내 지켜로 활동 보기"><span>{sessionName.slice(0, 1)}</span><b>{sessionName}</b></a>
-        ) : sessionRole === "research_admin" || sessionRole === "agency_staff" ? (
+        ) : sessionRole === "research_admin" ? (
           <a className="login-button" href={sitePath("/admin/")}>관리자</a>
+        ) : sessionRole === "agency_staff" ? (
+          <a className="login-button" href={sitePath("/admin/")}>기관</a>
         ) : (
           <a className="login-button" href={sitePath("/login/")}>로그인</a>
         )}

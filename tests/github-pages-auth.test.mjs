@@ -40,8 +40,10 @@ test("member participation starts empty and is derived from that member's report
   assert.doesNotMatch(myPage, /width: "66%"/);
 });
 
-test("the My Reports navigation item is only rendered for signed-in members", async () => {
+test("the role-specific navigation item is rendered in the shared account menu position", async () => {
   const siteHeader = await readFile(siteHeaderUrl, "utf8");
 
   assert.match(siteHeader, /sessionRole === "member" && <a[^>]+>내 기록<\/a>/);
+  assert.match(siteHeader, /sessionRole === "research_admin" && <a[^>]+>관리자 콘솔<\/a>/);
+  assert.match(siteHeader, /sessionRole === "agency_staff" && <a[^>]+>기관 콘솔<\/a>/);
 });
