@@ -45,7 +45,8 @@ type StaffRole = "research_admin" | "agency_staff";
 type PrototypeStaffAccount = {
   id: string;
   name: string;
-  email: string;
+  loginId: string;
+  email?: string;
   passwordHash?: string;
   salt?: string;
   role: StaffRole;
@@ -57,14 +58,15 @@ type PrototypeStaffAccount = {
 type SessionUser = {
   id: string;
   name: string;
-  email: string;
+  email?: string;
+  loginId?: string;
   role: "member" | StaffRole;
   agency: string | null;
 };
 
 const seededStaffAccounts: PrototypeStaffAccount[] = [
-  { id: "staff-demo-admin", name: "배수현 연구원", email: "research@jikeoro.local", role: "research_admin", agency: "지켜路 연구팀", active: true, createdAt: "2026-07-01T09:00:00.000Z" },
-  { id: "staff-demo-agency", name: "박길동 담당자", email: "road@local.go.kr", role: "agency_staff", agency: "대전광역시 도로관리팀", active: true, createdAt: "2026-07-01T09:00:00.000Z" },
+  { id: "staff-demo-admin", name: "배수현 연구원", loginId: "jikeoro-admin", role: "research_admin", agency: "지켜路 연구팀", active: true, createdAt: "2026-07-01T09:00:00.000Z" },
+  { id: "staff-demo-agency", name: "박길동 담당자", loginId: "daejeon-road", role: "agency_staff", agency: "대전광역시 도로관리팀", active: true, createdAt: "2026-07-01T09:00:00.000Z" },
 ];
 
 function bytesToHex(bytes: Uint8Array) {
@@ -88,7 +90,11 @@ function readAccounts(): PrototypeAccount[] {
 function readStaffAccounts(): PrototypeStaffAccount[] {
   try {
     const saved = window.localStorage.getItem(STAFF_USERS_KEY);
-    return saved ? JSON.parse(saved) as PrototypeStaffAccount[] : seededStaffAccounts;
+    if (!saved) return seededStaffAccounts;
+    return (JSON.parse(saved) as Array<PrototypeStaffAccount & { email?: string }>).map((account) => ({
+      ...account,
+      loginId: account.loginId || account.email || "",
+    }));
   } catch {
     return seededStaffAccounts;
   }
@@ -102,7 +108,7 @@ function publicStaffAccount(account: PrototypeStaffAccount) {
   return {
     id: account.id,
     name: account.name,
-    email: account.email,
+    loginId: account.loginId,
     role: account.role,
     agency: account.agency,
     active: account.active,
@@ -243,13 +249,13 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
 
   if (url.pathname === "/api/auth/admin-login" && method === "POST") {
     const body = JSON.parse(String(init?.body ?? "{}"));
-    const email = String(body.email ?? "").trim().toLowerCase();
+    const loginId = String(body.loginId ?? "").trim().toLowerCase();
     const password = String(body.password ?? "");
-    const account = readStaffAccounts().find((candidate) => candidate.email === email);
+    const account = readStaffAccounts().find((candidate) => candidate.loginId.toLowerCase() === loginId);
     if (!account || !account.active || !account.salt || !account.passwordHash || await hashPassword(password, account.salt) !== account.passwordHash) {
       return json({ error: "이메일 또는 비밀번호를 확인해주세요. 사용 중지된 계정은 로그인할 수 없습니다." }, 401);
     }
-    const user: SessionUser = { id: account.id, name: account.name, email: account.email, role: account.role, agency: account.agency || null };
+    const user: SessionUser = { id: account.id, name: account.name, loginId: account.loginId, role: account.role, agency: account.agency || null };
     window.sessionStorage.setItem(USER_KEY, JSON.stringify(user));
     window.sessionStorage.setItem(ROLE_KEY, account.role);
     return json({ ok: true, user });
@@ -259,9 +265,9 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     const body = JSON.parse(String(init?.body ?? "{}"));
     const role = body.role ?? "member";
     const user: SessionUser = role === "research_admin"
-      ? { id: "staff-demo-admin", name: "배수현 연구원", email: "research@jikeoro.local", role, agency: "지켜路 연구팀" }
+      ? { id: "staff-demo-admin", name: "배수현 연구원", loginId: "jikeoro-admin", role, agency: "지켜路 연구팀" }
       : role === "agency_staff"
-        ? { id: "staff-demo-agency", name: "박길동 담당자", email: "road@local.go.kr", role, agency: "대전광역시 도로관리팀" }
+        ? { id: "staff-demo-agency", name: "박길동 담당자", loginId: "daejeon-road", role, agency: "대전광역시 도로관리팀" }
         : { id: "demo-member", name: "김지킴", email: "member@jikeoro.local", role: "member", agency: null };
     window.sessionStorage.setItem(USER_KEY, JSON.stringify(user));
     window.sessionStorage.setItem(ROLE_KEY, role);
@@ -403,18 +409,18 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     if (role !== "research_admin") return json({ error: "연구원 관리자만 계정을 만들 수 있습니다." }, 403);
     const body = JSON.parse(String(init?.body ?? "{}"));
     const name = String(body.name ?? "").trim();
-    const email = String(body.email ?? "").trim().toLowerCase();
+    const loginId = String(body.loginId ?? "").trim().toLowerCase();
     const password = String(body.password ?? "");
     const accountRole: StaffRole = body.role === "research_admin" ? "research_admin" : "agency_staff";
     const agency = String(body.agency ?? "").trim();
-    if (name.length < 2 || !email.includes("@") || password.length < 8 || !agency) return json({ error: "이름, 이메일, 8자 이상의 초기 비밀번호와 소속 기관을 확인해주세요." }, 400);
+    if (name.length < 2 || !/^[a-z0-9._-]{4,30}$/.test(loginId) || password.length < 8 || !agency) return json({ error: "이름, 영문·숫자 4자 이상의 로그인 아이디, 8자 이상의 비밀번호와 소속 기관을 확인해주세요." }, 400);
     const accounts = readStaffAccounts();
-    if (accounts.some((account) => account.email === email) || readAccounts().some((account) => account.email === email)) return json({ error: "이미 사용 중인 이메일입니다." }, 409);
+    if (accounts.some((account) => account.loginId.toLowerCase() === loginId)) return json({ error: "이미 사용 중인 로그인 아이디입니다." }, 409);
     const salt = bytesToHex(crypto.getRandomValues(new Uint8Array(16)));
     const account: PrototypeStaffAccount = {
       id: `staff-${crypto.randomUUID()}`,
       name,
-      email,
+      loginId,
       salt,
       passwordHash: await hashPassword(password, salt),
       role: accountRole,

@@ -8,7 +8,7 @@ import { sitePath } from "../lib/site-path";
 type ReportStatus = "received" | "review" | "action" | "completed";
 type StaffRole = "research_admin" | "agency_staff";
 type AdminUser = { id?: string; name: string; email?: string; role: StaffRole; agency: string | null };
-type StaffAccount = { id: string; name: string; email: string; role: StaffRole; agency: string; active: boolean; createdAt: string };
+type StaffAccount = { id: string; name: string; loginId: string; role: StaffRole; agency: string; active: boolean; createdAt: string };
 type AdminReport = {
   id: string;
   category: string;
@@ -42,7 +42,7 @@ export default function AdminPage() {
   const [accountNotice, setAccountNotice] = useState("");
   const [creatingAccount, setCreatingAccount] = useState(false);
   const [savingAccountId, setSavingAccountId] = useState("");
-  const [accountDraft, setAccountDraft] = useState({ name: "", email: "", password: "", role: "agency_staff" as StaffRole, agency: "" });
+  const [accountDraft, setAccountDraft] = useState({ name: "", loginId: "", password: "", role: "agency_staff" as StaffRole, agency: "" });
   const [ready, setReady] = useState(false);
 
   const loadReports = async () => {
@@ -122,7 +122,7 @@ export default function AdminPage() {
       return;
     }
     setAccounts((current) => [...current, data.account]);
-    setAccountDraft({ name: "", email: "", password: "", role: "agency_staff", agency: "" });
+    setAccountDraft({ name: "", loginId: "", password: "", role: "agency_staff", agency: "" });
     setAccountNotice(`${data.account.name}님의 운영 계정을 만들었습니다.`);
   };
 
@@ -202,11 +202,11 @@ export default function AdminPage() {
           </div>
         </> : <section className="admin-accounts-workspace">
           <form className="staff-create-card" onSubmit={createAccount}>
-            <div className="staff-card-heading"><span>새 계정</span><h2>운영자를 초대하세요.</h2><p>처음 로그인할 때 사용할 이메일과 초기 비밀번호를 함께 전달해주세요.</p></div>
+            <div className="staff-card-heading"><span>권한 부여</span><h2>로그인 계정을 발급하세요.</h2><p>사용할 아이디와 비밀번호를 직접 정하고 역할과 소속 기관을 지정합니다.</p></div>
             <div className="staff-create-fields">
               <label><span>이름</span><input value={accountDraft.name} onChange={(event) => setAccountDraft((current) => ({ ...current, name: event.target.value }))} placeholder="예: 김한길 담당자" required /></label>
-              <label><span>이메일</span><input type="email" value={accountDraft.email} onChange={(event) => setAccountDraft((current) => ({ ...current, email: event.target.value }))} placeholder="name@organization.kr" required /></label>
-              <label><span>초기 비밀번호</span><input type="password" minLength={8} value={accountDraft.password} onChange={(event) => setAccountDraft((current) => ({ ...current, password: event.target.value }))} placeholder="8자 이상" required /></label>
+              <label><span>로그인 아이디</span><input value={accountDraft.loginId} onChange={(event) => setAccountDraft((current) => ({ ...current, loginId: event.target.value }))} placeholder="예: daejeon01" minLength={4} maxLength={30} pattern="[A-Za-z0-9._-]+" required /></label>
+              <label><span>로그인 비밀번호</span><input type="password" minLength={8} value={accountDraft.password} onChange={(event) => setAccountDraft((current) => ({ ...current, password: event.target.value }))} placeholder="8자 이상" required /></label>
               <label><span>권한</span><select value={accountDraft.role} onChange={(event) => setAccountDraft((current) => ({ ...current, role: event.target.value as StaffRole }))}><option value="agency_staff">기관 담당자</option><option value="research_admin">연구원 관리자</option></select></label>
               <label className="staff-agency-field"><span>소속 기관·조직</span><input value={accountDraft.agency} onChange={(event) => setAccountDraft((current) => ({ ...current, agency: event.target.value }))} placeholder="예: 대전광역시 도로관리과" required /></label>
             </div>
@@ -218,7 +218,7 @@ export default function AdminPage() {
             <div className="staff-account-list">
               {accounts.map((account) => <article className={!account.active ? "inactive" : ""} key={account.id}>
                 <div className={`staff-avatar ${account.role === "agency_staff" ? "agency" : ""}`}>{account.role === "research_admin" ? "研" : "官"}</div>
-                <div className="staff-identity"><strong>{account.name}</strong><span>{account.email}</span><small>{account.id.startsWith("staff-demo-") ? "기본 체험 계정" : new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium" }).format(new Date(account.createdAt)) + " 등록"}</small></div>
+                <div className="staff-identity"><strong>{account.name}</strong><span>아이디 · {account.loginId}</span><small>{account.id.startsWith("staff-demo-") ? "기본 체험 계정" : new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium" }).format(new Date(account.createdAt)) + " 등록"}</small></div>
                 <label><span>권한</span><select value={account.role} onChange={(event) => setAccounts((current) => current.map((item) => item.id === account.id ? { ...item, role: event.target.value as StaffRole } : item))}><option value="research_admin">연구원 관리자</option><option value="agency_staff">기관 담당자</option></select></label>
                 <label><span>소속 기관</span><input value={account.agency} onChange={(event) => setAccounts((current) => current.map((item) => item.id === account.id ? { ...item, agency: event.target.value } : item))} /></label>
                 <label><span>계정 상태</span><select value={account.active ? "active" : "inactive"} onChange={(event) => setAccounts((current) => current.map((item) => item.id === account.id ? { ...item, active: event.target.value === "active" } : item))}><option value="active">사용 중</option><option value="inactive">사용 중지</option></select></label>

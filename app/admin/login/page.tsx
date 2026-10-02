@@ -8,7 +8,7 @@ import { sitePath } from "../../lib/site-path";
 type AdminRole = "research_admin" | "agency_staff";
 
 export default function AdminLoginPage() {
-  const [email, setEmail] = useState("");
+  const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
   const [loadingRole, setLoadingRole] = useState<AdminRole | "account" | null>(null);
   const [error, setError] = useState("");
@@ -20,7 +20,7 @@ export default function AdminLoginPage() {
     const response = await fetch("/api/auth/admin-login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ loginId, password }),
     }).catch(() => null);
     if (!response?.ok) {
       const data = await response?.json().catch(() => null);
@@ -54,9 +54,9 @@ export default function AdminLoginPage() {
       <section className="admin-login-card">
         <p className="eyebrow">OPERATIONS SIGN IN</p>
         <h1>현장의 기록을<br />변화로 연결합니다.</h1>
-        <p>관리자가 등록한 운영 계정으로 로그인하세요. 권한에 따라 확인할 수 있는 기록과 기능이 달라집니다.</p>
+        <p>관리자가 발급한 아이디와 비밀번호로 로그인하세요. 부여된 권한에 따라 사용할 수 있는 기능이 달라집니다.</p>
         <form className="admin-account-login" onSubmit={loginWithAccount}>
-          <label><span>이메일</span><input type="email" autoComplete="username" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="name@organization.kr" required /></label>
+          <label><span>로그인 아이디</span><input autoComplete="username" value={loginId} onChange={(event) => setLoginId(event.target.value)} placeholder="관리자가 발급한 아이디" required /></label>
           <label><span>비밀번호</span><input type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="관리자가 전달한 초기 비밀번호" minLength={8} required /></label>
           <button type="submit" disabled={Boolean(loadingRole)}>{loadingRole === "account" ? "확인 중" : "운영 콘솔 로그인"}<i>→</i></button>
         </form>

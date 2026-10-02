@@ -25,8 +25,11 @@ test("research administrators can create staff accounts with role-based access",
   assert.match(runtime, /\/api\/auth\/admin-login/);
   assert.match(runtime, /\/api\/admin\/accounts/);
   assert.match(runtime, /role !== "research_admin"/);
+  assert.match(runtime, /candidate\.loginId\.toLowerCase\(\) === loginId/);
   assert.match(runtime, /passwordHash: await hashPassword/);
   assert.match(adminPage, /계정·권한 관리/);
+  assert.match(adminPage, /로그인 아이디/);
+  assert.match(adminPage, /로그인 비밀번호/);
   assert.match(adminPage, /연구원 관리자/);
   assert.match(adminPage, /기관 담당자/);
   assert.match(adminLogin, /운영 콘솔 로그인/);
