@@ -1,27 +1,14 @@
 import type { HazardCategory } from "../lib/hazard-categories";
+import { sitePath } from "../lib/site-path";
 
 export function HazardIllustration({ type }: { type: HazardCategory | string }) {
   if (type === "인도" || type === "단차") {
     return (
-      <svg className="hazard-illustration-svg" viewBox="0 0 640 360" preserveAspectRatio="xMidYMid slice" role="img" aria-label="한쪽 보도판이 들려 높이 차가 생긴 단차 일러스트">
-        <rect width="640" height="360" fill="#dfe8df" />
-        <circle cx="560" cy="62" r="92" fill="#d5ebc5" />
-        <path d="M0 260 420 55 640 139 640 360 0 360Z" fill="#bfcec4" />
-        <path d="M0 283 425 90 640 166 640 360 0 360Z" fill="#f5efe2" />
-        <path d="m70 280 197-88 114 40-198 95Z" fill="#e5d9c5" stroke="#fdfbf6" strokeWidth="5" />
-        <path d="m267 192 182-82 112 37-180 85Z" fill="#eee3d1" stroke="#fdfbf6" strokeWidth="5" />
-        <path d="m381 232 180-85v25l-180 86Z" fill="#c78c6f" />
-        <path d="m381 232 180-85" fill="none" stroke="#ff6655" strokeWidth="7" strokeLinecap="round" />
-        <path d="m181 327 200-95v26l-196 97Z" fill="#b89f7d" />
-        <circle cx="329" cy="258" r="31" fill="#153c38" stroke="#fff" strokeWidth="8" />
-        <circle cx="329" cy="258" r="12" fill="#9bcf67" />
-        <path d="M306 228c-18-25-34-46-45-70" fill="none" stroke="#153c38" strokeWidth="9" strokeLinecap="round" />
-        <path d="M261 158h34" fill="none" stroke="#153c38" strokeWidth="9" strokeLinecap="round" />
-        <path d="M405 196v-45c0-14 11-25 25-25h13" fill="none" stroke="#ff6655" strokeWidth="5" strokeLinecap="round" />
-        <circle cx="444" cy="126" r="7" fill="#ff6655" />
-        <rect x="421" y="180" width="89" height="34" rx="17" fill="#fffaf0" />
-        <text x="465" y="202" textAnchor="middle" fill="#a15043" fontSize="15" fontWeight="800">들뜬 보도판</text>
-      </svg>
+      <img
+        className="hazard-illustration-svg hazard-illustration-photo"
+        src={sitePath("/images/sidewalk-curb-hazard-v2.webp")}
+        alt="보행보조기 바퀴가 걸릴 수 있는 높은 보도 경계석 현장"
+      />
     );
   }
 
