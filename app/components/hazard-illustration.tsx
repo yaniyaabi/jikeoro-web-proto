@@ -27,17 +27,36 @@ export function HazardIllustration({ type }: { type: HazardCategory | string }) 
 
   if (type === "횡단보도" || type === "포트홀") {
     return (
-      <svg className="hazard-illustration-svg" viewBox="0 0 640 360" preserveAspectRatio="xMidYMid slice" role="img" aria-label="도로 표면이 파이고 물이 고인 포트홀 일러스트">
-        <rect width="640" height="360" fill="#d9e3dc" />
-        <path d="M0 82 640 8v352H0Z" fill="#66766f" />
-        <path d="m-20 124 192-22 7 31-193 24Zm242-28 105-12 7 31-108 13Zm157-18 201-24 7 32-204 23Z" fill="#f7f3e5" opacity=".93" />
-        <path d="M0 202 640 124" fill="none" stroke="#f0c258" strokeWidth="7" strokeDasharray="38 24" opacity=".8" />
-        <path d="M224 224c21-35 66-45 104-38 29-16 83 2 92 31 35 9 42 44 12 63-17 28-66 30-98 16-38 17-94 5-103-26-28-8-29-32-7-46Z" fill="#263c38" />
-        <path d="M250 231c31-25 70-25 97-16 27-8 55 3 66 22-23 24-56 39-91 42-35-1-67-13-88-31 4-6 9-12 16-17Z" fill="#315b61" />
-        <path d="M273 232c34-13 71-11 103 3" fill="none" stroke="#a7d6d8" strokeWidth="8" strokeLinecap="round" opacity=".8" />
-        <path d="m204 205-32-18m284 19 34-26m-51 118 29 20" stroke="#42544d" strokeWidth="6" strokeLinecap="round" />
-        <rect x="411" y="248" width="89" height="34" rx="17" fill="#fff4cf" />
-        <text x="455" y="270" textAnchor="middle" fill="#865f0f" fontSize="15" fontWeight="800">물 고임</text>
+      <svg className="hazard-illustration-svg" viewBox="0 0 640 360" preserveAspectRatio="xMidYMid slice" role="img" aria-label="보행 신호 시간이 짧아 어르신이 건너기 어려운 횡단보도 일러스트">
+        <rect width="640" height="360" fill="#dfe9df" />
+        <circle cx="86" cy="48" r="72" fill="#c9e5b8" />
+        <circle cx="155" cy="34" r="45" fill="#b7d9a7" />
+        <path d="M0 92 640 38v322H0Z" fill="#64756f" />
+        <path d="M0 92 640 38" fill="none" stroke="#f7f3e8" strokeWidth="18" />
+        <path d="M0 108 640 54" fill="none" stroke="#b9c8be" strokeWidth="6" />
+        <path d="m56 150 93-8 39 38-94 9Zm89 73 94-9 41 40-96 10Zm92 76 97-10 42 41-99 11Z" fill="#fbfaf3" />
+        <path d="m191 138 94-8 39 38-95 9Zm90 72 96-9 40 40-96 10Zm92 75 98-10 43 42-100 11Z" fill="#fbfaf3" />
+        <path d="M484 360 247 120" fill="none" stroke="#f2c85c" strokeWidth="6" strokeDasharray="28 22" opacity=".72" />
+
+        <path d="M526 266V89" fill="none" stroke="#183c37" strokeWidth="11" strokeLinecap="round" />
+        <path d="M526 101h-48" fill="none" stroke="#183c37" strokeWidth="10" strokeLinecap="round" />
+        <rect x="431" y="53" width="65" height="98" rx="14" fill="#153c38" />
+        <circle cx="463.5" cy="84" r="17" fill="#aef05d" />
+        <circle cx="464" cy="78" r="5" fill="#153c38" />
+        <path d="m464 86-10 15m10-15 11 8m-11-8 1 17m0 0-10 13m10-13 11 12" fill="none" stroke="#153c38" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+        <rect x="443" y="120" width="41" height="23" rx="7" fill="#fff4cf" />
+        <text x="463.5" y="137" textAnchor="middle" fill="#c54c3e" fontSize="17" fontWeight="900">7</text>
+
+        <circle cx="263" cy="191" r="18" fill="#f3c7a8" />
+        <path d="M250 215c9-10 25-11 35-2l17 53-42 4-15-39Z" fill="#e68269" />
+        <path d="m258 267-13 48m41-49 18 43m-49-71-32 27" fill="none" stroke="#173d38" strokeWidth="11" strokeLinecap="round" />
+        <path d="m304 222 29 27" fill="none" stroke="#173d38" strokeWidth="10" strokeLinecap="round" />
+        <path d="M333 249v58" fill="none" stroke="#fffaf0" strokeWidth="7" strokeLinecap="round" />
+        <path d="M333 307h15" fill="none" stroke="#fffaf0" strokeWidth="7" strokeLinecap="round" />
+
+        <rect x="347" y="169" width="151" height="39" rx="19.5" fill="#fffaf0" />
+        <circle cx="367" cy="188.5" r="6" fill="#ff6655" />
+        <text x="424" y="194" textAnchor="middle" fill="#8f4a41" fontSize="16" fontWeight="850">신호가 짧아요</text>
       </svg>
     );
   }
