@@ -918,7 +918,6 @@ export default function Home() {
             <div className="panel-meta"><span>{selected.type}</span><small>{selected.time}</small></div>
             <div className="detail-photo hazard-photo">
               <HazardIllustration type={selected.type} />
-              <span className="scene-caption">{selected.type}</span>
             </div>
             <div className="detail-body">
               <p className="location-line"><span aria-hidden="true">⌖</span> {selected.place}</p>
