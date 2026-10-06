@@ -454,10 +454,9 @@ export default function MyJikeoroPage() {
             <div className="reward-exchange-progress" aria-label={`상품권 교환까지 ${Math.round(rewardExchangeProgress)}%`}><i style={{ width: `${rewardExchangeProgress}%` }} /></div>
             <div className="reward-exchange-bottom">
               <p>{pendingRewardRequest ? "신청을 접수해 관리자 확인을 기다리고 있어요." : canExchangeReward ? "교환 가능한 마일리지가 모였어요." : `${rewardExchangeRemaining.toLocaleString()}P를 더 모으면 교환할 수 있어요.`}</p>
-              <button type="button" disabled={!canExchangeReward} aria-describedby="reward-exchange-note" onClick={openRewardForm}>{pendingRewardRequest ? "신청 접수 완료" : canExchangeReward ? "교환 신청하기" : "500P부터 신청"}</button>
+              <button type="button" disabled={!canExchangeReward} onClick={openRewardForm}>{pendingRewardRequest ? "신청 접수 완료" : canExchangeReward ? "교환 신청하기" : "500P부터 신청"}</button>
             </div>
             {rewardRequestNotice && <p className="reward-request-notice" role="status">{rewardRequestNotice}</p>}
-            <small id="reward-exchange-note">신청서 접수 시, 담당자가 확인 후 휴대전화로 상품권을 발송합니다.</small>
           </article>
         </section>
 
