@@ -1,7 +1,6 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { SiteFooter } from "../../components/site-footer";
 import { sitePath } from "../../lib/site-path";
 
 export default function AdminLoginPage() {
@@ -29,7 +28,6 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <>
     <main className="admin-login-page">
       <section className="admin-login-card">
         <p className="eyebrow">OPERATIONS SIGN IN</p>
@@ -45,7 +43,5 @@ export default function AdminLoginPage() {
       </section>
       <a className="back-home-link" href={sitePath("/")}>← 주민용 화면으로 돌아가기</a>
     </main>
-    <SiteFooter />
-    </>
   );
 }
