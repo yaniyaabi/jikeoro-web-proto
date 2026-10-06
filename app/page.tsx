@@ -1030,7 +1030,7 @@ export default function Home() {
                 <div className="description-field">
                   <div className="description-field-heading">
                     <label htmlFor="report-description">설명 <small>선택</small></label>
-                    <button className={isDictating ? "active" : ""} type="button" onClick={toggleDictation} aria-pressed={isDictating}>
+                    <button className={`report-audio-action ${isDictating ? "active" : ""}`} type="button" onClick={toggleDictation} aria-pressed={isDictating}>
                       <span className="speech-write-icon" aria-hidden="true">
                         <svg viewBox="0 0 36 28"><path d="M4 3.5h28a2.5 2.5 0 0 1 2.5 2.5v13a2.5 2.5 0 0 1-2.5 2.5H16l-7 4v-4H4A2.5 2.5 0 0 1 1.5 19V6A2.5 2.5 0 0 1 4 3.5Z"/><path d="M7 9h22M7 13h22M7 17h15"/></svg>
                       </span>
@@ -1051,10 +1051,10 @@ export default function Home() {
                     <strong>현장음 녹음</strong>
                     <small>{isRecording ? `${Math.floor(recordingSeconds / 60)}:${String(recordingSeconds % 60).padStart(2, "0")} 녹음 중` : "현장의 소리를 별도 파일로 남길 수 있어요."}</small>
                   </div>
-                  <button className={isRecording ? "recording" : ""} type="button" onClick={isRecording ? stopRecording : startRecording}>
+                  <button className={`report-audio-action ${isRecording ? "recording" : ""}`} type="button" onClick={isRecording ? stopRecording : startRecording}>
                     <span aria-hidden="true">{isRecording ? "■" : "●"}</span>{isRecording ? "녹음 끝내기" : "현장음 녹음"}
                   </button>
-                  <label className="audio-file-button">
+                  <label className="audio-file-button report-audio-action">
                     <input type="file" accept="audio/*" onChange={(event) => addFiles(event, "audio")} />
                     녹음 파일 선택
                   </label>
