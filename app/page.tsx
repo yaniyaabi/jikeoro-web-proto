@@ -321,7 +321,7 @@ function ReportGuidePreview({ step }: { step: number }) {
           <strong className="guide-screen-title">위험한 이유를<br />알려주세요.</strong>
           <small className="guide-field-label">위험요소 유형</small>
           <div className="guide-type-options"><b>인도</b><span>횡단보도</span><span>조도</span><span>날씨 관련 위험</span><span>기타</span></div>
-          <div className="guide-description-head"><b>설명</b><span><i aria-hidden="true">▰</i> 말로 글쓰기</span></div>
+          <div className="guide-description-head"><b>설명 <small>선택</small></b><span><i aria-hidden="true">▰</i> 말로 글쓰기</span></div>
           <div className="guide-textarea">예: 보도블록 높이 차이 때문에 발이 걸릴 것 같아요.</div>
           <div className="guide-voice-options"><span>● 현장음 녹음</span></div>
           <div className="guide-next-button">위치 입력하기 <b>→</b></div>
@@ -649,10 +649,6 @@ export default function Home() {
   const goToLocationStep = () => {
     if (!reportDetail) {
       setStepTwoValidation("선택한 위험의 세부 유형을 하나 골라주세요.");
-      return;
-    }
-    if (!reportDescription.trim()) {
-      setStepTwoValidation("위험한 이유를 글이나 말로 알려주세요.");
       return;
     }
     speechRecognitionRef.current?.stop();
@@ -1025,7 +1021,7 @@ export default function Home() {
                 </section>
                 <div className="description-field">
                   <div className="description-field-heading">
-                    <label htmlFor="report-description">설명</label>
+                    <label htmlFor="report-description">설명 <small>선택</small></label>
                     <button className={isDictating ? "active" : ""} type="button" onClick={toggleDictation} aria-pressed={isDictating}>
                       <span className="speech-write-icon" aria-hidden="true">
                         <svg viewBox="0 0 36 28"><path d="M4 3.5h28a2.5 2.5 0 0 1 2.5 2.5v13a2.5 2.5 0 0 1-2.5 2.5H16l-7 4v-4H4A2.5 2.5 0 0 1 1.5 19V6A2.5 2.5 0 0 1 4 3.5Z"/><path d="M7 9h22M7 13h22M7 17h15"/></svg>
