@@ -5,6 +5,7 @@ import { SiteHeader } from "../components/site-header";
 import { SiteFooter } from "../components/site-footer";
 import { HazardIllustration } from "../components/hazard-illustration";
 import { sitePath } from "../lib/site-path";
+import { formatRewardPhone, readRewardRequests, REWARD_REQUESTS_KEY, RewardRequest, writeRewardRequests } from "../lib/reward-requests";
 
 type ReportStatus = "received" | "review" | "action" | "completed";
 type StaffRole = "research_admin" | "agency_staff";
@@ -78,9 +79,11 @@ async function readReportMedia(reportId: string) {
 
 export default function AdminPage() {
   const [user, setUser] = useState<AdminUser | null>(null);
-  const [view, setView] = useState<"reports" | "accounts">("reports");
+  const [view, setView] = useState<"reports" | "accounts" | "rewards">("reports");
   const [reports, setReports] = useState<AdminReport[]>([]);
   const [accounts, setAccounts] = useState<StaffAccount[]>([]);
+  const [rewardRequests, setRewardRequests] = useState<RewardRequest[]>([]);
+  const [rewardNotice, setRewardNotice] = useState("");
   const [selectedId, setSelectedId] = useState("");
   const [filter, setFilter] = useState<"all" | ReportStatus>("all");
   const [status, setStatus] = useState<ReportStatus>("received");
@@ -123,6 +126,17 @@ export default function AdminPage() {
       })
       .then((data) => setAccounts(data.accounts ?? []))
       .catch((error) => setAccountNotice(error instanceof Error ? error.message : "계정 목록을 불러오지 못했어요."));
+  }, [user?.role]);
+
+  useEffect(() => {
+    if (user?.role !== "research_admin") return;
+    const refresh = () => setRewardRequests(readRewardRequests());
+    refresh();
+    const handleStorage = (event: StorageEvent) => {
+      if (!event.key || event.key === REWARD_REQUESTS_KEY) refresh();
+    };
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
   }, [user?.role]);
 
   const filteredReports = useMemo(() => filter === "all" ? reports : reports.filter((report) => report.status === filter), [filter, reports]);
@@ -222,9 +236,19 @@ export default function AdminPage() {
     setAccountNotice(`${data.account.name}님의 권한을 저장했습니다.`);
   };
 
+  const markRewardSent = (requestId: string) => {
+    const nextRequests = rewardRequests.map((request) => request.id === requestId
+      ? { ...request, status: "sent" as const, sentAt: new Date().toISOString() }
+      : request);
+    writeRewardRequests(nextRequests);
+    setRewardRequests(nextRequests);
+    setRewardNotice("상품권 발송 완료로 처리했습니다.");
+  };
+
   if (!ready) return <main className="member-page auth-loading">관리자 기록을 불러오고 있어요.</main>;
 
   const counts = statusOrder.reduce((result, key) => ({ ...result, [key]: reports.filter((report) => report.status === key).length }), {} as Record<ReportStatus, number>);
+  const pendingRewardCount = rewardRequests.filter((request) => request.status === "pending").length;
 
   return (
     <>
@@ -234,12 +258,13 @@ export default function AdminPage() {
       <section className="admin-main">
         <div className="admin-context-bar"><span className="admin-console-label">{user?.role === "research_admin" ? "관리자 콘솔" : "기관 콘솔"}</span><div className="admin-account"><span>{user?.role === "research_admin" ? "研" : "官"}</span><div><b>{user?.name}</b><small>{user?.role === "research_admin" ? "연구원 관리자" : user?.agency}</small></div><button onClick={logout}>로그아웃</button></div></div>
         <div className="admin-title-row">
-          <div><p className="eyebrow">{view === "reports" ? "REPORT OPERATIONS" : "ACCESS & PEOPLE"}</p><h1>{view === "reports" ? (user?.role === "research_admin" ? <>전국 보행위험<br />처리 현황</> : <>우리 기관 보행위험<br />처리 현황</>) : <>운영 계정과<br />권한 관리</>}</h1></div>
-          <p>{view === "reports" ? (user?.role === "research_admin" ? "전체 기록을 검토하고 담당기관을 연결합니다." : "우리 기관에 배정된 기록을 확인하고 처리 결과를 남깁니다.") : "연구원과 기관 담당자를 등록하고 각자 필요한 권한만 부여합니다."}</p>
+          <div><p className="eyebrow">{view === "reports" ? "REPORT OPERATIONS" : view === "accounts" ? "ACCESS & PEOPLE" : "REWARD OPERATIONS"}</p><h1>{view === "reports" ? (user?.role === "research_admin" ? <>전국 보행위험<br />처리 현황</> : <>우리 기관 보행위험<br />처리 현황</>) : view === "accounts" ? <>운영 계정과<br />권한 관리</> : <>온누리상품권<br />신청 관리</>}</h1></div>
+          <p>{view === "reports" ? (user?.role === "research_admin" ? "전체 기록을 검토하고 담당기관을 연결합니다." : "우리 기관에 배정된 기록을 확인하고 처리 결과를 남깁니다.") : view === "accounts" ? "연구원과 기관 담당자를 등록하고 각자 필요한 권한만 부여합니다." : "접수된 휴대전화 번호를 확인해 상품권을 발송하고 처리 상태를 기록합니다."}</p>
         </div>
 
         <div className="admin-view-tabs" role="tablist" aria-label="관리자 콘솔 메뉴">
           <button type="button" className={view === "reports" ? "active" : ""} onClick={() => setView("reports")}>제보 관리 <span>{reports.length}</span></button>
+          {user?.role === "research_admin" && <button type="button" className={view === "rewards" ? "active" : ""} onClick={() => { setView("rewards"); setRewardNotice(""); }}>상품권 관리 <span>{pendingRewardCount}</span></button>}
           {user?.role === "research_admin" && <button type="button" className={view === "accounts" ? "active" : ""} onClick={() => setView("accounts")}>계정·권한 관리 <span>{accounts.length}</span></button>}
         </div>
 
@@ -307,7 +332,7 @@ export default function AdminPage() {
               </> : <p className="empty-admin-list">왼쪽에서 기록을 선택해주세요.</p>}
             </section>
           </div>
-        </> : <section className="admin-accounts-workspace">
+        </> : view === "accounts" ? <section className="admin-accounts-workspace">
           <form className="staff-create-card" onSubmit={createAccount}>
             <div className="staff-card-heading"><span>권한 부여</span><h2>로그인 계정을 발급하세요.</h2><p>사용할 아이디와 비밀번호를 직접 정하고 역할과 소속 기관을 지정합니다.</p></div>
             <div className="staff-create-fields">
@@ -334,6 +359,25 @@ export default function AdminPage() {
             </div>
           </div>
           {accountNotice && <p className={`admin-account-notice ${accountNotice.includes("했습니다") ? "success" : ""}`} role="status">{accountNotice}</p>}
+        </section> : <section className="admin-rewards-workspace">
+          <div className="admin-rewards-summary">
+            <div><span>접수 대기</span><strong>{pendingRewardCount}<small>건</small></strong></div>
+            <div><span>발송 완료</span><strong>{rewardRequests.length - pendingRewardCount}<small>건</small></strong></div>
+            <p>개인정보가 포함되어 연구원 관리자에게만 표시됩니다.</p>
+          </div>
+          <div className="admin-reward-list">
+            <div className="admin-reward-list-heading"><div><span>온누리상품권</span><h2>교환 신청 목록</h2></div><b>총 {rewardRequests.length}건</b></div>
+            {rewardRequests.map((request) => <article className={request.status === "sent" ? "sent" : ""} key={request.id}>
+              <div className="admin-reward-status"><span>{request.status === "pending" ? "발송 대기" : "발송 완료"}</span><small>{request.source === "app" ? "앱" : "홈페이지"} 신청</small></div>
+              <div className="admin-reward-person"><strong>{request.name}</strong><span>{request.email}</span></div>
+              <div className="admin-reward-phone"><small>발송 휴대전화</small><a href={`tel:${request.phone}`}>{formatRewardPhone(request.phone)}</a></div>
+              <div className="admin-reward-points"><small>신청 마일리지</small><strong>{request.exchangePoints.toLocaleString()}P</strong></div>
+              <time dateTime={request.requestedAt}>{new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium", timeStyle: "short" }).format(new Date(request.requestedAt))}</time>
+              <button type="button" disabled={request.status === "sent"} onClick={() => markRewardSent(request.id)}>{request.status === "sent" ? "발송 처리됨" : "발송 완료 처리"}</button>
+            </article>)}
+            {!rewardRequests.length && <p className="admin-reward-empty">아직 접수된 상품권 교환 신청이 없습니다.</p>}
+          </div>
+          {rewardNotice && <p className="admin-reward-notice" role="status">{rewardNotice}</p>}
         </section>}
         <p className="prototype-auth-note">현재 운영 계정은 이 브라우저에 안전한 검증값으로 저장됩니다. 실제 배포 시 AWS 계정 DB와 서버 권한 정책으로 교체됩니다.</p>
       </section>

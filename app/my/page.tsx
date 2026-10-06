@@ -5,6 +5,7 @@ import { SiteHeader } from "../components/site-header";
 import { SiteFooter } from "../components/site-footer";
 import { sitePath } from "../lib/site-path";
 import { hazardDetails, normalizeHazardCategory } from "../lib/hazard-categories";
+import { REWARD_EXCHANGE_MINIMUM, readRewardRequests, RewardRequest, writeRewardRequests } from "../lib/reward-requests";
 
 type ReportStatus = "received" | "review" | "action" | "completed";
 type ActivityFilter = "all" | "active" | "completed";
@@ -39,15 +40,6 @@ type StoredReportMedia = {
 };
 
 type ReportMediaPreview = StoredReportMedia & { previewUrl: string };
-
-const REWARD_EXCHANGE_MINIMUM = 10_000;
-const REWARD_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSd6PApYqiWa-HbE5LyGA8bKAecQshSCMu38oAD6E1xlUOWRVQ/viewform";
-const REWARD_FORM_ENTRIES = {
-  name: "entry.1605426205",
-  email: "entry.1819571806",
-  phone: "entry.1254984587",
-  points: "entry.103413830",
-};
 
 function startOfWeek(value: string) {
   const date = new Date(value);
@@ -196,6 +188,7 @@ export default function MyJikeoroPage() {
   const [authReady, setAuthReady] = useState(false);
   const [memberName, setMemberName] = useState("김지킴");
   const [memberEmail, setMemberEmail] = useState("member@jikeoro.local");
+  const [memberId, setMemberId] = useState("member-web");
   const [reports, setReports] = useState<UserReport[]>(userReports);
   const [activityFilter, setActivityFilter] = useState<ActivityFilter>("all");
   const [selectedReport, setSelectedReport] = useState<UserReport | null>(null);
@@ -206,10 +199,15 @@ export default function MyJikeoroPage() {
   const [rewardFormOpen, setRewardFormOpen] = useState(false);
   const [rewardPhone, setRewardPhone] = useState("");
   const [rewardFormError, setRewardFormError] = useState("");
+  const [rewardRequests, setRewardRequests] = useState<RewardRequest[]>([]);
+  const [rewardRequestNotice, setRewardRequestNotice] = useState("");
   const participation = useMemo(() => calculateParticipation(reports), [reports]);
-  const rewardExchangeRemaining = Math.max(0, REWARD_EXCHANGE_MINIMUM - participation.points);
-  const rewardExchangeProgress = Math.min(100, (participation.points / REWARD_EXCHANGE_MINIMUM) * 100);
-  const canExchangeReward = participation.points >= REWARD_EXCHANGE_MINIMUM;
+  const myRewardRequests = rewardRequests.filter((request) => request.email.toLowerCase() === memberEmail.toLowerCase());
+  const pendingRewardRequest = myRewardRequests.find((request) => request.status === "pending");
+  const rewardAvailablePoints = Math.max(0, participation.points - myRewardRequests.length * REWARD_EXCHANGE_MINIMUM);
+  const rewardExchangeRemaining = Math.max(0, REWARD_EXCHANGE_MINIMUM - rewardAvailablePoints);
+  const rewardExchangeProgress = Math.min(100, (rewardAvailablePoints / REWARD_EXCHANGE_MINIMUM) * 100);
+  const canExchangeReward = rewardAvailablePoints >= REWARD_EXCHANGE_MINIMUM && !pendingRewardRequest;
   const visibleReports = reports.filter((report) => {
     if (activityFilter === "completed") return report.status === "completed";
     if (activityFilter === "active") return report.status !== "completed";
@@ -231,6 +229,7 @@ export default function MyJikeoroPage() {
         }
         if (session.user?.name) setMemberName(session.user.name);
         if (session.user?.email) setMemberEmail(session.user.email);
+        if (session.user?.id) setMemberId(String(session.user.id));
 
         const pendingReportId = window.sessionStorage.getItem("jikeoro-pending-report-id");
         if (pendingReportId) {
@@ -285,6 +284,13 @@ export default function MyJikeoroPage() {
   }, []);
 
   useEffect(() => {
+    const refresh = () => setRewardRequests(readRewardRequests());
+    refresh();
+    window.addEventListener("storage", refresh);
+    return () => window.removeEventListener("storage", refresh);
+  }, []);
+
+  useEffect(() => {
     if (!selectedReport) return;
     let disposed = false;
     let previewUrls: string[] = [];
@@ -328,8 +334,10 @@ export default function MyJikeoroPage() {
   };
 
   const openRewardForm = () => {
+    if (pendingRewardRequest) return;
     setRewardPhone(window.localStorage.getItem("jikeoro-reward-phone") ?? "");
     setRewardFormError("");
+    setRewardRequestNotice("");
     setRewardFormOpen(true);
   };
 
@@ -340,18 +348,28 @@ export default function MyJikeoroPage() {
       setRewardFormError("휴대전화 번호를 정확히 입력해주세요.");
       return;
     }
-    if (REWARD_FORM_URL.includes("FORM_ID")) {
-      setRewardFormError("신청 양식을 연결하는 중입니다. 잠시 후 다시 시도해주세요.");
+    if (participation.points - myRewardRequests.length * REWARD_EXCHANGE_MINIMUM < REWARD_EXCHANGE_MINIMUM) {
+      setRewardFormError("교환 가능한 마일리지를 다시 확인해주세요.");
       return;
     }
+    const nextRequest: RewardRequest = {
+      id: `reward-${crypto.randomUUID()}`,
+      applicantId: memberId,
+      name: memberName,
+      email: memberEmail,
+      phone: normalizedPhone,
+      points: participation.points,
+      exchangePoints: REWARD_EXCHANGE_MINIMUM,
+      source: "web",
+      status: "pending",
+      requestedAt: new Date().toISOString(),
+      sentAt: null,
+    };
+    const nextRequests = [nextRequest, ...readRewardRequests()];
+    writeRewardRequests(nextRequests);
+    setRewardRequests(nextRequests);
     window.localStorage.setItem("jikeoro-reward-phone", rewardPhone.trim());
-    const formUrl = new URL(REWARD_FORM_URL);
-    formUrl.searchParams.set("usp", "pp_url");
-    formUrl.searchParams.set(REWARD_FORM_ENTRIES.name, memberName);
-    formUrl.searchParams.set(REWARD_FORM_ENTRIES.email, memberEmail);
-    formUrl.searchParams.set(REWARD_FORM_ENTRIES.phone, rewardPhone.trim());
-    formUrl.searchParams.set(REWARD_FORM_ENTRIES.points, `${participation.points}P`);
-    window.open(formUrl.toString(), "_blank", "noopener,noreferrer");
+    setRewardRequestNotice("상품권 교환 신청이 접수됐어요. 담당자가 확인 후 휴대전화로 발송합니다.");
     setRewardFormOpen(false);
   };
 
@@ -427,18 +445,19 @@ export default function MyJikeoroPage() {
           <div className="reward-exchange-copy">
             <p className="eyebrow">MILEAGE REWARD</p>
             <h2 id="reward-exchange-title">모은 마일리지를<br />우리 동네에서 사용해요.</h2>
-            <p>10,000P부터 온누리상품권 등 지역상품권으로 교환할 수 있도록 준비하고 있어요.</p>
-            <div className="reward-exchange-balance"><span>현재 보유</span><strong>{participation.points.toLocaleString()}P</strong></div>
+            <p>500P를 모으면 디지털 온누리상품권 교환을 신청할 수 있어요.</p>
+            <div className="reward-exchange-balance"><span>사용 가능</span><strong>{rewardAvailablePoints.toLocaleString()}P</strong></div>
           </div>
           <article className="reward-voucher-card">
-            <div className="reward-voucher-top"><span>디지털 온누리상품권</span><b>교환 준비 중</b></div>
-            <div className="reward-voucher-mark"><i><img src={sitePath("/onnuri-logo-3d.png")} alt="디지털 온누리상품권" /></i><div><small>교환 시작 기준</small><strong>10,000P</strong></div></div>
+            <div className="reward-voucher-top"><span>디지털 온누리상품권</span><b>{pendingRewardRequest ? "접수 완료" : "교환 신청"}</b></div>
+            <div className="reward-voucher-mark"><i><img src={sitePath("/onnuri-logo-3d.png")} alt="디지털 온누리상품권" /></i><div><small>교환 기준</small><strong>500P</strong></div></div>
             <div className="reward-exchange-progress" aria-label={`상품권 교환까지 ${Math.round(rewardExchangeProgress)}%`}><i style={{ width: `${rewardExchangeProgress}%` }} /></div>
             <div className="reward-exchange-bottom">
-              <p>{canExchangeReward ? "교환 가능한 마일리지가 모였어요." : `${rewardExchangeRemaining.toLocaleString()}P를 더 모으면 교환할 수 있어요.`}</p>
-              <button type="button" disabled={!canExchangeReward} aria-describedby="reward-exchange-note" onClick={openRewardForm}>{canExchangeReward ? "교환 신청하기" : "10,000P부터 신청"}</button>
+              <p>{pendingRewardRequest ? "신청을 접수해 관리자 확인을 기다리고 있어요." : canExchangeReward ? "교환 가능한 마일리지가 모였어요." : `${rewardExchangeRemaining.toLocaleString()}P를 더 모으면 교환할 수 있어요.`}</p>
+              <button type="button" disabled={!canExchangeReward} aria-describedby="reward-exchange-note" onClick={openRewardForm}>{pendingRewardRequest ? "신청 접수 완료" : canExchangeReward ? "교환 신청하기" : "500P부터 신청"}</button>
             </div>
-            <small id="reward-exchange-note">신청서를 보내면 담당자가 확인한 뒤 입력한 휴대전화로 상품권을 발송합니다.</small>
+            {rewardRequestNotice && <p className="reward-request-notice" role="status">{rewardRequestNotice}</p>}
+            <small id="reward-exchange-note">신청서 접수 시, 담당자가 확인 후 휴대전화로 상품권을 발송합니다.</small>
           </article>
         </section>
 
@@ -493,16 +512,16 @@ export default function MyJikeoroPage() {
           <section className="reward-form-modal" role="dialog" aria-modal="true" aria-labelledby="reward-form-title">
             <button className="reward-form-close" type="button" onClick={() => setRewardFormOpen(false)} aria-label="교환 신청 닫기">×</button>
             <img className="reward-form-logo" src={sitePath("/onnuri-logo-3d.png")} alt="디지털 온누리상품권" />
-            <p className="eyebrow">10,000P REWARD</p>
+            <p className="eyebrow">500P REWARD</p>
             <h2 id="reward-form-title">상품권 교환을 신청할까요?</h2>
-            <p>회원 정보와 연락처가 입력된 Google Form이 열립니다. 내용을 확인해 제출하면 담당자가 확인 후 휴대전화로 보내드려요.</p>
+            <p>휴대전화 번호를 입력하면 관리자 콘솔에 교환 신청이 바로 접수됩니다.</p>
             <form onSubmit={submitRewardForm}>
               <div className="reward-applicant-summary"><span><small>이름</small><strong>{memberName}</strong></span><span><small>이메일</small><strong>{memberEmail}</strong></span></div>
               <label><span>상품권 받을 휴대전화 번호</span><input type="tel" inputMode="tel" autoComplete="tel" value={rewardPhone} onChange={(event) => { setRewardPhone(event.target.value); setRewardFormError(""); }} placeholder="010-1234-5678" /></label>
               {rewardFormError && <p className="reward-form-error" role="alert">{rewardFormError}</p>}
-              <button type="submit">Google Form에서 신청 계속하기 <span>→</span></button>
+              <button type="submit">상품권 교환 신청하기 <span>→</span></button>
             </form>
-            <small>Google Form 제출 전까지 포인트는 차감되지 않습니다.</small>
+            <small>신청하면 교환 마일리지 500P가 사용 처리됩니다.</small>
           </section>
         </div>
       )}
