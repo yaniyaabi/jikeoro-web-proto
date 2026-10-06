@@ -41,6 +41,10 @@ type AdminReport = {
 const statusLabels: Record<ReportStatus, string> = { received: "신규 접수", review: "검토 중", action: "조치 중", completed: "개선 완료" };
 const statusOrder: ReportStatus[] = ["received", "review", "action", "completed"];
 
+function reportTitle(report: Pick<AdminReport, "category" | "title">) {
+  return report.title.trim() || `${report.category} 위험요소를 발견했어요`;
+}
+
 function describeWeather(code: number) {
   if (code === 0) return "맑음";
   if (code <= 3) return "구름";
@@ -294,7 +298,7 @@ export default function AdminPage() {
                 {filteredReports.map((report) => (
                   <button className={selected?.id === report.id ? "selected" : ""} key={report.id} onClick={() => setSelectedId(report.id)}>
                     <div><span className={`status-chip status-${report.status}`}>{statusLabels[report.status]}</span><small>{new Intl.DateTimeFormat("ko-KR", { month: "numeric", day: "numeric" }).format(new Date(report.created_at))}</small></div>
-                    <h3>{report.title}</h3><p>{formatReportLocation(report)}</p>
+                    <h3>{reportTitle(report)}</h3><p>{formatReportLocation(report)}</p>
                     <div className="admin-list-footer"><span>{report.category}{report.subcategory ? ` · ${report.subcategory}` : ""}</span><b>{report.assigned_agency || "담당기관 미배정"}</b></div>
                   </button>
                 ))}
@@ -305,15 +309,15 @@ export default function AdminPage() {
             <section className="admin-detail-panel">
               {selected ? <>
                 <div className="admin-detail-top"><div><span className={`status-chip status-${selected.status}`}>{statusLabels[selected.status]}</span><small>{selected.id}</small></div><p>제보자 {selected.reporter_name || "익명"} · {new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium" }).format(new Date(selected.created_at))}</p></div>
-                <h2>{selected.title}</h2><p className="admin-location">{formatReportLocation(selected)}</p>
-                {selected.latitude != null && selected.longitude != null && <ReportLocationMap latitude={selected.latitude} longitude={selected.longitude} title={selected.title} />}
-                <div className="admin-description"><small>주민 설명</small><p>{selected.description}</p></div>
+                <h2>{reportTitle(selected)}</h2><p className="admin-location">{formatReportLocation(selected)}</p>
+                {selected.latitude != null && selected.longitude != null && <ReportLocationMap latitude={selected.latitude} longitude={selected.longitude} title={reportTitle(selected)} />}
+                <div className="admin-description"><small>주민 설명</small><p>{selected.description.trim() || reportTitle(selected)}</p></div>
                 <section className="admin-evidence-section" aria-labelledby="admin-evidence-title">
                   <div className="admin-evidence-heading"><div><small>현장 첨부자료</small><h3 id="admin-evidence-title">사진·영상·음성</h3></div><span>{detailMedia.length || selected.media?.length || 0}개</span></div>
                   {detailMediaLoading && <p className="admin-media-message">첨부자료를 불러오고 있어요.</p>}
                   {!detailMediaLoading && detailMedia.length > 0 && <div className="admin-media-gallery">
                     {detailMedia.map((media, index) => <figure className={`admin-media-item media-${media.kind}`} key={media.id}>
-                      {media.kind === "image" && <img src={media.previewUrl} alt={`${selected.title} 현장 사진 ${index + 1}`} />}
+                      {media.kind === "image" && <img src={media.previewUrl} alt={`${reportTitle(selected)} 현장 사진 ${index + 1}`} />}
                       {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
                       {media.kind === "video" && <video src={media.previewUrl} controls preload="metadata" />}
                       {media.kind === "audio" && <div className="admin-audio-preview"><span>●</span><audio src={media.previewUrl} controls><track kind="captions" /></audio></div>}

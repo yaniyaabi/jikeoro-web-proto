@@ -41,6 +41,10 @@ type StoredReportMedia = {
 
 type ReportMediaPreview = StoredReportMedia & { previewUrl: string };
 
+function reportTitle(report: Pick<UserReport, "title" | "type">) {
+  return report.title.trim() || `${report.type} 위험요소를 발견했어요`;
+}
+
 function startOfWeek(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return null;
@@ -476,7 +480,7 @@ export default function MyJikeoroPage() {
                 key={report.id}
                 role="button"
                 tabIndex={0}
-                aria-label={`${report.title} 상세 내용 보기`}
+                aria-label={`${reportTitle(report)} 상세 내용 보기`}
                 onClick={() => setSelectedReport(report)}
                 onKeyDown={(event) => {
                   if (event.key === "Enter" || event.key === " ") {
@@ -487,12 +491,12 @@ export default function MyJikeoroPage() {
               >
                 <div className="report-main">
                   <div className="report-meta"><span className={`status-chip status-${report.status}`}>{statusLabels[report.status]}</span><small>{report.submitted} · {report.type}{report.subcategory ? ` · ${report.subcategory}` : ""}</small></div>
-                  <h3>{report.title}</h3>
+                  <h3>{reportTitle(report)}</h3>
                   <p>{report.place}</p>
                   {Boolean(report.mediaCount) && <span className="report-media-count">사진·영상·음성 {report.mediaCount}개 첨부</span>}
                 </div>
                 <div className="response-box"><small>{report.department} 답변</small><p>{report.response}</p></div>
-                <ol className="status-track" aria-label={`${report.title} 처리 단계`}>
+                <ol className="status-track" aria-label={`${reportTitle(report)} 처리 단계`}>
                   {["접수", "현장 검토", "조치 전달", "개선 완료"].map((label, index) => (
                     <li className={index < report.stage ? "done" : ""} key={label}><i>{index < report.stage ? "✓" : index + 1}</i><span>{label}</span></li>
                   ))}
@@ -534,7 +538,7 @@ export default function MyJikeoroPage() {
                 <span className={`status-chip status-${selectedReport.status}`}>{statusLabels[selectedReport.status]}</span>
                 <small>{selectedReport.type}{selectedReport.subcategory ? ` · ${selectedReport.subcategory}` : ""} · {selectedReport.submitted}</small>
               </div>
-              <h2 id="member-detail-title">{selectedReport.title}</h2>
+              <h2 id="member-detail-title">{reportTitle(selectedReport)}</h2>
               <p>내가 남긴 위험 기록의 내용과 첨부자료를 확인할 수 있어요.</p>
             </header>
 
@@ -542,7 +546,7 @@ export default function MyJikeoroPage() {
               <div className="member-detail-main">
                 <section className="member-detail-section">
                   <h3>제보 내용</h3>
-                  <p>{selectedReport.description?.trim() || ""}</p>
+                  <p>{selectedReport.description?.trim() || reportTitle(selectedReport)}</p>
                 </section>
 
                 <section className="member-detail-section">
@@ -555,7 +559,7 @@ export default function MyJikeoroPage() {
                     <div className="member-media-gallery">
                       {detailMedia.map((media, index) => (
                         <figure className={`member-media-item media-${media.kind}`} key={media.id}>
-                          {media.kind === "image" && <img src={media.previewUrl} alt={`${selectedReport.title} 첨부 사진 ${index + 1}`} />}
+                          {media.kind === "image" && <img src={media.previewUrl} alt={`${reportTitle(selectedReport)} 첨부 사진 ${index + 1}`} />}
                           {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
                           {media.kind === "video" && <video src={media.previewUrl} controls preload="metadata" />}
                           {media.kind === "audio" && <div className="member-audio-preview"><span>●</span><audio src={media.previewUrl} controls /></div>}
