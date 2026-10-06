@@ -259,8 +259,8 @@ function LocationPickerMap({ point, onChange }: { point: GpsPoint; onChange: (po
 const reportGuideSteps = [
   {
     title: "사진이나 영상을 남겨요",
-    description: "위험한 곳이 잘 보이도록 촬영하거나 휴대전화에 저장된 자료를 선택합니다.",
-    details: ["사진은 한 장만 올려도 됩니다.", "영상으로 주변 상황을 함께 남길 수 있습니다.", "자료가 없다면 ‘자료 없이 계속하기’를 눌러도 됩니다."],
+    description: "기기에 저장된 사진이나 영상이 있다면 선택합니다.",
+    details: ["사진은 한 장만 올려도 됩니다.", "영상으로 주변 상황을 함께 남길 수 있습니다.", "자료가 없다면 ‘위험요소 선택하기’를 눌러도 됩니다."],
   },
   {
     title: "위험한 이유를 알려주세요",
@@ -284,8 +284,8 @@ function MediaOptionVisual({ kind }: { kind: "image" | "video" }) {
   return (
     <>
       <img className="provided-media-icon" src={sitePath(image ? "/icons/camera.png" : "/icons/video.png")} alt="" />
-      <strong>{image ? "사진 촬영·선택" : "영상 촬영·선택"}</strong>
-      <small>{image ? "카메라 또는 사진첩" : "카메라 또는 보관함"}</small>
+      <strong>{image ? "사진 선택" : "영상 선택"}</strong>
+      <small>{image ? "기기에 저장된 사진" : "기기에 저장된 영상"}</small>
     </>
   );
 }
@@ -315,13 +315,13 @@ function ReportGuidePreview({ step }: { step: number }) {
       {step === 1 && (
         <>
           <strong className="guide-screen-title">위험 모습을<br />남겨주세요.</strong>
-          <p>사진이나 영상을 촬영하거나 기기에 저장된 자료를 선택해주세요.</p>
+          <p>기기에 저장된 사진이나 영상을 선택해주세요.</p>
           <div className="guide-media-options">
             <span><MediaOptionVisual kind="image" /></span>
             <span><MediaOptionVisual kind="video" /></span>
           </div>
-          <p className="guide-media-privacy">얼굴과 차량번호가 보이면 제출 전에 확인해주세요. 파일은 이 기기에 안전하게 보관됩니다.</p>
-          <div className="guide-next-button">자료 없이 계속하기 <b>→</b></div>
+          <p className="guide-media-privacy">얼굴과 차량번호가 보이면 제출 전에 확인해주세요.</p>
+          <div className="guide-next-button">위험요소 선택하기 <b>→</b></div>
         </>
       )}
       {step === 2 && (
@@ -981,14 +981,14 @@ export default function Home() {
               <>
                 <p className="modal-step">1 / 4</p>
                 <h2 id="report-title">위험 모습을<br />남겨주세요.</h2>
-                <p className="modal-help">사진이나 영상을 촬영하거나 기기에 저장된 자료를 선택해주세요.</p>
+                <p className="modal-help">기기에 저장된 사진이나 영상을 선택해주세요.</p>
                 <div className="media-picker-grid">
                   <label className="media-picker-card">
-                    <input type="file" accept="image/*" capture="environment" multiple onChange={(event) => addFiles(event, "image")} />
+                    <input type="file" accept="image/*" multiple onChange={(event) => addFiles(event, "image")} />
                     <MediaOptionVisual kind="image" />
                   </label>
                   <label className="media-picker-card">
-                    <input type="file" accept="video/*" capture="environment" multiple onChange={(event) => addFiles(event, "video")} />
+                    <input type="file" accept="video/*" multiple onChange={(event) => addFiles(event, "video")} />
                     <MediaOptionVisual kind="video" />
                   </label>
                 </div>
@@ -1006,9 +1006,9 @@ export default function Home() {
                     ))}
                   </div>
                 )}
-                <p className="media-privacy">얼굴과 차량번호가 보이면 제출 전에 확인해주세요. 파일은 이 기기에 안전하게 보관됩니다.</p>
+                <p className="media-privacy">얼굴과 차량번호가 보이면 제출 전에 확인해주세요.</p>
                 {mediaError && <p className="media-error" role="alert">{mediaError}</p>}
-                <button className="modal-primary" onClick={() => setReportStep(2)}>{attachments.length > 0 ? "선택한 자료와 계속하기" : "자료 없이 계속하기"} <span>→</span></button>
+                <button className="modal-primary" onClick={() => setReportStep(2)}>{attachments.length > 0 ? "선택한 자료와 계속하기" : "위험요소 선택하기"} <span>→</span></button>
               </>
             )}
             {reportStep === 2 && (
