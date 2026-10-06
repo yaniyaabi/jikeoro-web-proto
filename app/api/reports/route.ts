@@ -85,8 +85,8 @@ export async function POST(request: Request) {
   const category = normalizeHazardCategory(body.category);
   const subcategory = normalizeHazardDetail(category, body.subcategory);
   if (!subcategory) return Response.json({ error: "세부 유형을 선택해주세요." }, { status: 400 });
-  const title = body.title?.trim() || `${category} 위험요소를 발견했어요`;
-  const description = body.description?.trim() || "주민이 현장에서 위험요소를 기록했습니다.";
+  const title = body.title?.trim() || "";
+  const description = body.description?.trim() || "";
   const d1 = getD1();
   await d1.batch([
     d1.prepare(

@@ -740,8 +740,8 @@ export default function Home() {
       body: JSON.stringify({
         category: reportType,
         subcategory: reportDetail,
-        title: reportDescription.trim() || `${reportType} 위험요소를 발견했어요`,
-        description: reportDescription,
+        title: reportDescription.trim(),
+        description: reportDescription.trim(),
         latitude: locationChoice === "gps" ? gpsPoint?.latitude ?? null : null,
         longitude: locationChoice === "gps" ? gpsPoint?.longitude ?? null : null,
         accuracy: locationChoice === "gps" ? gpsPoint?.accuracy ?? null : null,

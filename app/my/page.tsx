@@ -542,7 +542,7 @@ export default function MyJikeoroPage() {
               <div className="member-detail-main">
                 <section className="member-detail-section">
                   <h3>제보 내용</h3>
-                  <p>{selectedReport.description?.trim() || selectedReport.title}</p>
+                  <p>{selectedReport.description?.trim() || ""}</p>
                 </section>
 
                 <section className="member-detail-section">
