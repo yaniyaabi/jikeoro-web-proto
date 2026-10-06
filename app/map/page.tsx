@@ -663,7 +663,6 @@ export default function RiskMapPage() {
               {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
               {!mediaLoading && activeMedia?.kind === "video" && <video src={activeMedia.previewUrl} controls preload="metadata" aria-label={`${selected.title} 현장 영상`} />}
               {visualMedia.length > 1 && <div className="map-media-thumbnails">{visualMedia.map((item, index) => <button key={item.id} type="button" className={selectedMediaIndex === index ? "active" : ""} onClick={() => setSelectedMediaIndex(index)}>{item.kind === "image" ? "사진" : "영상"} {index + 1}</button>)}</div>}
-              <div className="map-lightbox-caption"><b>{selected.title}</b><span>{selected.place}</span></div>
             </div>
           </section>
         </div>
