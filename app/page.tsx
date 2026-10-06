@@ -974,7 +974,7 @@ export default function Home() {
 
       {reportOpen && (
         <div className="modal-backdrop" role="presentation" onMouseDown={(e) => e.target === e.currentTarget && closeReport()}>
-          <section className="report-modal" role="dialog" aria-modal="true" aria-labelledby="report-title">
+          <section className={`report-modal${reportStep === 5 ? " success-modal" : ""}`} role="dialog" aria-modal="true" aria-labelledby="report-title">
             <button className="modal-close" onClick={closeReport} aria-label="닫기">×</button>
             {reportStep < 5 && <div className="modal-progress"><span style={{ width: `${(reportStep / 4) * 100}%` }} /></div>}
             {reportStep === 1 && (
