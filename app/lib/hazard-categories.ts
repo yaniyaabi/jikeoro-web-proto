@@ -16,9 +16,9 @@ export const hazardDetails: Record<HazardCategory, HazardDetailOption[]> = {
     { name: "기타 인도 위험", help: "위 항목에 없는 인도 문제예요" },
   ],
   횡단보도: [
-    { name: "보행시간 짧음", help: "시간 안에 건너기 어려워요" },
-    { name: "신호기 문제", help: "신호등이나 음향신호가 불편해요" },
-    { name: "노면표시 흐림", help: "횡단보도 선이 잘 보이지 않아요" },
+    { name: "보행 시간 짧음", help: "시간 안에 건너기 어려워요" },
+    { name: "신호기 문제", help: "신호등이나 음향 신호가 불편해요" },
+    { name: "노면 표시 흐림", help: "횡단보도 선이 잘 보이지 않아요" },
     { name: "진입부 단차", help: "보도와 도로 사이 턱이 높아요" },
     { name: "시야 방해", help: "차량이나 시설물에 가려져요" },
     { name: "기타 횡단보도 위험", help: "위 항목에 없는 횡단보도 문제예요" },
