@@ -489,7 +489,7 @@ export default function MyJikeoroPage() {
                 <div className="report-main">
                   <div className="report-meta"><span className={`status-chip status-${report.status}`}>{statusLabels[report.status]}</span><small>{report.submitted} · {report.type}{report.subcategory ? ` · ${report.subcategory}` : ""}</small></div>
                   <h3>{report.title}</h3>
-                  <p>⌖ {report.place}</p>
+                  <p>{report.place}</p>
                   {Boolean(report.mediaCount) && <span className="report-media-count">사진·영상·음성 {report.mediaCount}개 첨부</span>}
                 </div>
                 <div className="response-box"><small>{report.department} 답변</small><p>{report.response}</p></div>

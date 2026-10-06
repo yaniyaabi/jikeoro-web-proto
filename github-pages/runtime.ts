@@ -22,6 +22,7 @@ type DemoReport = {
   place_description: string | null;
   latitude: number | null;
   longitude: number | null;
+  accuracy?: number | null;
   status: "received" | "review" | "action" | "completed";
   assigned_agency: string | null;
   response: string | null;
@@ -134,6 +135,15 @@ function normalizeCategory(value?: string | null) {
   if (value === "포트홀") return "횡단보도";
   if (["인도", "횡단보도", "조도", "날씨 관련 위험", "기타"].includes(value ?? "")) return value as string;
   return "기타";
+}
+
+function formatReportLocation(report: Pick<DemoReport, "address" | "place_description" | "latitude" | "longitude">) {
+  const writtenLocation = report.address?.trim() || report.place_description?.trim();
+  if (writtenLocation) return writtenLocation;
+  if (report.latitude != null && report.longitude != null) {
+    return `지도에서 선택한 위치 (${report.latitude.toFixed(5)}, ${report.longitude.toFixed(5)})`;
+  }
+  return "위치정보 없음";
 }
 
 const seededReports: DemoReport[] = [
@@ -334,6 +344,7 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
       place_description: body.placeDescription ?? null,
       latitude: body.latitude ?? null,
       longitude: body.longitude ?? null,
+      accuracy: body.accuracy ?? null,
       status: "received",
       assigned_agency: null,
       response: null,
@@ -360,7 +371,7 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
         subcategory: report.subcategory,
         title: report.title,
         description: report.description,
-        place: report.place_description ?? report.address ?? "우리 동네 위치 기록",
+        place: formatReportLocation(report),
         latitude: report.latitude,
         longitude: report.longitude,
         status: report.status,
@@ -404,7 +415,7 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
           latitude: report.latitude,
           longitude: report.longitude,
           accuracy: null,
-          place: report.place_description ?? report.address ?? "우리 동네 위치 기록",
+          place: formatReportLocation(report),
           status: report.status,
           createdAt: report.created_at,
           mediaCount: report.media?.filter((item) => item.kind === "image" || item.kind === "video").length ?? 0,

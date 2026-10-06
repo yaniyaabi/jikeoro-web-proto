@@ -57,6 +57,15 @@ function formatReportDate(value?: string | null) {
   return new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium", timeStyle: "short" }).format(date);
 }
 
+function formatReportLocation(report: Pick<AdminReport, "address" | "place_description" | "latitude" | "longitude">) {
+  const writtenLocation = report.address?.trim() || report.place_description?.trim();
+  if (writtenLocation) return writtenLocation;
+  if (report.latitude != null && report.longitude != null) {
+    return `지도에서 선택한 위치 (${report.latitude.toFixed(5)}, ${report.longitude.toFixed(5)})`;
+  }
+  return "위치정보 없음";
+}
+
 async function readReportMedia(reportId: string) {
   if (!("indexedDB" in window)) return [] as StoredReportMedia[];
   return new Promise<StoredReportMedia[]>((resolve) => {
@@ -280,7 +289,7 @@ export default function AdminPage() {
                 {filteredReports.map((report) => (
                   <button className={selected?.id === report.id ? "selected" : ""} key={report.id} onClick={() => setSelectedId(report.id)}>
                     <div><span className={`status-chip status-${report.status}`}>{statusLabels[report.status]}</span><small>{new Intl.DateTimeFormat("ko-KR", { month: "numeric", day: "numeric" }).format(new Date(report.created_at))}</small></div>
-                    <h3>{report.title}</h3><p>⌖ {report.address || report.place_description || "위치 확인 중"}</p>
+                    <h3>{report.title}</h3><p>{formatReportLocation(report)}</p>
                     <div className="admin-list-footer"><span>{report.category}{report.subcategory ? ` · ${report.subcategory}` : ""}</span><b>{report.assigned_agency || "담당기관 미배정"}</b></div>
                   </button>
                 ))}
@@ -291,7 +300,7 @@ export default function AdminPage() {
             <section className="admin-detail-panel">
               {selected ? <>
                 <div className="admin-detail-top"><div><span className={`status-chip status-${selected.status}`}>{statusLabels[selected.status]}</span><small>{selected.id}</small></div><p>제보자 {selected.reporter_name || "익명"} · {new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium" }).format(new Date(selected.created_at))}</p></div>
-                <h2>{selected.title}</h2><p className="admin-location">⌖ {selected.address || selected.place_description || "위치 확인 중"}</p>
+                <h2>{selected.title}</h2><p className="admin-location">{formatReportLocation(selected)}</p>
                 <div className="admin-description"><small>주민 설명</small><p>{selected.description}</p></div>
                 <section className="admin-evidence-section" aria-labelledby="admin-evidence-title">
                   <div className="admin-evidence-heading"><div><small>현장 첨부자료</small><h3 id="admin-evidence-title">사진·영상·음성</h3></div><span>{detailMedia.length || selected.media?.length || 0}개</span></div>
@@ -317,7 +326,7 @@ export default function AdminPage() {
                   {selected.subcategory && <div><dt>세부유형</dt><dd>{selected.subcategory}</dd></div>}
                   <div><dt>제보 시각</dt><dd>{formatReportDate(selected.observed_at || selected.created_at)}</dd></div>
                   <div><dt>날씨</dt><dd>{selected.weather ? `${describeWeather(selected.weather.code)} · ${Math.round(selected.weather.temperature)}°C` : "날씨 기록 없음"}</dd></div>
-                  <div><dt>위치</dt><dd>{selected.address || selected.place_description || "위치 확인 중"}</dd></div>
+                  <div><dt>위치</dt><dd>{formatReportLocation(selected)}</dd></div>
                   {(selected.latitude != null && selected.longitude != null) && <div><dt>위치 좌표</dt><dd>{selected.latitude.toFixed(5)}, {selected.longitude.toFixed(5)}{selected.accuracy ? ` · 오차 약 ${Math.round(selected.accuracy)}m` : ""}</dd></div>}
                   <div><dt>접수 시각</dt><dd>{formatReportDate(selected.created_at)}</dd></div>
                 </dl>

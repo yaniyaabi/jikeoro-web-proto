@@ -555,7 +555,6 @@ export default function RiskMapPage() {
 
       <section className="region-search" aria-label="시군구 지역 검색">
         <div className="region-search-copy">
-          <span aria-hidden="true">⌖</span>
           <div><strong>지역별로 찾아보기</strong><small>시·도와 시·군·구를 선택하면 경계 안의 제보만 보여드려요.</small></div>
         </div>
         <form onSubmit={(event) => { event.preventDefault(); applyRegion(); }}>

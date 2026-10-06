@@ -940,7 +940,7 @@ export default function Home() {
               <HazardIllustration type={selected.type} />
             </div>
             <div className="detail-body">
-              <p className="location-line"><span aria-hidden="true">⌖</span> {selected.place}</p>
+              <p className="location-line">{selected.place}</p>
               <h3>{selected.title}</h3>
               <p>{selected.detail}</p>
               <dl>

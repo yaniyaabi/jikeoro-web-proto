@@ -27,18 +27,31 @@ export async function GET(request: Request) {
   if (!user) return Response.json({ error: "로그인이 필요합니다." }, { status: 401 });
   await ensureDatabase();
   const result = await getD1().prepare(
-    `SELECT id, category AS type, subcategory, title, description, COALESCE(address, place_description, '위치 확인 중') AS place,
+    `SELECT id, category AS type, subcategory, title, description, address, place_description,
       latitude, longitude, accuracy, created_at AS createdAt, COALESCE(observed_at, created_at) AS observedAt,
       weather_json AS weather, media_json AS media, status, assigned_agency AS department,
       COALESCE(response, '기록이 접수되어 내용을 확인하고 있어요.') AS response
      FROM reports WHERE user_id = ? ORDER BY created_at DESC`,
   ).bind(user.id).all();
-  return Response.json({ reports: result.results.map((report) => ({
-    ...report,
-    weather: parseStoredJson(report.weather),
-    media: parseStoredJson(report.media) ?? [],
-    mediaCount: Array.isArray(parseStoredJson(report.media)) ? parseStoredJson(report.media).length : 0,
-  })) });
+  return Response.json({ reports: result.results.map((report) => {
+    const latitude = typeof report.latitude === "number" ? report.latitude : null;
+    const longitude = typeof report.longitude === "number" ? report.longitude : null;
+    const writtenLocation = typeof report.address === "string" && report.address.trim()
+      ? report.address.trim()
+      : typeof report.place_description === "string" && report.place_description.trim()
+        ? report.place_description.trim()
+        : "";
+    const place = writtenLocation || (latitude != null && longitude != null
+      ? `지도에서 선택한 위치 (${latitude.toFixed(5)}, ${longitude.toFixed(5)})`
+      : "위치정보 없음");
+    return {
+      ...report,
+      place,
+      weather: parseStoredJson(report.weather),
+      media: parseStoredJson(report.media) ?? [],
+      mediaCount: Array.isArray(parseStoredJson(report.media)) ? parseStoredJson(report.media).length : 0,
+    };
+  }) });
 }
 
 export async function DELETE(request: Request) {
