@@ -22,7 +22,7 @@ export function ensureDatabase() {
     const schemaStatements = [
       `CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY NOT NULL, email TEXT NOT NULL, name TEXT NOT NULL, role TEXT NOT NULL CHECK(role IN ('member','research_admin','agency_staff')), agency TEXT, created_at TEXT NOT NULL)`,
       `CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email)`,
-      `CREATE TABLE IF NOT EXISTS reports (id TEXT PRIMARY KEY NOT NULL, user_id TEXT REFERENCES users(id), category TEXT NOT NULL, title TEXT NOT NULL, description TEXT NOT NULL, latitude REAL, longitude REAL, accuracy REAL, address TEXT, place_description TEXT, status TEXT NOT NULL CHECK(status IN ('received','review','action','completed')), assigned_agency TEXT, response TEXT, observed_at TEXT, weather_json TEXT, media_json TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL)`,
+      `CREATE TABLE IF NOT EXISTS reports (id TEXT PRIMARY KEY NOT NULL, user_id TEXT REFERENCES users(id), category TEXT NOT NULL, subcategory TEXT, title TEXT NOT NULL, description TEXT NOT NULL, latitude REAL, longitude REAL, accuracy REAL, address TEXT, place_description TEXT, status TEXT NOT NULL CHECK(status IN ('received','review','action','completed')), assigned_agency TEXT, response TEXT, observed_at TEXT, weather_json TEXT, media_json TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL)`,
       `CREATE INDEX IF NOT EXISTS idx_reports_user_id ON reports(user_id)`,
       `CREATE INDEX IF NOT EXISTS idx_reports_status_updated_at ON reports(status, updated_at)`,
       `CREATE INDEX IF NOT EXISTS idx_reports_assigned_agency ON reports(assigned_agency)`,
@@ -38,19 +38,26 @@ export function ensureDatabase() {
     const reportColumns = await d1.prepare(`PRAGMA table_info(reports)`).all<{ name: string }>();
     const existingColumns = new Set(reportColumns.results.map((column) => column.name));
     const reportMigrations = [
+      ["subcategory", `ALTER TABLE reports ADD COLUMN subcategory TEXT`],
       ["observed_at", `ALTER TABLE reports ADD COLUMN observed_at TEXT`],
       ["weather_json", `ALTER TABLE reports ADD COLUMN weather_json TEXT`],
       ["media_json", `ALTER TABLE reports ADD COLUMN media_json TEXT`],
     ].filter(([column]) => !existingColumns.has(column));
     if (reportMigrations.length) await d1.batch(reportMigrations.map(([, statement]) => d1.prepare(statement)));
 
+    await d1.batch([
+      d1.prepare(`UPDATE reports SET subcategory = '가로등 부족' WHERE id = 'rpt-103' AND (subcategory IS NULL OR subcategory = '')`),
+      d1.prepare(`UPDATE reports SET subcategory = '턱·단차' WHERE id = 'rpt-98' AND (subcategory IS NULL OR subcategory = '')`),
+      d1.prepare(`UPDATE reports SET subcategory = '적치물·통행 방해' WHERE id = 'rpt-81' AND (subcategory IS NULL OR subcategory = '')`),
+    ]);
+
     const seedStatements = [
       d1.prepare(`INSERT OR IGNORE INTO users (id,email,name,role,agency,created_at) VALUES (?,?,?,?,?,?)`).bind("demo-member", "member@jikeoro.local", "김지킴", "member", null, "2026-07-01T09:00:00.000Z"),
       d1.prepare(`INSERT INTO users (id,email,name,role,agency,created_at) VALUES (?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET name = excluded.name`).bind("demo-admin", "research@jikeoro.local", "배수현 연구원", "research_admin", "지켜路 연구팀", "2026-07-01T09:00:00.000Z"),
       d1.prepare(`INSERT OR IGNORE INTO users (id,email,name,role,agency,created_at) VALUES (?,?,?,?,?,?)`).bind("demo-agency", "road@local.go.kr", "박길동 담당자", "agency_staff", "관할 도로관리과", "2026-07-01T09:00:00.000Z"),
-      d1.prepare(`INSERT OR IGNORE INTO reports (id,user_id,category,title,description,address,place_description,status,assigned_agency,response,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).bind("rpt-103", "demo-member", "조도", "골목길 가로등 사이가 어두워요", "가로등 사이 구간이 어두워 바닥 상태를 확인하기 어렵습니다.", null, "우리 동네 시장길 골목", "review", "관할 도로관리과", "야간 현장 확인 일정이 잡혔어요. 8월 19일까지 결과를 알려드릴게요.", "2026-08-12T11:00:00.000Z", "2026-08-14T02:00:00.000Z"),
-      d1.prepare(`INSERT OR IGNORE INTO reports (id,user_id,category,title,description,address,place_description,status,assigned_agency,response,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).bind("rpt-98", "demo-member", "인도", "약국 앞 보도블록 높이 차이", "보행보조기 바퀴가 걸릴 수 있는 높이 차이가 있습니다.", null, "새봄약국 앞", "action", "우리 동네 주민센터", "현장 확인 후 보수 대상으로 분류되어 담당 유지보수팀에 전달됐어요.", "2026-08-04T08:30:00.000Z", "2026-08-10T03:00:00.000Z"),
-      d1.prepare(`INSERT OR IGNORE INTO reports (id,user_id,category,title,description,address,place_description,status,assigned_agency,response,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).bind("rpt-81", "demo-member", "인도", "상가 입간판이 보행로를 막아요", "입간판 때문에 보행 유효폭이 좁아졌습니다.", null, "복합문화공간 앞", "completed", "관할 생활도로 담당기관", "상가 안내와 현장 정비를 마쳤어요. 통행 가능 폭 1.8m를 확보했습니다.", "2026-07-21T06:00:00.000Z", "2026-07-29T05:00:00.000Z"),
+      d1.prepare(`INSERT OR IGNORE INTO reports (id,user_id,category,subcategory,title,description,address,place_description,status,assigned_agency,response,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`).bind("rpt-103", "demo-member", "조도", "가로등 부족", "골목길 가로등 사이가 어두워요", "가로등 사이 구간이 어두워 바닥 상태를 확인하기 어렵습니다.", null, "우리 동네 시장길 골목", "review", "관할 도로관리과", "야간 현장 확인 일정이 잡혔어요. 8월 19일까지 결과를 알려드릴게요.", "2026-08-12T11:00:00.000Z", "2026-08-14T02:00:00.000Z"),
+      d1.prepare(`INSERT OR IGNORE INTO reports (id,user_id,category,subcategory,title,description,address,place_description,status,assigned_agency,response,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`).bind("rpt-98", "demo-member", "인도", "턱·단차", "약국 앞 보도블록 높이 차이", "보행보조기 바퀴가 걸릴 수 있는 높이 차이가 있습니다.", null, "새봄약국 앞", "action", "우리 동네 주민센터", "현장 확인 후 보수 대상으로 분류되어 담당 유지보수팀에 전달됐어요.", "2026-08-04T08:30:00.000Z", "2026-08-10T03:00:00.000Z"),
+      d1.prepare(`INSERT OR IGNORE INTO reports (id,user_id,category,subcategory,title,description,address,place_description,status,assigned_agency,response,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`).bind("rpt-81", "demo-member", "인도", "적치물·통행 방해", "상가 입간판이 보행로를 막아요", "입간판 때문에 보행 유효폭이 좁아졌습니다.", null, "복합문화공간 앞", "completed", "관할 생활도로 담당기관", "상가 안내와 현장 정비를 마쳤어요. 통행 가능 폭 1.8m를 확보했습니다.", "2026-07-21T06:00:00.000Z", "2026-07-29T05:00:00.000Z"),
     ];
     await d1.batch(seedStatements);
   })();

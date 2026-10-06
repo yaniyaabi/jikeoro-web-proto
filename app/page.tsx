@@ -6,7 +6,7 @@ import { SiteHeader } from "./components/site-header";
 import { SiteFooter } from "./components/site-footer";
 import { HazardIllustration } from "./components/hazard-illustration";
 import { sitePath } from "./lib/site-path";
-import { hazardCategories, hazardFilters, hazardIconFiles, hazardPinFiles, type HazardCategory } from "./lib/hazard-categories";
+import { hazardCategories, hazardDetails, hazardFilters, hazardIconFiles, hazardPinFiles, type HazardCategory } from "./lib/hazard-categories";
 
 type Hazard = {
   id: number;
@@ -357,6 +357,7 @@ export default function Home() {
   const [reportTime, setReportTime] = useState(() => new Date().toISOString());
   const [locationValidation, setLocationValidation] = useState("");
   const [reportType, setReportType] = useState<HazardCategory>("인도");
+  const [reportDetail, setReportDetail] = useState("");
   const [reportDescription, setReportDescription] = useState("");
   const [stepTwoValidation, setStepTwoValidation] = useState("");
   const [hasResearchConsent, setHasResearchConsent] = useState(false);
@@ -501,6 +502,7 @@ export default function Home() {
     setReportTime(new Date().toISOString());
     setLocationValidation("");
     setReportType("인도");
+    setReportDetail("");
     setReportDescription("");
     setStepTwoValidation("");
     setHasResearchConsent(false);
@@ -636,6 +638,10 @@ export default function Home() {
   };
 
   const goToLocationStep = () => {
+    if (!reportDetail) {
+      setStepTwoValidation("선택한 위험의 세부 유형을 하나 골라주세요.");
+      return;
+    }
     if (!reportDescription.trim()) {
       setStepTwoValidation("위험한 이유를 글이나 말로 알려주세요.");
       return;
@@ -720,6 +726,7 @@ export default function Home() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         category: reportType,
+        subcategory: reportDetail,
         title: reportDescription.trim() || `${reportType} 위험요소를 발견했어요`,
         description: reportDescription,
         latitude: locationChoice === "gps" ? gpsPoint?.latitude ?? null : null,
@@ -998,9 +1005,15 @@ export default function Home() {
                 <fieldset>
                   <legend>위험요소 유형</legend>
                   <div className="type-options">
-                    {hazardCategories.map((item) => <label key={item}><input type="radio" name="hazard" checked={reportType === item} onChange={() => setReportType(item)} /><span className="hazard-type-option"><img src={sitePath(`/icons/${hazardIconFiles[item]}`)} alt="" />{item}</span></label>)}
+                    {hazardCategories.map((item) => <label key={item}><input type="radio" name="hazard" checked={reportType === item} onChange={() => { setReportType(item); setReportDetail(""); setStepTwoValidation(""); }} /><span className="hazard-type-option"><img src={sitePath(`/icons/${hazardIconFiles[item]}`)} alt="" />{item}</span></label>)}
                   </div>
                 </fieldset>
+                <section className="hazard-detail-panel" aria-live="polite" aria-labelledby="hazard-detail-title">
+                  <div className="hazard-detail-heading"><span>{reportType}</span><strong id="hazard-detail-title">세부 유형</strong><small>가장 가까운 항목 하나를 골라주세요.</small></div>
+                  <div className="hazard-detail-options">
+                    {hazardDetails[reportType].map((item) => <button type="button" className={reportDetail === item.name ? "active" : ""} aria-pressed={reportDetail === item.name} onClick={() => { setReportDetail(item.name); setStepTwoValidation(""); }} key={item.name}><strong className="hazard-detail-name">{item.name}</strong><small className="hazard-detail-help">{item.help}</small><b className="hazard-detail-check" aria-hidden="true">✓</b></button>)}
+                  </div>
+                </section>
                 <label className="text-field">
                   <span>설명</span>
                   <textarea
@@ -1129,6 +1142,7 @@ export default function Home() {
                   <h3 id="report-review-title">제보내용 확인</h3>
                   <dl>
                     <div><dt>위험유형</dt><dd>{reportType}</dd></div>
+                    <div><dt>세부유형</dt><dd>{reportDetail}</dd></div>
                     <div><dt>위치</dt><dd>{locationChoice === "gps" && gpsPoint ? `지도에서 선택한 위치 (${gpsPoint.latitude.toFixed(5)}, ${gpsPoint.longitude.toFixed(5)})` : placeDescription || "위치 입력 전"}</dd></div>
                     <div><dt>첨부</dt><dd>사진 {attachments.filter((item) => item.kind === "image").length} · 영상 {attachments.filter((item) => item.kind === "video").length} · 음성 {attachments.filter((item) => item.kind === "audio").length}</dd></div>
                   </dl>

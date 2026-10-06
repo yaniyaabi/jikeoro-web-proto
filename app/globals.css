@@ -646,9 +646,13 @@ html[data-site-contrast="high"]{--ink:#001b17;--ink-soft:#18342e;--paper:#fff;--
 
 /* 확정된 다섯 개의 큰 위험 카테고리 */
 .type-options{grid-template-columns:repeat(5,1fr)}
+.hazard-detail-panel{margin:14px 0 18px;padding:16px;border:1px solid #cbd9cd;border-radius:16px;background:linear-gradient(145deg,#f2f7ed,#fff)}
+.hazard-detail-heading{display:flex;align-items:center;gap:9px;margin-bottom:11px}.hazard-detail-heading span{padding:5px 9px;border-radius:999px;background:#dff4cf;color:var(--ink);font-size:12px;font-weight:900}.hazard-detail-heading strong{font-size:17px}.hazard-detail-heading small{margin-left:auto;color:#647970;font-size:12px}
+.hazard-detail-options{display:grid;gap:8px}.hazard-detail-options button{width:100%;min-height:62px;border:1px solid #c9d5cc;border-radius:12px;background:#fff;padding:10px 13px;display:grid;grid-template-columns:1fr auto;grid-template-areas:"name check" "help check";align-items:center;text-align:left;color:var(--ink);cursor:pointer;transition:border-color .18s,background .18s,transform .18s,box-shadow .18s}.hazard-detail-options button:hover{border-color:#66816f;background:#f7fbf2;transform:translateY(-1px)}.hazard-detail-options button.active{border:2px solid var(--ink);background:#eff8e7;box-shadow:0 5px 0 rgba(10,54,48,.12)}.hazard-detail-name{grid-area:name;font-size:18px;font-weight:900;letter-spacing:-.025em}.hazard-detail-help{grid-area:help;margin-top:3px;color:#687b73;font-size:13px;line-height:1.4}.hazard-detail-check{grid-area:check;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:#e5ece3;color:transparent;font-size:16px;font-weight:900}.hazard-detail-options button.active .hazard-detail-check{background:var(--mint);color:var(--ink)}
 .guide-type-options{grid-template-columns:repeat(5,1fr)}
 .guide-type-options>*{min-height:46px;padding:6px 3px;display:grid;place-items:center;font-size:12px;line-height:1.2}
 @media(max-width:720px){.type-options{grid-template-columns:repeat(2,1fr)}.type-options label:last-child{grid-column:1/-1}}
+@media(max-width:720px){.hazard-detail-panel{padding:13px;margin-top:12px}.hazard-detail-heading{align-items:flex-start;flex-wrap:wrap}.hazard-detail-heading strong{font-size:18px}.hazard-detail-heading small{width:100%;margin-left:0;font-size:14px}.hazard-detail-options button{min-height:68px;padding:11px 13px}.hazard-detail-name{font-size:19px}.hazard-detail-help{font-size:14px}}
 
 /* 모바일 웹 최종 정리: 큰 글자와 데스크톱 카드가 작은 화면을 밀어내지 않도록 재배치 */
 @media(max-width:720px){

@@ -12,6 +12,7 @@ import { hazardCategories, hazardFilters, hazardPinFiles, normalizeHazardCategor
 type MapReport = {
   id: string;
   type: string;
+  subcategory?: string | null;
   title: string;
   description: string;
   latitude: number;
@@ -629,7 +630,7 @@ export default function RiskMapPage() {
                   <button className="risk-report-select" type="button" onClick={() => selectReport(report)}>
                     <span className={`report-index index-${toneByType[report.type] ?? "navy"}`}>{index + 1}</span>
                     <span className="report-list-copy">
-                      <span><b>{report.type}</b><small>{statusText[report.status]}</small></span>
+                      <span><b>{report.type}{report.subcategory ? ` · ${report.subcategory}` : ""}</b><small>{statusText[report.status]}</small></span>
                       <strong>{report.title}</strong>
                       <span className="report-list-place">{report.place}</span>
                       <time>{formatDate(report.createdAt)}</time>

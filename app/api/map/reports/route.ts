@@ -3,7 +3,7 @@ import { ensureDatabase, getD1 } from "../../../../db";
 export async function GET() {
   await ensureDatabase();
   const result = await getD1().prepare(
-    `SELECT id, category AS type, title, description,
+    `SELECT id, category AS type, subcategory, title, description,
       latitude, longitude, accuracy,
       COALESCE(address, place_description, '우리 동네 현장 기록') AS place,
       status, created_at AS createdAt

@@ -13,6 +13,7 @@ window.localStorage.removeItem(ROLE_KEY);
 type DemoReport = {
   id: string;
   category: string;
+  subcategory: string | null;
   title: string;
   description: string;
   address: string | null;
@@ -137,6 +138,7 @@ const seededReports: DemoReport[] = [
   {
     id: "pages-demo-1",
     category: "인도",
+    subcategory: "턱·단차",
     title: "보도 경계석 단차",
     description: "보행보조기 바퀴가 걸릴 만큼 경계석의 높이 차이가 커요.",
     address: "대전광역시 서구 둔산로",
@@ -157,6 +159,7 @@ const seededReports: DemoReport[] = [
   {
     id: "pages-demo-2",
     category: "조도",
+    subcategory: "가로등 부족",
     title: "골목길 가로등 사이가 어두워요",
     description: "야간에 보행로가 잘 보이지 않아요.",
     address: "부산광역시 부산진구 시민공원로",
@@ -177,6 +180,7 @@ const seededReports: DemoReport[] = [
   {
     id: "pages-demo-3",
     category: "횡단보도",
+    subcategory: "보행 신호 짧음",
     title: "횡단보도 신호 시간이 짧아요",
     description: "보행 신호가 짧아 어르신이 건너는 중에 신호가 바뀝니다.",
     address: "서울특별시 종로구 종로",
@@ -207,9 +211,10 @@ function readReports(): DemoReport[] {
       ? [...seededReports.filter((seeded) => !savedReports.some((report) => report.id === seeded.id)), ...savedReports]
       : seededReports;
     return reports.map((report) => {
-      if (report.id === "pages-demo-1") return { ...report, category: normalizeCategory(report.category), address: seededReports[0].address, place_description: seededReports[0].place_description, latitude: seededReports[0].latitude, longitude: seededReports[0].longitude, assigned_agency: seededReports[0].assigned_agency, reporter_name: seededReports[0].reporter_name, reporter_email: seededReports[0].reporter_email };
-      if (report.id === "pages-demo-2") return { ...report, category: normalizeCategory(report.category), address: seededReports[1].address, place_description: seededReports[1].place_description, latitude: seededReports[1].latitude, longitude: seededReports[1].longitude, assigned_agency: seededReports[1].assigned_agency, reporter_name: seededReports[1].reporter_name, reporter_email: seededReports[1].reporter_email };
-      return { ...report, category: normalizeCategory(report.category) };
+      if (report.id === "pages-demo-1") return { ...report, category: normalizeCategory(report.category), subcategory: report.subcategory ?? seededReports[0].subcategory, address: seededReports[0].address, place_description: seededReports[0].place_description, latitude: seededReports[0].latitude, longitude: seededReports[0].longitude, assigned_agency: seededReports[0].assigned_agency, reporter_name: seededReports[0].reporter_name, reporter_email: seededReports[0].reporter_email };
+      if (report.id === "pages-demo-2") return { ...report, category: normalizeCategory(report.category), subcategory: report.subcategory ?? seededReports[1].subcategory, address: seededReports[1].address, place_description: seededReports[1].place_description, latitude: seededReports[1].latitude, longitude: seededReports[1].longitude, assigned_agency: seededReports[1].assigned_agency, reporter_name: seededReports[1].reporter_name, reporter_email: seededReports[1].reporter_email };
+      if (report.id === "pages-demo-3") return { ...report, category: normalizeCategory(report.category), subcategory: report.subcategory ?? seededReports[2].subcategory };
+      return { ...report, category: normalizeCategory(report.category), subcategory: report.subcategory ?? null };
     });
   } catch {
     return seededReports;
@@ -318,6 +323,7 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     const report: DemoReport = {
       id: `pages-${Date.now()}`,
       category: normalizeCategory(body.category ?? body.type),
+      subcategory: typeof body.subcategory === "string" ? body.subcategory : null,
       title: body.title ?? `${normalizeCategory(body.category ?? body.type)} 신고`,
       description: body.description ?? "",
       address: body.address ?? null,
@@ -347,6 +353,7 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
       reports: accountReports.map((report) => ({
         id: report.id,
         type: report.category,
+        subcategory: report.subcategory,
         title: report.title,
         description: report.description,
         place: report.place_description ?? report.address ?? "우리 동네 위치 기록",
@@ -387,6 +394,7 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
         .map((report) => ({
           id: report.id,
           type: report.category,
+          subcategory: report.subcategory,
           title: report.title,
           description: report.description,
           latitude: report.latitude,

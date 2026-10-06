@@ -17,6 +17,7 @@ type ReportMediaPreview = StoredReportMedia & { previewUrl: string };
 type AdminReport = {
   id: string;
   category: string;
+  subcategory?: string | null;
   title: string;
   description: string;
   address: string | null;
@@ -256,7 +257,7 @@ export default function AdminPage() {
                   <button className={selected?.id === report.id ? "selected" : ""} key={report.id} onClick={() => setSelectedId(report.id)}>
                     <div><span className={`status-chip status-${report.status}`}>{statusLabels[report.status]}</span><small>{new Intl.DateTimeFormat("ko-KR", { month: "numeric", day: "numeric" }).format(new Date(report.created_at))}</small></div>
                     <h3>{report.title}</h3><p>⌖ {report.address || report.place_description || "위치 확인 중"}</p>
-                    <div className="admin-list-footer"><span>{report.category}</span><b>{report.assigned_agency || "담당기관 미배정"}</b></div>
+                    <div className="admin-list-footer"><span>{report.category}{report.subcategory ? ` · ${report.subcategory}` : ""}</span><b>{report.assigned_agency || "담당기관 미배정"}</b></div>
                   </button>
                 ))}
                 {!filteredReports.length && <p className="empty-admin-list">해당 상태의 기록이 없습니다.</p>}
@@ -289,6 +290,7 @@ export default function AdminPage() {
                 </section>
                 <dl className="admin-report-facts">
                   <div><dt>위험유형</dt><dd>{selected.category}</dd></div>
+                  {selected.subcategory && <div><dt>세부유형</dt><dd>{selected.subcategory}</dd></div>}
                   <div><dt>제보 시각</dt><dd>{formatReportDate(selected.observed_at || selected.created_at)}</dd></div>
                   <div><dt>날씨</dt><dd>{selected.weather ? `${describeWeather(selected.weather.code)} · ${Math.round(selected.weather.temperature)}°C` : "날씨 기록 없음"}</dd></div>
                   <div><dt>위치</dt><dd>{selected.address || selected.place_description || "위치 확인 중"}</dd></div>

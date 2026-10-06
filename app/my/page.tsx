@@ -4,13 +4,14 @@ import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { SiteHeader } from "../components/site-header";
 import { SiteFooter } from "../components/site-footer";
 import { sitePath } from "../lib/site-path";
-import { normalizeHazardCategory } from "../lib/hazard-categories";
+import { hazardDetails, normalizeHazardCategory } from "../lib/hazard-categories";
 
 type ReportStatus = "received" | "review" | "action" | "completed";
 type ActivityFilter = "all" | "active" | "completed";
 type UserReport = {
   id: number | string;
   type: string;
+  subcategory?: string | null;
   title: string;
   description?: string;
   place: string;
@@ -244,12 +245,14 @@ export default function MyJikeoroPage() {
         const legacyReport = window.sessionStorage.getItem("jikeoro-demo-latest-report");
         if (legacyReport) {
           try {
-            const legacy = JSON.parse(legacyReport) as { type?: string; title?: string; place?: string };
+            const legacy = JSON.parse(legacyReport) as { type?: string; subcategory?: string; title?: string; place?: string };
+            const legacyCategory = normalizeHazardCategory(legacy.type);
             const migrationResponse = await fetch("/api/reports", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
-                category: normalizeHazardCategory(legacy.type),
+                category: legacyCategory,
+                subcategory: legacy.subcategory || hazardDetails[legacyCategory][0].name,
                 title: legacy.title || "이전에 남긴 위험 기록",
                 description: legacy.title || "DB 연결 전에 남긴 기록을 복구했습니다.",
                 placeDescription: legacy.place || "기록 당시 입력한 위치",
@@ -465,7 +468,7 @@ export default function MyJikeoroPage() {
                 }}
               >
                 <div className="report-main">
-                  <div className="report-meta"><span className={`status-chip status-${report.status}`}>{statusLabels[report.status]}</span><small>{report.submitted} · {report.type}</small></div>
+                  <div className="report-meta"><span className={`status-chip status-${report.status}`}>{statusLabels[report.status]}</span><small>{report.submitted} · {report.type}{report.subcategory ? ` · ${report.subcategory}` : ""}</small></div>
                   <h3>{report.title}</h3>
                   <p>⌖ {report.place}</p>
                   {Boolean(report.mediaCount) && <span className="report-media-count">사진·영상·음성 {report.mediaCount}개 첨부</span>}
@@ -512,7 +515,7 @@ export default function MyJikeoroPage() {
             <header className="member-detail-heading">
               <div className="report-meta">
                 <span className={`status-chip status-${selectedReport.status}`}>{statusLabels[selectedReport.status]}</span>
-                <small>{selectedReport.type} · {selectedReport.submitted}</small>
+                <small>{selectedReport.type}{selectedReport.subcategory ? ` · ${selectedReport.subcategory}` : ""} · {selectedReport.submitted}</small>
               </div>
               <h2 id="member-detail-title">{selectedReport.title}</h2>
               <p>내가 남긴 위험 기록의 내용과 첨부자료를 확인할 수 있어요.</p>
@@ -555,6 +558,7 @@ export default function MyJikeoroPage() {
               <aside className="member-detail-side">
                 <dl className="member-detail-facts">
                   <div><dt>위험유형</dt><dd>{selectedReport.type}</dd></div>
+                  {selectedReport.subcategory && <div><dt>세부유형</dt><dd>{selectedReport.subcategory}</dd></div>}
                   <div><dt>위치</dt><dd>{selectedReport.place}</dd></div>
                   {(selectedReport.latitude != null && selectedReport.longitude != null) && <div><dt>위치 좌표</dt><dd>{selectedReport.latitude.toFixed(5)}, {selectedReport.longitude.toFixed(5)}</dd></div>}
                   <div><dt>제보 시각</dt><dd>{selectedReport.createdAt ? new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium", timeStyle: "short" }).format(new Date(selectedReport.createdAt)) : selectedReport.submitted}</dd></div>

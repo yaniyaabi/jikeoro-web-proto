@@ -13,6 +13,7 @@ export const reports = sqliteTable("reports", {
   id: text("id").primaryKey(),
   userId: text("user_id").references(() => users.id),
   category: text("category").notNull(),
+  subcategory: text("subcategory"),
   title: text("title").notNull(),
   description: text("description").notNull(),
   latitude: real("latitude"),
