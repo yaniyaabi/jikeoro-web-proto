@@ -6,7 +6,6 @@ import type { Feature, FeatureCollection, MultiPolygon, Polygon, Position } from
 import { SiteHeader } from "../components/site-header";
 import { SiteFooter } from "../components/site-footer";
 import { sitePath } from "../lib/site-path";
-import { HazardIllustration } from "../components/hazard-illustration";
 import { hazardCategories, hazardFilters, hazardPinFiles, normalizeHazardCategory } from "../lib/hazard-categories";
 
 type MapReport = {
@@ -162,12 +161,13 @@ function ReportThumbnail({ report, onOpen }: { report: MapReport; onOpen: () => 
     };
   }, [report.id]);
 
+  if (!media) return null;
+
   return (
     <button className="map-inline-thumb" type="button" onClick={onOpen} aria-label={`${report.title} 사진 또는 영상 크게 보기`}>
       {media?.kind === "image" && <img src={media.previewUrl} alt="" />}
       {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
       {media?.kind === "video" && <video src={media.previewUrl} muted preload="metadata" />}
-      {!media && <span className={`map-inline-sample tone-${toneByType[report.type] ?? "navy"}`} aria-hidden="true"><span /></span>}
     </button>
   );
 }
@@ -496,7 +496,12 @@ export default function RiskMapPage() {
   };
 
   const openReportMedia = (report: MapReport) => {
-    setSelectedId(report.id);
+    if (selectedId !== report.id) {
+      setSelectedMedia([]);
+      setSelectedMediaIndex(0);
+      setMediaLoading(true);
+      setSelectedId(report.id);
+    }
     setDetailOpen(true);
   };
 
@@ -648,7 +653,7 @@ export default function RiskMapPage() {
         </aside>
       </section>
 
-      {detailOpen && selected && (
+      {detailOpen && selected && (mediaLoading || activeMedia) && (
         <div className="map-detail-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setDetailOpen(false); }}>
           <section className="map-detail-modal media-only" role="dialog" aria-modal="true" aria-label={`${selected.title} 첨부 자료 크게 보기`}>
             <button className="map-detail-close" type="button" onClick={() => setDetailOpen(false)} aria-label="상세 내용 닫기">×</button>
@@ -657,13 +662,6 @@ export default function RiskMapPage() {
               {!mediaLoading && activeMedia?.kind === "image" && <img src={activeMedia.previewUrl} alt={`${selected.title} 현장 사진`} />}
               {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
               {!mediaLoading && activeMedia?.kind === "video" && <video src={activeMedia.previewUrl} controls preload="metadata" aria-label={`${selected.title} 현장 영상`} />}
-              {!mediaLoading && !activeMedia && (
-                <div className="map-sample-media hazard-photo">
-                  <HazardIllustration type={selected.type} />
-                  <span className="scene-caption">첨부 예시 · {selected.type}</span>
-                  <p>이 예시 기록에는 원본 사진·영상이 없어 현장 유형 이미지로 표시합니다.</p>
-                </div>
-              )}
               {visualMedia.length > 1 && <div className="map-media-thumbnails">{visualMedia.map((item, index) => <button key={item.id} type="button" className={selectedMediaIndex === index ? "active" : ""} onClick={() => setSelectedMediaIndex(index)}>{item.kind === "image" ? "사진" : "영상"} {index + 1}</button>)}</div>}
               <div className="map-lightbox-caption"><b>{selected.title}</b><span>{selected.place}</span></div>
             </div>
