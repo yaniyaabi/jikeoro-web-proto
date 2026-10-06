@@ -313,8 +313,9 @@ function ReportGuidePreview({ step }: { step: number }) {
           <strong className="guide-screen-title">위험한 이유를<br />알려주세요.</strong>
           <small className="guide-field-label">위험요소 유형</small>
           <div className="guide-type-options"><b>인도</b><span>횡단보도</span><span>조도</span><span>날씨 관련 위험</span><span>기타</span></div>
+          <div className="guide-description-head"><b>설명</b><span><i aria-hidden="true">▰</i> 말로 글쓰기</span></div>
           <div className="guide-textarea">예: 보도블록 높이 차이 때문에 발이 걸릴 것 같아요.</div>
-          <div className="guide-voice-options"><span>🎙 말로 글쓰기</span><span>● 현장음 녹음</span></div>
+          <div className="guide-voice-options"><span>● 현장음 녹음</span></div>
           <div className="guide-next-button">위치 입력하기 <b>→</b></div>
         </>
       )}
@@ -1014,21 +1015,24 @@ export default function Home() {
                     {hazardDetails[reportType].map((item) => <button type="button" className={reportDetail === item.name ? "active" : ""} aria-pressed={reportDetail === item.name} onClick={() => { setReportDetail(item.name); setStepTwoValidation(""); }} key={item.name}><strong className="hazard-detail-name">{item.name}</strong><small className="hazard-detail-help">{item.help}</small><b className="hazard-detail-check" aria-hidden="true">✓</b></button>)}
                   </div>
                 </section>
-                <label className="text-field">
-                  <span>설명</span>
+                <div className="description-field">
+                  <div className="description-field-heading">
+                    <label htmlFor="report-description">설명</label>
+                    <button className={isDictating ? "active" : ""} type="button" onClick={toggleDictation} aria-pressed={isDictating}>
+                      <span className="speech-write-icon" aria-hidden="true">
+                        <svg viewBox="0 0 36 28"><path d="M4 3.5h28a2.5 2.5 0 0 1 2.5 2.5v13a2.5 2.5 0 0 1-2.5 2.5H16l-7 4v-4H4A2.5 2.5 0 0 1 1.5 19V6A2.5 2.5 0 0 1 4 3.5Z"/><path d="M7 9h22M7 13h22M7 17h15"/></svg>
+                      </span>
+                      {isDictating ? "말하기 끝내기" : "말로 글쓰기"}
+                    </button>
+                    <p aria-live="polite">{dictationMessage || "말한 내용이 설명 칸에 글자로 입력됩니다."}</p>
+                  </div>
                   <textarea
+                    id="report-description"
                     value={reportDescription}
                     onChange={(event) => { setReportDescription(event.target.value); setStepTwoValidation(""); }}
                     placeholder="예: 보도블록 높이 차이 때문에 발이 걸릴 것 같아요."
                     rows={4}
                   />
-                </label>
-                <div className="description-voice-tools">
-                  <button className={isDictating ? "active" : ""} type="button" onClick={toggleDictation}>
-                    <span aria-hidden="true">{isDictating ? "■" : "🎙"}</span>
-                    {isDictating ? "말하기 끝내기" : "말로 글쓰기"}
-                  </button>
-                  <p aria-live="polite">{dictationMessage || "말한 내용이 설명 칸에 글자로 입력됩니다."}</p>
                 </div>
                 <div className="voice-recorder step-two-recorder">
                   <div>
