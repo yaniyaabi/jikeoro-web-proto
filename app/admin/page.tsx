@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { SiteHeader } from "../components/site-header";
 import { SiteFooter } from "../components/site-footer";
 import { HazardIllustration } from "../components/hazard-illustration";
+import { ReportLocationMap } from "../components/report-location-map";
 import { sitePath } from "../lib/site-path";
 import { formatRewardPhone, readRewardRequests, REWARD_REQUESTS_KEY, RewardRequest, writeRewardRequests } from "../lib/reward-requests";
 
@@ -305,6 +306,7 @@ export default function AdminPage() {
               {selected ? <>
                 <div className="admin-detail-top"><div><span className={`status-chip status-${selected.status}`}>{statusLabels[selected.status]}</span><small>{selected.id}</small></div><p>제보자 {selected.reporter_name || "익명"} · {new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium" }).format(new Date(selected.created_at))}</p></div>
                 <h2>{selected.title}</h2><p className="admin-location">{formatReportLocation(selected)}</p>
+                {selected.latitude != null && selected.longitude != null && <ReportLocationMap latitude={selected.latitude} longitude={selected.longitude} title={selected.title} />}
                 <div className="admin-description"><small>주민 설명</small><p>{selected.description}</p></div>
                 <section className="admin-evidence-section" aria-labelledby="admin-evidence-title">
                   <div className="admin-evidence-heading"><div><small>현장 첨부자료</small><h3 id="admin-evidence-title">사진·영상·음성</h3></div><span>{detailMedia.length || selected.media?.length || 0}개</span></div>
