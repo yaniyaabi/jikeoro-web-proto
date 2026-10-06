@@ -292,8 +292,16 @@ function MediaOptionVisual({ kind }: { kind: "image" | "video" }) {
 
 function LocationPinIcon() {
   return (
-    <span className="current-location-icon" aria-hidden="true">
+    <span className="location-action-icon current-location-icon" aria-hidden="true">
       <svg viewBox="0 0 28 36"><path d="M14 1.5C7.1 1.5 1.5 7.1 1.5 14c0 9.5 12.5 20.5 12.5 20.5S26.5 23.5 26.5 14C26.5 7.1 20.9 1.5 14 1.5Z"/><circle cx="14" cy="13.5" r="5.8"/></svg>
+    </span>
+  );
+}
+
+function ManualInputIcon() {
+  return (
+    <span className="location-action-icon manual-location-icon" aria-hidden="true">
+      <svg viewBox="0 0 32 24"><rect x="1" y="3" width="30" height="18" rx="3"/><path d="M6 8h2m3 0h2m3 0h2m3 0h2m3 0h1M6 12h2m3 0h2m3 0h2m3 0h2m3 0h1M7 16h18"/></svg>
     </span>
   );
 }
@@ -330,7 +338,7 @@ function ReportGuidePreview({ step }: { step: number }) {
       {step === 3 && (
         <>
           <strong className="guide-screen-title">위험한 장소를<br />확인해주세요.</strong>
-          <div className="guide-location-options"><b><LocationPinIcon />현재 위치 사용</b><span>⌨ 직접 입력</span></div>
+          <div className="guide-location-options"><b><LocationPinIcon />현재 위치 사용</b><span><ManualInputIcon />직접 입력</span></div>
           <div className="guide-map-preview"><i className="road-one" /><i className="road-two" /><span>●</span><small>지도를 움직여 핀을 맞춰주세요</small></div>
           <div className="guide-location-result"><i />선택한 위치 <small>위도 36.36563 · 경도 127.36227</small></div>
           <div className="guide-next-button">제보내용 확인하기 <b>→</b></div>
@@ -1096,7 +1104,7 @@ export default function Home() {
                       onClick={chooseManualLocation}
                       aria-pressed={locationChoice === "manual"}
                     >
-                      <span aria-hidden="true">⌨</span>
+                      <ManualInputIcon />
                       직접 입력
                     </button>
                   </div>
