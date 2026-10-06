@@ -259,7 +259,6 @@ export default function AdminPage() {
         <div className="admin-context-bar"><span className="admin-console-label">{user?.role === "research_admin" ? "관리자 콘솔" : "기관 콘솔"}</span><div className="admin-account"><span>{user?.role === "research_admin" ? "研" : "官"}</span><div><b>{user?.name}</b><small>{user?.role === "research_admin" ? "연구원 관리자" : user?.agency}</small></div><button onClick={logout}>로그아웃</button></div></div>
         <div className="admin-title-row">
           <div><p className="eyebrow">{view === "reports" ? "REPORT OPERATIONS" : view === "accounts" ? "ACCESS & PEOPLE" : "REWARD OPERATIONS"}</p><h1>{view === "reports" ? (user?.role === "research_admin" ? <>전국 보행위험<br />처리 현황</> : <>우리 기관 보행위험<br />처리 현황</>) : view === "accounts" ? <>운영 계정과<br />권한 관리</> : <>온누리상품권<br />신청 관리</>}</h1></div>
-          <p>{view === "reports" ? (user?.role === "research_admin" ? "전체 기록을 검토하고 담당기관을 연결합니다." : "우리 기관에 배정된 기록을 확인하고 처리 결과를 남깁니다.") : view === "accounts" ? "연구원과 기관 담당자를 등록하고 각자 필요한 권한만 부여합니다." : "접수된 휴대전화 번호를 확인해 상품권을 발송하고 처리 상태를 기록합니다."}</p>
         </div>
 
         <div className="admin-view-tabs" role="tablist" aria-label="관리자 콘솔 메뉴">
@@ -379,7 +378,6 @@ export default function AdminPage() {
           </div>
           {rewardNotice && <p className="admin-reward-notice" role="status">{rewardNotice}</p>}
         </section>}
-        <p className="prototype-auth-note">현재 운영 계정은 이 브라우저에 안전한 검증값으로 저장됩니다. 실제 배포 시 AWS 계정 DB와 서버 권한 정책으로 교체됩니다.</p>
       </section>
     </main>
     <SiteFooter />

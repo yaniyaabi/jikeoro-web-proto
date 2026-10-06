@@ -504,7 +504,6 @@ export default function MyJikeoroPage() {
             {!visibleReports.length && <p className="empty-member-reports">아직 해당하는 기록이 없어요.<a href={sitePath("/?report=1")}>첫 위험요소 기록하기 →</a></p>}
           </div>
         </div>
-        <p className="prototype-auth-note">현재는 로그인·대응 현황을 미리 보여주는 프로토타입입니다. 실제 운영 단계에서는 본인 계정에 저장된 기록만 안전하게 표시됩니다.</p>
       </section>
 
       {rewardFormOpen && (
