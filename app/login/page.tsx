@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { SiteFooter } from "../components/site-footer";
 import { AccessibilityTools } from "../components/site-header";
 import { sitePath } from "../lib/site-path";
+import { issueEmailVerificationCode, isEmailVerified, verifyEmailCode } from "../lib/email-verification";
 
 type AuthMode = "login" | "signup";
 
@@ -13,6 +14,11 @@ export default function MemberLoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
+  const [verificationIssuedFor, setVerificationIssuedFor] = useState("");
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [verificationMessage, setVerificationMessage] = useState("");
+  const [testVerificationCode, setTestVerificationCode] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -33,7 +39,40 @@ export default function MemberLoginPage() {
     setError("");
     setPassword("");
     setPasswordConfirm("");
+    setVerificationCode("");
+    setVerificationIssuedFor("");
+    setEmailVerified(false);
+    setVerificationMessage("");
+    setTestVerificationCode("");
     window.history.replaceState({}, "", sitePath(`/login/${nextMode === "signup" ? "?mode=signup" : ""}`));
+  };
+
+  const requestEmailVerification = () => {
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      setError("이메일 주소를 정확히 입력해주세요.");
+      return;
+    }
+    const code = issueEmailVerificationCode(normalizedEmail);
+    setVerificationIssuedFor(normalizedEmail);
+    setVerificationCode("");
+    setEmailVerified(false);
+    setVerificationMessage("인증번호를 발급했어요. 5분 안에 입력해주세요.");
+    setTestVerificationCode(code);
+    setError("");
+  };
+
+  const confirmEmailVerification = () => {
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!verifyEmailCode(normalizedEmail, verificationCode)) {
+      setVerificationMessage("인증번호가 맞지 않거나 유효시간이 지났어요.");
+      setEmailVerified(false);
+      return;
+    }
+    setEmailVerified(true);
+    setVerificationMessage("이메일 인증이 완료됐어요.");
+    setTestVerificationCode("");
+    setError("");
   };
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
@@ -55,6 +94,10 @@ export default function MemberLoginPage() {
       }
       if (password !== passwordConfirm) {
         setError("비밀번호가 서로 같지 않아요.");
+        return;
+      }
+      if (!emailVerified || !isEmailVerified(normalizedEmail)) {
+        setError("이메일 인증을 완료해주세요.");
         return;
       }
     }
@@ -106,12 +149,13 @@ export default function MemberLoginPage() {
             <div className="member-auth-card-heading">
               <span>{mode === "login" ? "다시 만나 반가워요" : "지켜路와 함께해요"}</span>
               <h2>{mode === "login" ? "내 기록을 확인하세요." : "새 계정을 만들어보세요."}</h2>
-              <p>{mode === "login" ? "가입한 이메일과 비밀번호를 입력해주세요." : "간단한 정보만 입력하면 바로 참여할 수 있어요."}</p>
+              <p>{mode === "login" ? "가입한 이메일과 비밀번호를 입력해주세요." : "이메일 인증 후 새 계정을 만들 수 있어요."}</p>
             </div>
 
             <form className="member-auth-form" onSubmit={submit}>
               {mode === "signup" && <label><span>이름</span><input type="text" value={name} onChange={(event) => setName(event.target.value)} autoComplete="name" placeholder="예: 김지킴" /></label>}
-              <label><span>이메일</span><input type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" placeholder="name@example.com" /></label>
+              <label><span>이메일</span><span className={mode === "signup" ? "member-email-field" : ""}><input type="email" value={email} onChange={(event) => { setEmail(event.target.value); if (event.target.value.trim().toLowerCase() !== verificationIssuedFor) { setEmailVerified(false); setVerificationMessage(""); setTestVerificationCode(""); } }} autoComplete="email" placeholder="name@example.com" />{mode === "signup" && <button type="button" onClick={requestEmailVerification}>{verificationIssuedFor ? "다시 받기" : "인증번호 받기"}</button>}</span></label>
+              {mode === "signup" && verificationIssuedFor && <div className={`member-email-verification ${emailVerified ? "verified" : ""}`}><label><span>인증번호</span><span><input inputMode="numeric" maxLength={6} value={verificationCode} onChange={(event) => setVerificationCode(event.target.value.replace(/\D/g, ""))} placeholder="6자리 입력" disabled={emailVerified} /><button type="button" onClick={confirmEmailVerification} disabled={emailVerified}>{emailVerified ? "인증 완료" : "확인"}</button></span></label><p>{verificationMessage}</p>{testVerificationCode && <small>시연용 인증번호 <b>{testVerificationCode}</b></small>}</div>}
               <label>
                 <span>비밀번호</span>
                 <span className="member-password-field"><input type={showPassword ? "text" : "password"} value={password} onChange={(event) => setPassword(event.target.value)} autoComplete={mode === "signup" ? "new-password" : "current-password"} placeholder={mode === "signup" ? "8자 이상 입력" : "비밀번호 입력"} /><button type="button" onClick={() => setShowPassword((current) => !current)}>{showPassword ? "숨기기" : "보기"}</button></span>
@@ -122,7 +166,6 @@ export default function MemberLoginPage() {
             </form>
 
             <p className="member-auth-switch">{mode === "login" ? "아직 계정이 없나요?" : "이미 계정이 있나요?"} <button type="button" onClick={() => changeMode(mode === "login" ? "signup" : "login")}>{mode === "login" ? "회원가입" : "로그인"}</button></p>
-            <small className="member-auth-prototype-note">현재 프로토타입 계정은 이 브라우저에만 임시 보관됩니다. AWS 연결 시 정식 인증 계정으로 전환됩니다.</small>
           </div>
         </section>
       </main>

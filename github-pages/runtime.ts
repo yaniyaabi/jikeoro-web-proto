@@ -1,3 +1,5 @@
+import { clearEmailVerification, isEmailVerified } from "../app/lib/email-verification";
+
 const PAGES_PREFIX = "/jikeoro-web-proto";
 const REPORTS_KEY = "jikeoro-pages-reports";
 const ROLE_KEY = "jikeoro-pages-role";
@@ -256,6 +258,7 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     const email = String(body.email ?? "").trim().toLowerCase();
     const password = String(body.password ?? "");
     if (name.length < 2 || !email.includes("@") || password.length < 8) return json({ error: "이름, 이메일, 8자 이상의 비밀번호를 확인해주세요." }, 400);
+    if (!isEmailVerified(email)) return json({ error: "이메일 인증을 먼저 완료해주세요." }, 400);
     const accounts = readAccounts();
     if (accounts.some((account) => account.email === email)) return json({ error: "이미 가입된 이메일입니다. 로그인해주세요." }, 409);
     const salt = bytesToHex(crypto.getRandomValues(new Uint8Array(16)));
@@ -271,6 +274,7 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     const user: SessionUser = { id: account.id, name: account.name, email: account.email, role: "member", agency: null };
     window.sessionStorage.setItem(USER_KEY, JSON.stringify(user));
     window.sessionStorage.setItem(ROLE_KEY, "member");
+    clearEmailVerification();
     return json({ ok: true, user }, 201);
   }
 
