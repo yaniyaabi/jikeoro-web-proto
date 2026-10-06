@@ -576,8 +576,9 @@ export default function MyJikeoroPage() {
                 <dl className="member-detail-facts">
                   <div><dt>위험유형</dt><dd>{selectedReport.type}</dd></div>
                   {selectedReport.subcategory && <div><dt>세부유형</dt><dd>{selectedReport.subcategory}</dd></div>}
-                  <div><dt>위치</dt><dd>{selectedReport.place}</dd></div>
-                  {(selectedReport.latitude != null && selectedReport.longitude != null) && <div><dt>위치 좌표</dt><dd>{selectedReport.latitude.toFixed(5)}, {selectedReport.longitude.toFixed(5)}</dd></div>}
+                  {selectedReport.latitude != null && selectedReport.longitude != null
+                    ? <div><dt>위치 좌표</dt><dd>{selectedReport.latitude.toFixed(5)}, {selectedReport.longitude.toFixed(5)}</dd></div>
+                    : <div><dt>위치</dt><dd>{selectedReport.place}</dd></div>}
                   <div><dt>제보 시각</dt><dd>{selectedReport.createdAt ? new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium", timeStyle: "short" }).format(new Date(selectedReport.createdAt)) : selectedReport.submitted}</dd></div>
                   {selectedReport.weather && <div><dt>날씨</dt><dd>{describeWeather(selectedReport.weather.code)} · {Math.round(selectedReport.weather.temperature)}°C</dd></div>}
                 </dl>
