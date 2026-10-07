@@ -722,6 +722,71 @@ html[data-site-contrast="high"]{--ink:#001b17;--ink-soft:#18342e;--paper:#fff;--
   .mobile-report-button{min-width:190px;font-size:14px}.project-section{margin-left:7px;margin-right:7px}
 }
 
+/* 라이트·다크 모드: 기능 색상은 유지하고 바탕과 정보 표면만 어둡게 전환합니다. */
+.admin-login-accessibility{position:absolute;z-index:3;right:clamp(14px,3vw,42px);top:18px}
+html[data-site-theme="dark"]{
+  --ink-soft:#aec2ba;
+  --paper:#0b1714;
+  --white:#172722;
+  --line:#3b5149;
+  --navy:#7caca0;
+}
+html[data-site-theme="dark"] body{background:var(--paper);color:#edf7f3}
+html[data-site-theme="dark"] .site-header,
+html[data-site-theme="dark"] .universal-header.member-header,
+html[data-site-theme="dark"] .site-footer,
+html[data-site-theme="dark"] .member-auth-header{background:rgba(11,23,20,.96);border-color:var(--line)}
+html[data-site-theme="dark"] :is(.site-accessibility button,.account-button,.hero-app-download,.mobile-menu-toggle){background:#172722;color:#edf7f3;border-color:var(--line);box-shadow:none}
+html[data-site-theme="dark"] :is(.header-cta,.desktop-nav,.brand,.member-auth-header-actions>a){color:#edf7f3;border-color:#75958a}
+html[data-site-theme="dark"] .mobile-menu-toggle>span{background:#edf7f3}
+html[data-site-theme="dark"] .mobile-site-menu{background:rgba(18,34,29,.99);border-color:var(--line);box-shadow:0 24px 55px rgba(0,0,0,.42)}
+html[data-site-theme="dark"] .mobile-site-menu-heading{border-color:var(--line)}
+html[data-site-theme="dark"] .mobile-site-menu>a.active{background:#21382f}
+html[data-site-theme="dark"] .hero::before{background:#18352c}
+html[data-site-theme="dark"] .hero::after{border-color:#38564c}
+html[data-site-theme="dark"] :is(.hero-description,.section-heading>p,.how-intro>p,.project-copy>p:not(.eyebrow),.member-auth-story>p:not(.eyebrow),.member-intro>p,.admin-title-row>p){color:var(--ink-soft)}
+html[data-site-theme="dark"] .eyebrow{color:#8fc4a5}
+html[data-site-theme="dark"] .hero-note strong{color:#edf7f3}
+html[data-site-theme="dark"] .hero-note p{color:var(--ink-soft)}
+html[data-site-theme="dark"] :is(.dashboard-card,.explorer-card,.report-guide,.guide-screen,.guide-copy,.guide-step-tabs button,.activity-board,.admin-workspace,.admin-stats button,.admin-report-list>button,.member-auth-card,.member-auth-story li,.member-detail-modal,.member-detail-section,.member-detail-side,.risk-map-workspace,.region-search,.reward-form-modal){background:#15241f;color:#edf7f3;border-color:var(--line);box-shadow:none}
+html[data-site-theme="dark"] :is(.map-section,.how-section,.app-download-section,.member-section,.risk-map-page,.admin-page){background:var(--paper);color:#edf7f3}
+html[data-site-theme="dark"] :is(.guide-preview-wrap,.app-download-card,.report-panel,.detail-body,.project-metrics,.badge-card,.admin-description,.member-media-message,.member-detail-response,.reward-exchange,.guide-review,.guide-location-result,.guide-consent,.hazard-detail-panel){background:#1b2d27;color:#edf7f3;border-color:var(--line)}
+html[data-site-theme="dark"] :is(.guide-media-options>span,.guide-textarea,.guide-navigation button,.guide-type-options>*,.guide-description-head>span,.guide-location-options>*,.type-options button,.hazard-detail-options button,.media-picker-card,.description-field textarea,.location-choice-button,.manual-location-field input,.member-auth-form input,.admin-form-grid select,.admin-form-grid input,.admin-response-field textarea,.region-search input,.reward-form-modal input){background:#0f1d19;color:#edf7f3;border-color:#40574f}
+html[data-site-theme="dark"] :is(.member-auth-tabs,.member-email-verification,.description-field-heading>button,.voice-recorder,.location-choice-button.active){background:#1b3029;color:#edf7f3;border-color:var(--line)}
+html[data-site-theme="dark"] .member-auth-tabs button{color:var(--ink-soft)}
+html[data-site-theme="dark"] .member-auth-tabs button.active{background:#2a4038;color:#fff}
+html[data-site-theme="dark"] .member-email-verification.verified{background:#203a28;border-color:#5b8344}
+html[data-site-theme="dark"] .member-email-verification small{background:#0f1d19;color:var(--ink-soft)}
+html[data-site-theme="dark"] :is(input,textarea,select)::placeholder{color:#839a91}
+html[data-site-theme="dark"] :is(.guide-copy li,.member-detail-response p,.admin-description p,.response-box p,.report-main>p,.hazard-detail-help,.member-media-message){color:#c2d2cc}
+html[data-site-theme="dark"] :is(.guide-copy>p,.guide-review small,.guide-location-result small,.member-detail-facts dt,.member-auth-card-heading p,.member-auth-switch,.member-auth-prototype-note,.admin-report-list>button>p){color:var(--ink-soft)}
+html[data-site-theme="dark"] .guide-step-tabs button.active{background:#102d2a;color:#fff}
+html[data-site-theme="dark"] .guide-step-tabs span{background:#2b4139}
+html[data-site-theme="dark"] .guide-step-tabs button.active span{background:var(--mint);color:#102d2a}
+html[data-site-theme="dark"] .admin-report-list>button:hover,
+html[data-site-theme="dark"] .admin-report-list>button.selected{background:#20372e}
+html[data-site-theme="dark"] .admin-login-page{background:#06100e}
+html[data-site-theme="dark"] .admin-login-card{background:#15241f;color:#edf7f3}
+html[data-site-theme="dark"] .admin-login-card>p:not(.eyebrow):not(.admin-login-error){color:var(--ink-soft)}
+html[data-site-theme="dark"] .admin-account>span{background:#102d2a}
+html[data-site-theme="dark"] .reward-form-modal{background:#241a15}
+html[data-site-theme="dark"] .reward-applicant-summary>span{background:#38251b}
+html[data-site-theme="dark"] .reward-form-modal>p:not(.eyebrow){color:#d7bbb0}
+html[data-site-theme="dark"] .member-auth-page{background:radial-gradient(circle at 12% 78%,rgba(183,240,107,.08),transparent 24%),radial-gradient(circle at 90% 8%,rgba(53,91,72,.48),transparent 29%),#0b1714}
+html[data-site-theme="dark"] .member-auth-story>p:not(.eyebrow){color:#b8ccc4}
+html[data-site-theme="dark"] .member-auth-story li>small{color:var(--ink-soft)}
+html[data-site-theme="dark"] .member-auth-form>label>span:first-child{color:#edf7f3}
+html[data-site-theme="dark"] .member-auth-card-heading>span{color:#91bea7}
+html[data-site-theme="dark"] .member-password-field button{background:#2a4038;color:#edf7f3}
+html[data-site-theme="dark"] .member-auth-switch button{color:var(--mint)}
+html[data-site-theme="dark"] .member-detail-close{background:#2a3d36;color:#fff}
+html[data-site-theme="dark"] .leaflet-control-attribution{background:rgba(17,29,25,.86)!important;color:#d6e4de!important}
+html[data-site-theme="dark"] .leaflet-control-attribution a{color:#b7f06b!important}
+html[data-site-theme="dark"][data-site-contrast="high"]{--paper:#000;--white:#090909;--line:#fff;--ink-soft:#fff}
+html[data-site-theme="dark"][data-site-contrast="high"] body{background:#000;color:#fff}
+
+@media(max-width:720px){.admin-login-accessibility{top:10px;right:10px}.admin-login-accessibility .site-accessibility button{width:42px;min-width:42px;height:42px}.admin-login-accessibility .site-accessibility button b{display:none}}
+
 /* Keep the three optional audio controls on one visual size system. */
 .description-field-heading>.report-audio-action,
 .voice-recorder>.report-audio-action,
