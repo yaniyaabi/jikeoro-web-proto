@@ -26,7 +26,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="ko" suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem('jikeoro-site-theme');if(t!=='light'&&t!=='dark'){t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}document.documentElement.dataset.siteTheme=t;document.documentElement.style.colorScheme=t}catch(e){}})()` }} />
+        <script dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem('jikeoro-site-theme');if(t!=='light'&&t!=='dark'){var m=matchMedia('(max-width: 768px)').matches||matchMedia('(pointer: coarse)').matches;t=m&&matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}document.documentElement.dataset.siteTheme=t;document.documentElement.style.colorScheme=t}catch(e){}})()` }} />
       </head>
       <body>{children}</body>
     </html>

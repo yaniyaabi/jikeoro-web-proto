@@ -16,9 +16,10 @@ export function AccessibilityTools() {
 
   useEffect(() => {
     const saved = window.localStorage.getItem(THEME_KEY);
+    const mobileDevice = window.matchMedia("(max-width: 768px)").matches || window.matchMedia("(pointer: coarse)").matches;
     const initialTheme: SiteTheme = saved === "light" || saved === "dark"
       ? saved
-      : window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      : mobileDevice && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
     setTheme(initialTheme);
     document.documentElement.dataset.siteTheme = initialTheme;
     document.documentElement.style.colorScheme = initialTheme;
