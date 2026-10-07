@@ -1,7 +1,6 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { AccessibilityTools } from "../../components/site-header";
 import { sitePath } from "../../lib/site-path";
 
 export default function AdminLoginPage() {
@@ -30,7 +29,6 @@ export default function AdminLoginPage() {
 
   return (
     <main className="admin-login-page">
-      <div className="admin-login-accessibility"><AccessibilityTools /></div>
       <section className="admin-login-card">
         <p className="eyebrow">OPERATIONS SIGN IN</p>
         <h1>현장의 기록을<br />변화로 연결합니다.</h1>

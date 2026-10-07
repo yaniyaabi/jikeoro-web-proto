@@ -6,24 +6,9 @@ import { sitePath } from "../lib/site-path";
 type HeaderSection = "home" | "map" | "my" | "admin";
 
 const CONTRAST_KEY = "jikeoro-site-high-contrast";
-const THEME_KEY = "jikeoro-site-theme";
-type SiteTheme = "light" | "dark";
-
 export function AccessibilityTools() {
   const [highContrast, setHighContrast] = useState(() => typeof window !== "undefined" && window.localStorage.getItem(CONTRAST_KEY) === "true");
-  const [theme, setTheme] = useState<SiteTheme>("light");
   const [isSpeaking, setIsSpeaking] = useState(false);
-
-  useEffect(() => {
-    const saved = window.localStorage.getItem(THEME_KEY);
-    const mobileDevice = window.matchMedia("(max-width: 768px)").matches || window.matchMedia("(pointer: coarse)").matches;
-    const initialTheme: SiteTheme = saved === "light" || saved === "dark"
-      ? saved
-      : mobileDevice && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-    setTheme(initialTheme);
-    document.documentElement.dataset.siteTheme = initialTheme;
-    document.documentElement.style.colorScheme = initialTheme;
-  }, []);
 
   useEffect(() => {
     document.documentElement.dataset.siteContrast = highContrast ? "high" : "normal";
@@ -35,14 +20,6 @@ export function AccessibilityTools() {
     setHighContrast(next);
     window.localStorage.setItem(CONTRAST_KEY, String(next));
     document.documentElement.dataset.siteContrast = next ? "high" : "normal";
-  };
-
-  const toggleTheme = () => {
-    const next: SiteTheme = theme === "light" ? "dark" : "light";
-    setTheme(next);
-    window.localStorage.setItem(THEME_KEY, next);
-    document.documentElement.dataset.siteTheme = next;
-    document.documentElement.style.colorScheme = next;
   };
 
   const readPage = () => {
@@ -73,9 +50,6 @@ export function AccessibilityTools() {
     <div className="site-accessibility" aria-label="화면 접근성 기능">
       <button type="button" onClick={readPage} className={isSpeaking ? "active" : ""} aria-pressed={isSpeaking} aria-label={isSpeaking ? "읽어주기 멈추기" : "페이지 내용 읽어주기"}>
         <span aria-hidden="true">{isSpeaking ? "■" : "♬"}</span><b>{isSpeaking ? "멈추기" : "읽어주기"}</b>
-      </button>
-      <button type="button" onClick={toggleTheme} aria-label={theme === "light" ? "다크 모드로 전환" : "라이트 모드로 전환"}>
-        <span aria-hidden="true">{theme === "light" ? "☾" : "☀"}</span><b>{theme === "light" ? "다크" : "라이트"}</b>
       </button>
       <button type="button" onClick={toggleContrast} className={highContrast ? "active" : ""} aria-pressed={highContrast} aria-label={highContrast ? "기본 화면으로 보기" : "고대비 화면으로 보기"}>
         <span aria-hidden="true">◐</span><b>고대비</b>

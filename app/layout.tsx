@@ -24,10 +24,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="ko" suppressHydrationWarning>
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem('jikeoro-site-theme');if(t!=='light'&&t!=='dark'){var m=matchMedia('(max-width: 768px)').matches||matchMedia('(pointer: coarse)').matches;t=m&&matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}document.documentElement.dataset.siteTheme=t;document.documentElement.style.colorScheme=t}catch(e){}})()` }} />
-      </head>
+    <html lang="ko">
       <body>{children}</body>
     </html>
   );
