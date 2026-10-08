@@ -1063,7 +1063,7 @@ main {
   }
 }
 
-@media(min-width:721px) and (max-width:1359px) {
+@media(min-width:721px) and (max-width:1180px) {
   .site-header {
     height: 82px;
     padding-left: 32px;
@@ -1112,6 +1112,84 @@ main {
   }
   .project-metrics {
     max-width: 720px;
+  }
+}
+
+@media(min-width:1181px) and (max-width:1359px) {
+  .site-header {
+    height: 84px;
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+  .desktop-nav {
+    display: flex;
+    font-size: 14px;
+  }
+  .hero {
+    width: 100%;
+    max-width: 1359px;
+    min-height: 720px;
+    margin-inline: auto;
+    padding: 112px 32px 64px;
+    grid-template-columns: minmax(420px,.88fr) minmax(540px,1.12fr);
+    column-gap: 32px;
+  }
+  .hero-copy {
+    width: 100%;
+    max-width: 520px;
+  }
+  .hero h1 {
+    max-width: 520px;
+    font-size: clamp(46px,4vw,52px);
+  }
+  .hero-visual {
+    width: 100%;
+    min-height: 560px;
+  }
+  .dashboard-card {
+    width: 100%;
+    max-width: 620px;
+  }
+  .dashboard-topbar {
+    height: 90px;
+    padding: 14px 20px;
+    gap: 14px;
+  }
+  .dashboard-heading {
+    flex: 1 1 auto;
+  }
+  .dashboard-topbar strong {
+    white-space: nowrap;
+  }
+  .dashboard-badges {
+    gap: 8px;
+  }
+  .insight-badge {
+    min-width: 100px;
+    min-height: 54px;
+    padding: 9px 11px;
+  }
+  .insight-badge b {
+    font-size: 20px;
+  }
+  .insight-badge span {
+    display: block;
+    font-size: 10px;
+  }
+  .hero-map {
+    height: 340px;
+  }
+  .dashboard-bottom {
+    min-height: 80px;
+  }
+}
+
+@media(min-width:1181px) and (max-width:1239px) {
+  .hero h1 {
+    word-break: keep-all;
+  }
+  .hero h1 .hero-line {
+    white-space: normal;
   }
 }
 
