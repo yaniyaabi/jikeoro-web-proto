@@ -996,7 +996,7 @@ main {
   transform: translateY(1px);
 }
 
-@media(min-width:1181px) {
+@media(min-width:1360px) {
   .site-header {
     height: 86px;
     padding-left: max(64px, calc((100vw - 1500px) / 2 + 64px));
@@ -1063,7 +1063,7 @@ main {
   }
 }
 
-@media(min-width:721px) and (max-width:1180px) {
+@media(min-width:721px) and (max-width:1359px) {
   .site-header {
     height: 82px;
     padding-left: 32px;
@@ -1096,6 +1096,12 @@ main {
   }
   .dashboard-card {
     width: min(100%,760px);
+  }
+  .dashboard-heading {
+    flex: 1 1 auto;
+  }
+  .dashboard-topbar strong {
+    white-space: nowrap;
   }
   .project-section {
     width: calc(100% - 48px);
