@@ -914,6 +914,8 @@ html[data-site-contrast="high"]{--ink:#001b17;--ink-soft:#18342e;--paper:#fff;--
 @media(max-width:720px) {
   .app-download-card { display: flex; gap: 21px; }
   .app-download-mark { width: 128px; height: 128px; }
+  .risk-map-intro dt { font-size: 13px; line-height: 1.35; }
+  .risk-map-intro .place-metric { font-size: 21px; line-height: 1.2; padding-top: 2px; }
   .hero-visual,
   .map-section { display: none; }
 }
