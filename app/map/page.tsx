@@ -609,7 +609,6 @@ export default function RiskMapPage() {
               <small>{provinceChartMode ? "도넛 가운데 숫자는 시·도별 전체 제보 수예요." : "핀 색으로 위험 유형을 구분할 수 있어요."}</small>
             </div>
           </aside>
-          {provinceChartMode && <div className="map-zoom-hint"><span aria-hidden="true">＋</span> 도넛을 누르거나 지도를 확대하면 개별 위치가 보여요.</div>}
           <div className="map-privacy-note"><span /> 신고자 정보 없이 위험 위치만 표시됩니다.</div>
         </div>
 
