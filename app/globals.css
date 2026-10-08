@@ -833,3 +833,79 @@ html[data-site-contrast="high"]{--ink:#001b17;--ink-soft:#18342e;--paper:#fff;--
   .member-page .status-track { gap: 2px; }
   .member-page .status-track span { font-size: 13px; }
 }
+
+/* Flatten and rebalance the mobile-app promotion. */
+.app-download-card {
+  grid-template-columns: 205px minmax(360px,560px) minmax(320px,340px);
+  justify-content: start;
+  gap: 32px;
+}
+.app-download-mark {
+  overflow: hidden;
+  border-radius: 27%;
+  background: var(--mint);
+  filter: drop-shadow(0 15px 20px rgba(16,45,42,.16));
+}
+.app-download-mark img {
+  width: 108%;
+  height: 108%;
+  max-width: none;
+  border-radius: 0;
+  object-fit: cover;
+  transform: scale(1.06);
+}
+.app-download-button {
+  min-width: 320px;
+  border-color: #c9d8c3;
+  background: #f7faf2;
+  color: var(--ink);
+  box-shadow: 0 12px 25px rgba(16,45,42,.12);
+  transition: transform .15s, box-shadow .15s, border-color .15s;
+}
+.app-download-button::after { display: none; }
+.app-download-button:hover {
+  transform: translateY(-2px);
+  border-color: #a9bf9f;
+  box-shadow: 0 16px 29px rgba(16,45,42,.15);
+}
+.app-download-button:active {
+  transform: translateY(0);
+  box-shadow: 0 8px 18px rgba(16,45,42,.11);
+}
+.app-download-button-icon {
+  overflow: hidden;
+  border-radius: 24%;
+  background: var(--mint);
+  filter: drop-shadow(0 5px 8px rgba(16,45,42,.16));
+  transform: none;
+}
+.app-download-button-icon img {
+  width: 108%;
+  height: 108%;
+  border-radius: 0;
+  object-fit: cover;
+  transform: scale(1.06);
+}
+.app-download-button small { color: #61766e; }
+.app-download-button>i {
+  background: #dff3c8;
+  color: #285f35;
+  box-shadow: none;
+}
+
+@media(max-width:1200px) {
+  .app-download-card { grid-template-columns: 180px minmax(0,1fr) 310px; gap: 24px; }
+  .app-download-mark { width: 180px; height: 180px; }
+  .app-download-button { min-width: 310px; }
+}
+
+@media(max-width:900px) {
+  .app-download-card { grid-template-columns: 150px minmax(0,1fr); }
+  .app-download-mark { width: 150px; height: 150px; }
+  .app-download-button { grid-column: 1/3; width: 100%; min-width: 0; }
+}
+
+@media(max-width:720px) {
+  .app-download-card { display: flex; gap: 21px; }
+  .app-download-mark { width: 128px; height: 128px; }
+}
