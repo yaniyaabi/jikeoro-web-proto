@@ -935,3 +935,32 @@ html[data-site-contrast="high"]{--ink:#001b17;--ink-soft:#18342e;--paper:#fff;--
   .member-page .status-track li::before { height: 3px; top: 20px; }
   .member-page .status-track span { font-size: 17px; line-height: 1.35; font-weight: 750; }
 }
+
+@media(max-width:720px) {
+  .voice-recorder.step-two-recorder {
+    width:100%;
+    min-width:0;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  }
+  .step-two-recorder>div {
+    min-width:0;
+    grid-column:1/-1;
+  }
+  .step-two-recorder>.report-audio-action {
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    min-height:43px;
+    height:auto;
+    padding:8px 6px;
+    font-size:13px;
+    line-height:1.25;
+    white-space:normal;
+    text-align:center;
+  }
+}
+
+@media(max-width:340px) {
+  .voice-recorder.step-two-recorder { grid-template-columns:1fr; }
+  .step-two-recorder>div { grid-column:1; }
+}
