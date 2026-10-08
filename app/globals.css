@@ -747,32 +747,38 @@ html[data-site-contrast="high"]{--ink:#001b17;--ink-soft:#18342e;--paper:#fff;--
 }
 
 /* Improve map search and legend readability. */
-.region-search { padding: 18px 20px; }
-.region-search-copy>div { gap: 5px; }
-.region-search-copy strong { font-size: 19px; }
-.region-search-copy small { font-size: 14px; line-height: 1.55; }
-.region-search label>span { font-size: 13px; }
-.region-search select { min-height: 48px; font-size: 16px; }
+.region-search { padding: 21px 23px; }
+.region-search-copy>div { gap: 7px; }
+.region-search-copy strong { font-size: 24px; }
+.region-search-copy small { font-size: 17px; line-height: 1.55; }
+.region-search label>span { font-size: 16px; }
+.region-search select { min-height: 52px; font-size: 18px; }
 .region-search-submit,
-.region-search-reset { min-height: 48px; font-size: 16px; }
+.region-search-reset { min-height: 52px; font-size: 18px; }
 
-.map-legend { width: 290px; padding: 18px 19px 16px; border-radius: 19px; }
-.map-legend-heading { padding-bottom: 13px; }
-.map-legend-heading>div { gap: 5px; }
-.map-legend-heading strong { font-size: 18px; }
-.map-legend-heading span { font-size: 12px; }
-.map-legend-heading button { min-height: 34px; padding: 6px 10px; font-size: 12px; }
-.map-legend ul { margin: 14px 0 12px; gap: 12px 10px; }
-.map-legend li { gap: 9px; font-size: 14px; }
-.map-legend small { font-size: 12px; line-height: 1.55; }
+.map-legend { width: 350px; padding: 21px 22px 19px; border-radius: 21px; }
+.map-legend-heading { padding-bottom: 16px; }
+.map-legend-heading>div { gap: 6px; }
+.map-legend-heading strong { font-size: 23px; }
+.map-legend-heading span { font-size: 16px; }
+.map-legend-heading button { min-height: 42px; padding: 8px 13px; font-size: 15px; }
+.map-legend-heading button b { font-size: 18px; }
+.map-legend ul { margin: 17px 0 15px; gap: 15px 13px; }
+.map-legend li { gap: 11px; font-size: 18px; }
+.map-legend small { font-size: 15px; line-height: 1.6; }
 
 @media(max-width:560px) {
-  .region-search-copy strong { font-size: 19px; }
-  .region-search-copy small { font-size: 14px; }
-  .map-legend { width: min(290px, calc(100% - 68px)); padding: 16px 17px 14px; }
-  .map-legend-heading span { display: block; font-size: 12px; }
-  .map-legend li { font-size: 14px; }
-  .map-legend small { font-size: 12px; }
+  .region-search-copy strong { font-size: 24px; }
+  .region-search-copy small { font-size: 17px; }
+  .map-legend { width: min(350px, calc(100% - 68px)); padding: 19px 20px 17px; }
+  .map-legend-heading span { display: block; font-size: 16px; }
+  .map-legend li { font-size: 18px; }
+  .map-legend small { font-size: 15px; }
+}
+
+@media(max-width:380px) {
+  .map-legend ul { grid-template-columns: 1fr; }
+  .map-legend-boundary { grid-column: 1; }
 }
 
 /* Make the My Records page comfortable to read at a glance. */
