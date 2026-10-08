@@ -963,7 +963,7 @@ export default function Home() {
         <div className="project-metrics">
           <div><strong>전국</strong><span>우리 동네<br />참여 생활권</span></div>
           <div><strong>60<span>초</span></strong><span>목표 기록<br />완료 시간</span></div>
-          <div><strong>4<span>종</span></strong><span>사진·영상·음성·텍스트<br />참여 방식</span></div>
+          <div><strong>4<span>종</span></strong><span>참여 방식<br />사진·음성·영상·텍스트</span></div>
           <p>※ 수치는 1차년도 프로토타입의 초기 설계 목표이며 시범운영 결과에 따라 조정됩니다.</p>
         </div>
       </section>
