@@ -745,3 +745,32 @@ html[data-site-contrast="high"]{--ink:#001b17;--ink-soft:#18342e;--paper:#fff;--
   justify-content:center;
   gap:7px;
 }
+
+/* Improve map search and legend readability. */
+.region-search { padding: 18px 20px; }
+.region-search-copy>div { gap: 5px; }
+.region-search-copy strong { font-size: 19px; }
+.region-search-copy small { font-size: 14px; line-height: 1.55; }
+.region-search label>span { font-size: 13px; }
+.region-search select { min-height: 48px; font-size: 16px; }
+.region-search-submit,
+.region-search-reset { min-height: 48px; font-size: 16px; }
+
+.map-legend { width: 290px; padding: 18px 19px 16px; border-radius: 19px; }
+.map-legend-heading { padding-bottom: 13px; }
+.map-legend-heading>div { gap: 5px; }
+.map-legend-heading strong { font-size: 18px; }
+.map-legend-heading span { font-size: 12px; }
+.map-legend-heading button { min-height: 34px; padding: 6px 10px; font-size: 12px; }
+.map-legend ul { margin: 14px 0 12px; gap: 12px 10px; }
+.map-legend li { gap: 9px; font-size: 14px; }
+.map-legend small { font-size: 12px; line-height: 1.55; }
+
+@media(max-width:560px) {
+  .region-search-copy strong { font-size: 19px; }
+  .region-search-copy small { font-size: 14px; }
+  .map-legend { width: min(290px, calc(100% - 68px)); padding: 16px 17px 14px; }
+  .map-legend-heading span { display: block; font-size: 12px; }
+  .map-legend li { font-size: 14px; }
+  .map-legend small { font-size: 12px; }
+}
