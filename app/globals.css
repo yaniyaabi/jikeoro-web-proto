@@ -927,6 +927,8 @@ html[data-site-contrast="high"]{--ink:#001b17;--ink-soft:#18342e;--paper:#fff;--
   .member-page .impact-stats b { font-size: 28px; }
   .member-page .impact-stats span { font-size: 17px; line-height: 1.45; }
   .member-page .point-rule { font-size: 16px!important; }
+  .member-page .mission-top span { font-size: 18px; }
+  .member-page .mission-top b { padding: 8px 11px; font-size: 16px; }
   .member-page .mission-bottom strong,
   .member-page .mission-bottom a { font-size: 18px; }
   .member-page .status-track { min-height: 76px; }
