@@ -122,7 +122,7 @@ export default function MemberLoginPage() {
       <main className="member-auth-page">
         <header className="member-auth-header">
           <a className="brand" href={sitePath("/")} aria-label="지켜로 홈">
-            <span className="brand-mark" aria-hidden="true">路</span>
+            <span className="brand-mark" aria-hidden="true"><img src={sitePath("/jikeoro-brand-v6.png")} alt="" /></span>
             <span><strong>지켜路</strong><small>우리 동네 보행안전 지도</small></span>
           </a>
           <div className="member-auth-header-actions"><AccessibilityTools /><a href={sitePath("/")}>홈으로 돌아가기</a></div>

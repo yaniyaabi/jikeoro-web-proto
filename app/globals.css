@@ -24,7 +24,8 @@ a { color: inherit; text-decoration: none; }
 
 .site-header { height: clamp(78px, 5.2vw, 96px); display: flex; align-items: center; justify-content: space-between; padding: 0 clamp(24px, 4vw, 86px); position: absolute; z-index: 20; width: 100%; top: 0; left: 0; }
 .brand { display: inline-flex; align-items: center; gap: 11px; }
-.brand-mark { width: 39px; height: 39px; border-radius: 11px; display: grid; place-items: center; background: var(--ink); color: var(--mint); font-family: Georgia, serif; font-weight: 800; font-size: 21px; text-indent: 2px; transform: rotate(-2deg); }
+.brand-mark { width: 39px; height: 39px; border-radius: 11px; display: grid; place-items: center; overflow: hidden; flex: 0 0 auto; box-shadow: 0 4px 10px rgba(16,45,42,.14); }
+.brand-mark img { width: 100%; height: 100%; display: block; object-fit: cover; }
 .brand > span:last-child { display: flex; flex-direction: column; line-height: 1; }
 .brand strong { font-size: 20px; letter-spacing: -.06em; }
 .brand small { font-size: 9px; font-weight: 700; letter-spacing: .02em; color: var(--ink-soft); margin-top: 5px; }
@@ -721,6 +722,10 @@ html[data-site-contrast="high"]{--ink:#001b17;--ink-soft:#18342e;--paper:#fff;--
   .hero{padding-left:14px;padding-right:14px}.hero h1{font-size:35px!important}.hero-actions{gap:8px}.primary-button{padding-left:11px;padding-right:11px;font-size:14px}.text-link{font-size:13px}
   .mobile-report-button{min-width:190px;font-size:14px}.project-section{margin-left:7px;margin-right:7px}
 }
+
+/* Unified 2026-10 brand mark */
+.app-download-mark img { width: 112%; height: 112%; border-radius: 24%; }
+.app-download-button-icon img { inset: 0; width: 100%; height: 100%; border-radius: 24%; }
 
 /* Keep the three optional audio controls on one visual size system. */
 .description-field-heading>.report-audio-action,

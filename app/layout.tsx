@@ -7,6 +7,10 @@ export const metadata: Metadata = {
   ),
   title: "지켜路 | 우리 동네 보행안전 지도",
   description: "전국의 주민과 함께 만드는 참여형 보행안전 데이터 플랫폼",
+  icons: {
+    icon: [{ url: "/favicon-v6.png", type: "image/png", sizes: "32x32" }],
+    apple: [{ url: "/apple-touch-icon-v6.png", sizes: "180x180" }],
+  },
   openGraph: {
     title: "지켜路 | 우리 동네 보행안전 지도",
     description: "걷다가 발견한 위험, 우리 동네의 더 나은 길이 됩니다.",

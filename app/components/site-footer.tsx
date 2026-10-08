@@ -10,7 +10,7 @@ export function SiteFooter({ showAdminLink = false }: SiteFooterProps) {
   return (
     <footer className={`site-footer${showAdminLink ? " site-footer-home" : ""}`}>
       <a className="brand footer-brand" href={sitePath("/#top")}>
-        <span className="brand-mark">路</span>
+        <span className="brand-mark" aria-hidden="true"><img src={sitePath("/jikeoro-brand-v6.png")} alt="" /></span>
         <span><strong>지켜路</strong><small>우리 동네 보행안전 지도</small></span>
       </a>
       <p>

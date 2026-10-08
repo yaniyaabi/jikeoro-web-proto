@@ -94,7 +94,7 @@ export function SiteHeader({ active, inner = false }: { active: HeaderSection; i
   return (
     <header className={`site-header universal-header${inner ? " member-header" : ""}`}>
       <a className="brand" href={sitePath("/")} aria-label="지켜로 홈">
-        <span className="brand-mark" aria-hidden="true">路</span>
+        <span className="brand-mark" aria-hidden="true"><img src={sitePath("/jikeoro-brand-v6.png")} alt="" /></span>
         <span><strong>지켜路</strong><small>우리 동네 보행안전 지도</small></span>
       </a>
 

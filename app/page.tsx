@@ -884,7 +884,7 @@ export default function Home() {
       <section className="app-download-section" aria-labelledby="app-download-title">
         <div className="app-download-card">
           <div className="app-download-mark" aria-hidden="true">
-            <img src={sitePath("/jikeoro-app-icon-3d-v2.png")} alt="" />
+            <img src={sitePath("/jikeoro-brand-v6.png")} alt="" />
           </div>
           <div className="app-download-content">
             <p className="eyebrow">JIKEORO MOBILE APP</p>
@@ -898,7 +898,7 @@ export default function Home() {
           </div>
           <a className="app-download-button" href="https://yaniyaabi.github.io/jikeoro-senior-app-proto/" target="_blank" rel="noreferrer">
             <span className="app-download-button-icon" aria-hidden="true">
-              <img src={sitePath("/jikeoro-app-icon-3d-v2.png")} alt="" />
+              <img src={sitePath("/jikeoro-brand-v6.png")} alt="" />
             </span>
             <div><small>지켜路 모바일 앱</small><strong>설치 화면 열기</strong></div>
             <i aria-hidden="true">↗</i>
