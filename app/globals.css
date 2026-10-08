@@ -928,4 +928,9 @@ html[data-site-contrast="high"]{--ink:#001b17;--ink-soft:#18342e;--paper:#fff;--
   .member-page .point-rule { font-size: 16px!important; }
   .member-page .mission-bottom strong,
   .member-page .mission-bottom a { font-size: 18px; }
+  .member-page .status-track { min-height: 76px; }
+  .member-page .status-track li { gap: 12px; }
+  .member-page .status-track i { width: 42px; height: 42px; font-size: 15px; }
+  .member-page .status-track li::before { height: 3px; top: 20px; }
+  .member-page .status-track span { font-size: 17px; line-height: 1.35; font-weight: 750; }
 }
