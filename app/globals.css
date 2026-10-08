@@ -774,3 +774,62 @@ html[data-site-contrast="high"]{--ink:#001b17;--ink-soft:#18342e;--paper:#fff;--
   .map-legend li { font-size: 14px; }
   .map-legend small { font-size: 12px; }
 }
+
+/* Make the My Records page comfortable to read at a glance. */
+.member-page .eyebrow { font-size: 14px; }
+.member-page .member-profile strong { font-size: 18px; }
+.member-page .member-profile small { font-size: 15px; line-height: 1.45; }
+.member-page .member-profile button,
+.member-page .member-profile>a { font-size: 14px; }
+
+.member-page .participation-grid article { min-height: 270px; padding: 30px; }
+.member-page .impact-card>p { font-size: 17px; }
+.member-page .impact-card>small { font-size: 15px; line-height: 1.65; }
+.member-page .impact-stats span { font-size: 15px; }
+.member-page .impact-stats b { font-size: 21px; }
+.member-page .point-rule { font-size: 14px; }
+.member-page .mission-top span,
+.member-page .mission-top b { font-size: 15px; }
+.member-page .mission-card h2 { font-size: 32px; }
+.member-page .mission-card>p { font-size: 16px; }
+.member-page .mission-bottom strong,
+.member-page .mission-bottom button,
+.member-page .mission-bottom a { font-size: 15px; }
+
+.member-page .reward-exchange-copy>p:not(.eyebrow) { font-size: 17px; }
+.member-page .reward-exchange-balance span { font-size: 15px; }
+.member-page .reward-exchange-balance strong { font-size: 36px; }
+.member-page .reward-voucher-top>span { font-size: 20px; }
+.member-page .reward-voucher-top>b { font-size: 14px; }
+.member-page .reward-voucher-mark small { font-size: 15px; }
+.member-page .reward-voucher-mark strong { font-size: 44px; }
+.member-page .reward-exchange-bottom p { font-size: 16px; line-height: 1.55; }
+.member-page .reward-exchange-bottom button { font-size: 16px; }
+.member-page .reward-voucher-card>small { font-size: 14px; }
+
+.member-page .activity-heading h2 { font-size: 31px; }
+.member-page .activity-filters button { min-height: 42px; padding: 9px 15px; font-size: 15px; }
+.member-page .member-report { padding-top: 30px; padding-bottom: 30px; }
+.member-page .status-chip { font-size: 15px; }
+.member-page .report-meta small { font-size: 14px; line-height: 1.5; }
+.member-page .report-main h3,
+.member-page .report-main h4 { font-size: 21px; }
+.member-page .report-main>p { font-size: 16px; }
+.member-page .response-box small { font-size: 14px; }
+.member-page .response-box p { font-size: 16px; line-height: 1.7; }
+.member-page .status-track i { width: 30px; height: 30px; font-size: 11px; }
+.member-page .status-track li::before { top: 14px; }
+.member-page .status-track span { font-size: 14px; }
+.member-page .member-report-open-hint { font-size: 15px; }
+
+@media(max-width:720px) {
+  .member-page .member-intro h1,
+  .member-page .member-intro h2 { font-size: 38px; }
+  .member-page .participation-grid article { min-height: 0; padding: 24px; }
+  .member-page .mission-card h2 { font-size: 29px; }
+  .member-page .reward-exchange-copy>p:not(.eyebrow) { font-size: 16px; }
+  .member-page .activity-heading h2 { font-size: 27px; line-height: 1.25; }
+  .member-page .member-report { padding-top: 27px; padding-bottom: 54px; }
+  .member-page .status-track { gap: 2px; }
+  .member-page .status-track span { font-size: 13px; }
+}
