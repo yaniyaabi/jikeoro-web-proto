@@ -948,12 +948,13 @@ html[data-site-contrast="high"]{--ink:#001b17;--ink-soft:#18342e;--paper:#fff;--
     min-width:0;
     grid-column:1/-1;
   }
-  .step-two-recorder>.report-audio-action {
+  .voice-recorder.step-two-recorder>.report-audio-action,
+  .voice-recorder.step-two-recorder>.audio-file-button.report-audio-action {
     width:100%;
     min-width:0;
     max-width:100%;
     min-height:43px;
-    height:auto;
+    height:43px;
     padding:8px 6px;
     font-size:13px;
     line-height:1.25;
