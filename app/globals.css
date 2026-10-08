@@ -966,3 +966,185 @@ html[data-site-contrast="high"]{--ink:#001b17;--ink-soft:#18342e;--paper:#fff;--
   .voice-recorder.step-two-recorder { grid-template-columns:1fr; }
   .step-two-recorder>div { grid-column:1; }
 }
+
+/* Homepage mobile layout: keep every section readable inside a real phone viewport. */
+@media(max-width:720px) {
+  .mobile-report-button {
+    display: none;
+  }
+  .site-footer-home {
+    padding-bottom: 42px;
+  }
+  .hero {
+    padding: 104px 18px 48px;
+  }
+  .hero h1 {
+    max-width: 100%;
+    font-size: clamp(34px, 9.6vw, 39px)!important;
+    overflow-wrap: break-word;
+  }
+  .hero h1 .hero-line {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+  }
+  .hero h1 .hero-line>span {
+    display: inline;
+  }
+  .hero-description br {
+    display: none;
+  }
+  .hero-actions {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .hero-actions .primary-button {
+    width: 100%;
+    min-height: 56px;
+    justify-content: center;
+  }
+  .hero-actions .text-link {
+    width: 100%;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: normal;
+  }
+  .hero-support-row,
+  .hero-note {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .trust-strip {
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    padding: 18px;
+    display: grid;
+    grid-template-columns: 1fr;
+    justify-items: center;
+    gap: 9px;
+    overflow: hidden;
+    text-align: center;
+  }
+  .trust-strip p {
+    max-width: 100%;
+    font-size: 12px;
+    line-height: 1.45;
+    white-space: normal;
+  }
+  .trust-strip span {
+    width: 18px;
+    height: 1px;
+    border-radius: 999px;
+    opacity: .65;
+  }
+
+  .how-section,
+  .app-download-section {
+    width: 100%;
+    max-width: 100%;
+  }
+  .report-guide,
+  .guide-preview-wrap,
+  .guide-screen,
+  .guide-copy,
+  .guide-step-tabs {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .guide-screen {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+  .guide-media-options,
+  .guide-voice-options,
+  .guide-navigation {
+    grid-template-columns: minmax(0,1fr) minmax(0,1fr);
+  }
+  .guide-media-options>* ,
+  .guide-voice-options>* ,
+  .guide-navigation>* {
+    min-width: 0;
+  }
+
+  .app-download-card {
+    width: 100%;
+    max-width: 100%;
+    align-items: stretch;
+    overflow: hidden;
+  }
+  .app-download-mark {
+    align-self: center;
+  }
+  .app-download-content {
+    width: 100%;
+    min-width: 0;
+    text-align: center;
+  }
+  .app-download-content .eyebrow {
+    text-align: center;
+  }
+  .app-download-content>p:not(.eyebrow) {
+    max-width: 100%;
+  }
+  .app-download-steps {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .app-download-steps span {
+    width: 100%;
+    min-height: 44px;
+    justify-content: flex-start;
+    text-align: left;
+  }
+  .app-download-button {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .project-section {
+    width: calc(100% - 20px);
+    max-width: calc(100% - 20px);
+    min-width: 0;
+    overflow: hidden;
+  }
+  .project-copy,
+  .project-metrics,
+  .project-metrics>div {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+  .project-copy h2,
+  .project-copy>p,
+  .project-metrics span,
+  .project-metrics p {
+    overflow-wrap: break-word;
+    word-break: keep-all;
+  }
+}
+
+@media(max-width:380px) {
+  .hero {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  .hero h1 {
+    font-size: 33px!important;
+  }
+  .how-section,
+  .app-download-section {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  .project-section {
+    width: calc(100% - 14px);
+    max-width: calc(100% - 14px);
+  }
+}
