@@ -914,16 +914,18 @@ html[data-site-contrast="high"]{--ink:#001b17;--ink-soft:#18342e;--paper:#fff;--
 @media(max-width:720px) {
   .app-download-card { display: flex; gap: 21px; }
   .app-download-mark { width: 128px; height: 128px; }
-  .risk-map-intro dt { font-size: 13px; line-height: 1.35; }
-  .risk-map-intro .place-metric { font-size: 21px; line-height: 1.2; padding-top: 2px; }
+  .hero-visual,
+  .map-section { display: none; }
+}
+
+@media(min-width:721px) {
+  .risk-map-intro dt { font-size: 16px; line-height: 1.35; }
+  .risk-map-intro .place-metric { font-size: 26px; line-height: 1.2; padding-top: 1px; }
   .member-page .impact-card>p { font-size: 19px; }
-  .member-page .impact-card>strong { font-size: 64px; }
-  .member-page .impact-card>strong span { font-size: 18px; }
   .member-page .impact-card>small { font-size: 18px; line-height: 1.6; }
-  .member-page .impact-stats { margin-top: 28px; padding-top: 20px; gap: 16px; }
   .member-page .impact-stats b { font-size: 28px; }
   .member-page .impact-stats span { font-size: 17px; line-height: 1.45; }
   .member-page .point-rule { font-size: 16px!important; }
-  .hero-visual,
-  .map-section { display: none; }
+  .member-page .mission-bottom strong,
+  .member-page .mission-bottom a { font-size: 18px; }
 }
