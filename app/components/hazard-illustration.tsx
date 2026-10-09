@@ -3,68 +3,85 @@ import type { HazardCategory } from "../lib/hazard-categories";
 export function HazardIllustration({ type }: { type: HazardCategory | string }) {
   if (type === "인도" || type === "단차") {
     return (
-      <svg className="hazard-illustration-svg" viewBox="0 0 640 360" preserveAspectRatio="xMidYMid slice" role="img" aria-label="보행보조기 바퀴가 걸릴 수 있는 높은 보도 경계석 일러스트">
+      <svg className="hazard-illustration-svg" viewBox="0 0 640 360" preserveAspectRatio="xMidYMid slice" role="img" aria-label="휠체어의 앞바퀴가 높은 보도 경계석에 막힌 모습을 보여주는 일러스트">
         <defs>
-          <linearGradient id="curb-scene-bg" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor="#edf4ea" />
-            <stop offset="1" stopColor="#d9e8d8" />
+          <linearGradient id="curb-sky" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#eef7e8" />
+            <stop offset="1" stopColor="#dcebd8" />
           </linearGradient>
-          <linearGradient id="curb-paving" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor="#fffaf0" />
-            <stop offset="1" stopColor="#e7dbc5" />
+          <linearGradient id="curb-road" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stopColor="#b9a68b" />
+            <stop offset="1" stopColor="#aa9476" />
+          </linearGradient>
+          <linearGradient id="curb-top" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stopColor="#fffdf5" />
+            <stop offset="1" stopColor="#efe7d5" />
           </linearGradient>
           <linearGradient id="curb-face" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#e9a081" />
-            <stop offset="1" stopColor="#c77f64" />
+            <stop offset="0" stopColor="#f19a7b" />
+            <stop offset="1" stopColor="#cf7459" />
           </linearGradient>
-          <linearGradient id="walker-basket" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#b9f36c" />
-            <stop offset="1" stopColor="#83cf58" />
-          </linearGradient>
-          <filter id="walker-shadow" x="-30%" y="-30%" width="170%" height="180%">
-            <feDropShadow dx="0" dy="9" stdDeviation="8" floodColor="#153c38" floodOpacity=".2" />
+          <filter id="wheelchair-shadow" x="-30%" y="-30%" width="180%" height="190%">
+            <feDropShadow dx="0" dy="10" stdDeviation="8" floodColor="#153c38" floodOpacity=".2" />
           </filter>
         </defs>
 
-        <rect width="640" height="360" fill="url(#curb-scene-bg)" />
-        <circle cx="579" cy="45" r="105" fill="#cce9b9" opacity=".78" />
-        <circle cx="43" cy="33" r="66" fill="#d5ebc9" />
-        <path d="M0 100 640 47v34L0 139Z" fill="#b8c9c0" />
-        <path d="M0 116 640 63v22L0 143Z" fill="#f8faf3" />
+        <rect width="640" height="360" fill="url(#curb-sky)" />
+        <circle cx="56" cy="47" r="84" fill="#d3eac5" />
+        <circle cx="594" cy="31" r="94" fill="#c7e7b5" opacity=".75" />
+        <path d="M0 112h640v44H0Z" fill="#b8cbc0" />
+        <path d="M0 128h640v28H0Z" fill="#f9fbf4" />
 
-        <path d="M0 139 640 84v129L0 292Z" fill="url(#curb-paving)" />
-        <path d="M0 292 640 213v147H0Z" fill="#b7a286" />
-        <path d="M367 117 640 84v39l-273 39Z" fill="#fffdf7" />
-        <path d="M367 162 640 123v90l-273 42Z" fill="url(#curb-face)" />
-        <path d="M367 162 640 123" fill="none" stroke="#ff6655" strokeWidth="7" strokeLinecap="round" />
+        <path d="M0 156h640v204H0Z" fill="url(#curb-road)" />
+        <path d="M0 218h420v142H0Z" fill="#c3b197" />
+        <path d="M420 174h220v58H420Z" fill="url(#curb-top)" />
+        <path d="M420 232h220v128H420Z" fill="url(#curb-face)" />
+        <path d="M420 232h220" fill="none" stroke="#ff6554" strokeWidth="8" />
+        <path d="M0 218h420" fill="none" stroke="#ddd0ba" strokeWidth="4" />
+        <path d="M44 260h98m-75 42h82" fill="none" stroke="#e8ddca" strokeWidth="5" strokeLinecap="round" />
+        <path d="M463 202h145" fill="none" stroke="#d7ddcf" strokeWidth="4" strokeDasharray="12 10" />
 
-        <path d="M62 175 329 141M37 224l292-42M28 276l301-50" fill="none" stroke="#fff" strokeWidth="5" opacity=".82" />
-        <path d="M143 126 113 307M275 114 245 280" fill="none" stroke="#d5c7b1" strokeWidth="3" opacity=".78" />
-        <path d="M382 128 629 96" fill="none" stroke="#dce5db" strokeWidth="3" strokeDasharray="11 10" />
+        <ellipse cx="265" cy="322" rx="166" ry="22" fill="#665b4d" opacity=".16" />
+        <path d="M72 287h73" fill="none" stroke="#5aa66d" strokeWidth="9" strokeLinecap="round" />
+        <path d="m132 274 17 13-17 13" fill="none" stroke="#5aa66d" strokeWidth="9" strokeLinecap="round" strokeLinejoin="round" />
 
-        <ellipse cx="253" cy="303" rx="135" ry="24" fill="#6e6659" opacity=".16" />
-        <g filter="url(#walker-shadow)">
-          <circle cx="184" cy="272" r="29" fill="#fffdf7" />
-          <circle cx="184" cy="272" r="21" fill="#153c38" />
-          <circle cx="184" cy="272" r="8" fill="#b5f263" />
-          <circle cx="318" cy="249" r="43" fill="#fffdf7" />
-          <circle cx="318" cy="249" r="33" fill="#153c38" />
-          <circle cx="318" cy="249" r="13" fill="#b5f263" />
+        <g filter="url(#wheelchair-shadow)">
+          <circle cx="241" cy="263" r="62" fill="#fffdf7" stroke="#153c38" strokeWidth="10" />
+          <circle cx="241" cy="263" r="38" fill="#dff5cb" stroke="#153c38" strokeWidth="7" />
+          <circle cx="241" cy="263" r="10" fill="#aef05d" />
+          <path d="M241 225v76M203 263h76m-65-42 54 84m-65-2 76-78" stroke="#8bb797" strokeWidth="4" opacity=".72" />
 
-          <path d="M188 238h92l43-103M280 238l-59-105M280 238l67-83M222 133h92m33 22h47" fill="none" stroke="#153c38" strokeWidth="9" strokeLinecap="round" strokeLinejoin="round" />
-          <path d="M232 134 208 88h86" fill="none" stroke="#153c38" strokeWidth="9" strokeLinecap="round" strokeLinejoin="round" />
-          <path d="M220 92h82" stroke="#153c38" strokeWidth="16" strokeLinecap="round" />
-          <path d="M239 144h70l-9 58h-45Z" fill="url(#walker-basket)" stroke="#153c38" strokeWidth="6" strokeLinejoin="round" />
-          <path d="M224 132h96" stroke="#fffdf7" strokeWidth="5" strokeLinecap="round" opacity=".9" />
-          <circle cx="394" cy="155" r="7" fill="#153c38" />
+          <circle cx="385" cy="288" r="24" fill="#fffdf7" stroke="#153c38" strokeWidth="8" />
+          <circle cx="385" cy="288" r="8" fill="#aef05d" />
+
+          <path d="M177 128v87h112" fill="none" stroke="#153c38" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M169 128h-24" stroke="#153c38" strokeWidth="11" strokeLinecap="round" />
+          <path d="M202 211h87l54 70h37" fill="none" stroke="#153c38" strokeWidth="11" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M283 213 241 263m44-50 100 75" fill="none" stroke="#153c38" strokeWidth="8" strokeLinecap="round" />
+          <path d="M335 278h58" stroke="#153c38" strokeWidth="8" strokeLinecap="round" />
+
+          <circle cx="210" cy="97" r="29" fill="#f0bd9a" stroke="#fffdf7" strokeWidth="6" />
+          <path d="M186 91c5-24 40-31 56-9-13-5-25-3-32 5-8 8-8 21-3 31-17-3-25-13-21-27Z" fill="#153c38" />
+          <path d="M193 132c18-9 44-5 57 11l27 65h-83l-18-50c-4-12 3-22 17-26Z" fill="#ff806d" stroke="#fffdf7" strokeWidth="5" strokeLinejoin="round" />
+          <path d="M242 153 286 181" fill="none" stroke="#153c38" strokeWidth="11" strokeLinecap="round" />
+          <circle cx="290" cy="184" r="7" fill="#f0bd9a" />
+          <path d="m246 207 48 39 54 12" fill="none" stroke="#153c38" strokeWidth="13" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M342 257h28" stroke="#153c38" strokeWidth="12" strokeLinecap="round" />
         </g>
 
-        <path d="M419 143v82" fill="none" stroke="#ff6655" strokeWidth="5" strokeLinecap="round" />
-        <path d="m409 154 10-11 10 11m-20 60 10 11 10-11" fill="none" stroke="#ff6655" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
-        <g transform="translate(439 157)">
-          <rect width="137" height="42" rx="21" fill="#fffaf0" stroke="#f5dfd1" />
-          <circle cx="22" cy="21" r="6" fill="#ff6655" />
-          <text x="84" y="27" textAnchor="middle" fill="#924c41" fontSize="16" fontWeight="850">높은 경계석</text>
+        <circle cx="409" cy="275" r="31" fill="#ff6554" opacity=".13" />
+        <path d="m397 254 9 12 13-8-4 15 14 5-15 5 3 15-12-9-10 12-1-16-16-1 14-8-7-14 15 5Z" fill="#ff6554" />
+        <path d="M455 187v96" fill="none" stroke="#ff6554" strokeWidth="5" strokeLinecap="round" />
+        <path d="m444 199 11-12 11 12m-22 72 11 12 11-12" fill="none" stroke="#ff6554" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+
+        <g transform="translate(474 194)">
+          <rect width="140" height="48" rx="24" fill="#fffdf7" stroke="#f2d8cb" strokeWidth="2" />
+          <circle cx="23" cy="24" r="7" fill="#ff6554" />
+          <text x="88" y="30" textAnchor="middle" fill="#88483f" fontSize="17" fontWeight="850">12cm 높은 턱</text>
+        </g>
+        <g transform="translate(34 172)">
+          <rect width="154" height="39" rx="19.5" fill="#153c38" />
+          <text x="77" y="25" textAnchor="middle" fill="#d7ff9c" fontSize="15" fontWeight="850">휠체어 통행 위험</text>
         </g>
       </svg>
     );
