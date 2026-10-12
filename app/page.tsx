@@ -190,15 +190,34 @@ function NeighborhoodIllustrationMap({ items, selectedId, onSelect }: { items: H
   );
 }
 
-function LocationPickerMap({ point, onChange }: { point: GpsPoint; onChange: (point: GpsPoint) => void }) {
+function LocationPickerMap({ point, onChange, editable, confirmed }: {
+  point: GpsPoint;
+  onChange: (point: GpsPoint) => void;
+  editable: boolean;
+  confirmed: boolean;
+}) {
   const mapElementRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const pointRef = useRef(point);
   const onChangeRef = useRef(onChange);
+  const editableRef = useRef(editable);
   const [mapError, setMapError] = useState("");
 
   useEffect(() => { pointRef.current = point; }, [point]);
   useEffect(() => { onChangeRef.current = onChange; }, [onChange]);
+  useEffect(() => {
+    editableRef.current = editable;
+    const map = mapRef.current;
+    if (!map) return;
+    const controls = [map.dragPan, map.scrollZoom, map.boxZoom, map.dragRotate, map.keyboard, map.doubleClickZoom, map.touchZoomRotate];
+    controls.forEach((control) => editable ? control.enable() : control.disable());
+  }, [editable]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || editable) return;
+    map.setCenter([point.longitude, point.latitude]);
+  }, [editable, point.latitude, point.longitude]);
 
   useEffect(() => {
     if (!mapElementRef.current || mapRef.current) return;
@@ -229,8 +248,18 @@ function LocationPickerMap({ point, onChange }: { point: GpsPoint; onChange: (po
           attributionControl: true,
         });
         map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
+        if (!editableRef.current) {
+          map.dragPan.disable();
+          map.scrollZoom.disable();
+          map.boxZoom.disable();
+          map.dragRotate.disable();
+          map.keyboard.disable();
+          map.doubleClickZoom.disable();
+          map.touchZoomRotate.disable();
+        }
         map.on("load", () => { setMapError(""); map.resize(); });
         map.on("moveend", () => {
+          if (!editableRef.current) return;
           const center = map.getCenter();
           onChangeRef.current({ ...pointRef.current, latitude: center.lat, longitude: center.lng });
         });
@@ -248,9 +277,14 @@ function LocationPickerMap({ point, onChange }: { point: GpsPoint; onChange: (po
   }, []);
 
   return (
-    <div className="location-picker-map" aria-label="제보 위치 선택 지도">
+    <div className={`location-picker-map ${editable ? "is-editing" : "is-locked"}`} aria-label={editable ? "핀 위치를 조정하는 지도" : "스크롤할 때 움직이지 않는 위치 지도"}>
       <div ref={mapElementRef} className="location-map-canvas" />
-      {!mapError && <><span className="location-center-pin" aria-hidden="true">●</span><p className="location-map-guide">지도를 움직여 위험한 곳에 핀을 맞춰주세요.</p></>}
+      {!mapError && <>
+        <span className="location-center-pin" aria-hidden="true">●</span>
+        <p className={`location-map-guide ${confirmed && !editable ? "confirmed" : ""}`}>
+          {editable ? "지도를 움직여 핀을 위험한 곳에 맞춰주세요." : confirmed ? "✓ 이 위치로 고정됐어요." : "지도를 움직이려면 아래 버튼을 눌러주세요."}
+        </p>
+      </>}
       {mapError && <p className="location-map-error" role="alert">{mapError}</p>}
     </div>
   );
@@ -269,8 +303,8 @@ const reportGuideSteps = [
   },
   {
     title: "위치를 확인해요",
-    description: "현재 위치를 불러온 뒤 지도를 움직여 위험한 장소에 핀을 맞춥니다.",
-    details: ["‘현재 위치 사용’을 눌러 GPS를 켭니다.", "지도 가운데 핀이 위험한 곳에 오도록 지도를 움직입니다.", "GPS가 어렵다면 장소 이름을 직접 적을 수 있습니다."],
+    description: "현재 위치를 불러온 뒤 핀을 조정하고 위치를 고정합니다.",
+    details: ["‘현재 위치 사용’을 눌러 GPS를 켭니다.", "‘핀 위치 조정하기’를 누른 뒤 지도 가운데 핀을 위험한 곳에 맞춥니다.", "‘이 위치로 고정’을 누르거나 장소 이름을 직접 적습니다."],
   },
   {
     title: "내용을 확인하고 보내요",
@@ -339,8 +373,8 @@ function ReportGuidePreview({ step }: { step: number }) {
         <>
           <strong className="guide-screen-title">위험한 장소를<br />확인해주세요.</strong>
           <div className="guide-location-options"><b><LocationPinIcon />현재 위치 사용</b><span><ManualInputIcon />직접 입력</span></div>
-          <div className="guide-map-preview"><i className="road-one" /><i className="road-two" /><span>●</span><small>지도를 움직여 핀을 맞춰주세요</small></div>
-          <div className="guide-location-result"><i />선택한 위치 <small>위도 36.36563 · 경도 127.36227</small></div>
+          <div className="guide-map-preview"><i className="road-one" /><i className="road-two" /><span>●</span><small>핀 위치 조정 → 이 위치로 고정</small></div>
+          <div className="guide-location-result"><i />고정한 위치 <small>위도 36.36563 · 경도 127.36227</small></div>
           <div className="guide-next-button">제보내용 확인하기 <b>→</b></div>
         </>
       )}
@@ -367,6 +401,8 @@ export default function Home() {
   const [gpsStatus, setGpsStatus] = useState<GpsStatus>("idle");
   const [gpsPoint, setGpsPoint] = useState<GpsPoint | null>(null);
   const [locationMapResetKey, setLocationMapResetKey] = useState(0);
+  const [locationConfirmed, setLocationConfirmed] = useState(false);
+  const [locationEditing, setLocationEditing] = useState(false);
   const [gpsMessage, setGpsMessage] = useState("");
   const [placeDescription, setPlaceDescription] = useState("");
   const [weatherStatus, setWeatherStatus] = useState<WeatherStatus>("idle");
@@ -512,6 +548,8 @@ export default function Home() {
     setGpsStatus("idle");
     setGpsPoint(null);
     setLocationMapResetKey(0);
+    setLocationConfirmed(false);
+    setLocationEditing(false);
     setGpsMessage("");
     setPlaceDescription("");
     setWeatherStatus("idle");
@@ -668,6 +706,8 @@ export default function Home() {
 
   const requestCurrentLocation = () => {
     setLocationChoice("gps");
+    setLocationConfirmed(false);
+    setLocationEditing(false);
     setLocationValidation("");
     setGpsMessage("");
 
@@ -703,6 +743,8 @@ export default function Home() {
 
   const chooseManualLocation = () => {
     setLocationChoice("manual");
+    setLocationConfirmed(false);
+    setLocationEditing(false);
     setLocationValidation("");
     setWeatherStatus("idle");
     setWeatherSnapshot(null);
@@ -715,6 +757,10 @@ export default function Home() {
       setLocationValidation("현재 위치를 확인하거나 위험한 장소를 직접 입력해주세요.");
       return;
     }
+    if (hasGps && !locationConfirmed) {
+      setLocationValidation("지도 아래의 ‘이 위치로 고정’ 버튼을 눌러주세요.");
+      return;
+    }
     setLocationValidation("");
     setReportTime(new Date().toISOString());
     setReportStep(4);
@@ -722,7 +768,7 @@ export default function Home() {
 
   const submitReport = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const hasGps = locationChoice === "gps" && gpsStatus === "success" && gpsPoint;
+    const hasGps = locationChoice === "gps" && gpsStatus === "success" && gpsPoint && locationConfirmed;
     const hasManualLocation = locationChoice === "manual" && placeDescription.trim();
     if (!hasGps && !hasManualLocation) {
       setLocationValidation("현재 위치를 확인하거나 주소·장소 설명 중 하나를 입력해주세요.");
@@ -1087,7 +1133,7 @@ export default function Home() {
                 <h2 id="report-title">위험한 장소를<br />확인해주세요.</h2>
                 <fieldset className="location-fieldset">
                   <legend>위치</legend>
-                  <p className="field-guide">GPS 지도의 핀을 맞추거나 알고 있는 주소·장소를 직접 알려주세요.</p>
+                  <p className="field-guide">핀 위치를 조정한 뒤 고정하거나, 알고 있는 주소·장소를 직접 알려주세요.</p>
                   <div className="location-methods">
                     <button
                       className={locationChoice === "gps" ? "active" : ""}
@@ -1118,11 +1164,24 @@ export default function Home() {
 
                   {locationChoice === "gps" && gpsStatus === "success" && gpsPoint && (
                     <div className="gps-map-block">
-                      <LocationPickerMap key={locationMapResetKey} point={gpsPoint} onChange={(nextPoint) => { setGpsPoint(nextPoint); setLocationValidation(""); }} />
+                      <LocationPickerMap
+                        key={locationMapResetKey}
+                        point={gpsPoint}
+                        editable={locationEditing}
+                        confirmed={locationConfirmed}
+                        onChange={(nextPoint) => { setGpsPoint(nextPoint); setLocationConfirmed(false); setLocationValidation(""); }}
+                      />
                       <div className="gps-map-meta">
-                        <span><i className="location-dot" />선택한 위치</span>
+                        <span><i className={`location-dot ${locationConfirmed ? "confirmed" : ""}`} />{locationConfirmed ? "고정한 위치" : locationEditing ? "핀 위치 조정 중" : "현재 위치"}</span>
                         <small>위도 {gpsPoint.latitude.toFixed(5)} · 경도 {gpsPoint.longitude.toFixed(5)}</small>
-                        <button type="button" onClick={requestCurrentLocation}>현재 위치로 돌아가기</button>
+                      </div>
+                      <div className="location-pin-actions">
+                        {locationEditing ? (
+                          <button className="location-pin-confirm" type="button" onClick={() => { setLocationEditing(false); setLocationConfirmed(true); setLocationValidation(""); }}>이 위치로 고정 <span>✓</span></button>
+                        ) : (
+                          <button className={locationConfirmed ? "location-pin-adjust" : "location-pin-start"} type="button" onClick={() => { setLocationEditing(true); setLocationConfirmed(false); setLocationValidation(""); }}>{locationConfirmed ? "위치 다시 조정" : "핀 위치 조정하기"}</button>
+                        )}
+                        <button className="location-pin-current" type="button" onClick={requestCurrentLocation}>현재 위치<br />다시 찾기</button>
                       </div>
                     </div>
                   )}
