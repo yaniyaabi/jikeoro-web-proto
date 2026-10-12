@@ -7,8 +7,14 @@ type HeaderSection = "home" | "map" | "my" | "admin";
 
 const CONTRAST_KEY = "jikeoro-site-high-contrast";
 export function AccessibilityTools() {
-  const [highContrast, setHighContrast] = useState(() => typeof window !== "undefined" && window.localStorage.getItem(CONTRAST_KEY) === "true");
+  const [highContrast, setHighContrast] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+
+  useEffect(() => {
+    const savedContrast = window.localStorage.getItem(CONTRAST_KEY) === "true";
+    setHighContrast(savedContrast);
+    document.documentElement.dataset.siteContrast = savedContrast ? "high" : "normal";
+  }, []);
 
   useEffect(() => {
     document.documentElement.dataset.siteContrast = highContrast ? "high" : "normal";

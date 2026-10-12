@@ -8,19 +8,21 @@
   --white: #ffffff;
   --mint: #b7f06b;
   --mint-bright: #d4ff96;
-  --coral: #ff654f;
+  --coral: #ce3b30;
   --yellow: #ffc84b;
   --line: #d9e0d7;
+  --control-line: #6b8078;
   --navy: #163f47;
 }
 
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 body { margin: 0; background: var(--paper); color: var(--ink); font-family: Pretendard, "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; }
-button, input, textarea { font: inherit; }
+button, input, textarea, select { font: inherit; }
 button, a { -webkit-tap-highlight-color: transparent; }
 button { color: inherit; }
 a { color: inherit; text-decoration: none; }
+input::placeholder, textarea::placeholder { color: var(--ink-soft); opacity: 1; }
 
 .site-header { height: clamp(78px, 5.2vw, 96px); display: flex; align-items: center; justify-content: space-between; padding: 0 clamp(24px, 4vw, 86px); position: absolute; z-index: 20; width: 100%; top: 0; left: 0; }
 .brand { display: inline-flex; align-items: center; gap: 11px; }
@@ -782,6 +784,126 @@ html[data-site-contrast="high"]{--ink:#001b17;--ink-soft:#18342e;--paper:#fff;--
   .map-legend-boundary { grid-column: 1; }
 }
 
+/* WCAG AA contrast layer: keep controls and meaningful graphics distinguishable. */
+:where(
+  .member-auth-form input,.admin-login-card input,.admin-field input,.admin-field select,
+  .admin-field textarea,.admin-form-grid select,.admin-form-grid input,
+  .admin-response-field textarea,.staff-create-fields input,.staff-create-fields select,
+  .staff-account-list input,.staff-account-list select,.region-search select,
+  .reward-form-modal input,.report-modal input,.report-modal textarea
+) {
+  border-color:var(--control-line);
+}
+:where(
+  .site-accessibility button,.header-cta,.account-button,.risk-map-filters button,
+  .map-like-button,.hazard-detail-options button,.guide-navigation button,
+  .guide-step-tabs button,.member-detail-actions button,.region-search-submit,
+  .region-search-reset,.map-media-thumbnails button
+) {
+  border-color:var(--control-line);
+}
+
+html[data-site-contrast="high"] {
+  --control-line:#294f45;
+  accent-color:#005f4a;
+}
+html[data-site-contrast="high"] :where(input,textarea,select) {
+  border:2px solid var(--control-line);
+  background:#fff;
+  color:var(--ink);
+  caret-color:var(--ink);
+}
+html[data-site-contrast="high"] :where(input,textarea)::placeholder {
+  color:var(--ink-soft);
+  opacity:1;
+}
+html[data-site-contrast="high"] :where(
+  main,header,footer,.member-detail-backdrop,.reward-form-backdrop
+) :is(p,small,dt,figcaption) {
+  color:var(--ink-soft);
+}
+html[data-site-contrast="high"] :where(
+  .project-section,.selected-report-summary,.reward-voucher-card,.dark-insight,
+  .coral-insight,.map-zoom-hint,.panel-button,.header-cta,.login-button,
+  .mobile-site-menu .report,.admin-stats button.active,.admin-save-button,
+  .member-auth-submit,.member-detail-done
+) :is(p,small,span,b,strong) {
+  color:inherit;
+}
+html[data-site-contrast="high"] :where(
+  .dashboard-card,.floating-report,.map-key,.risk-map-workspace,.selected-report-detail,
+  .member-report,.member-detail-card,.member-auth-card,.admin-workspace,
+  .staff-create-card,.staff-list-card,.guide-shell,.reward-exchange,
+  .region-search,.report-modal,.reward-form-modal
+) {
+  border-color:var(--line);
+}
+html[data-site-contrast="high"] :where(
+  .site-accessibility button,.header-cta,.account-button,.risk-map-filters button,
+  .map-like-button,.hazard-detail-options button,.guide-navigation button,
+  .guide-step-tabs button,.member-detail-actions button,.region-search-submit,
+  .region-search-reset,.map-media-thumbnails button
+) {
+  border-color:var(--control-line);
+}
+html[data-site-contrast="high"] :where(.leaflet-hazard-marker,.naver-risk-marker,.map-pin) {
+  border-color:var(--ink);
+}
+html[data-site-contrast="high"] :where(.marker-yellow,.index-yellow) {
+  background:#795400!important;
+  color:#fff!important;
+}
+html[data-site-contrast="high"] :where(.marker-mint,.index-mint) {
+  background:#176a3b!important;
+  color:#fff!important;
+}
+html[data-site-contrast="high"] :where(.marker-plum,.index-plum) {
+  background:#604872!important;
+  color:#fff!important;
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --ink:#001b17;
+    --ink-soft:#18342e;
+    --paper:#fff;
+    --coral:#ce281e;
+    --line:#4e625c;
+    --control-line:#294f45;
+  }
+}
+
+/* Late overrides for small labels that use bespoke illustration colors. */
+html[data-site-contrast="high"] :where(
+  .mini-label,.map-label,.floating-report small,.guide-screen-count,
+  .guide-media-options small,.guide-media-privacy
+) {
+  color:var(--ink-soft);
+}
+html[data-site-contrast="high"] .neighborhood-stream :is(b,small),
+html[data-site-contrast="high"] .neighborhood-park :is(b,small),
+html[data-site-contrast="high"] .neighborhood-road small,
+html[data-site-contrast="high"] .neighborhood-bridge small {
+  color:#18342e;
+}
+html[data-site-contrast="high"] .trust-strip :is(p,small,span,strong) {
+  color:#fff;
+}
+html[data-site-contrast="high"] .guide-screen :is(p,small) {
+  color:var(--ink-soft);
+}
+html[data-site-contrast="high"] .app-download-steps i {
+  color:#4e625c;
+}
+
+@media (forced-colors: active) {
+  * { forced-color-adjust:auto; }
+  button,input,textarea,select { border:2px solid ButtonText; }
+  button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible {
+    outline:3px solid Highlight;
+  }
+}
+
 /* Make the My Records page comfortable to read at a glance. */
 .member-page .eyebrow { font-size: 14px; }
 .member-page .member-profile strong { font-size: 18px; }
@@ -1206,4 +1328,10 @@ html[data-site-contrast="high"]{--ink:#001b17;--ink-soft:#18342e;--paper:#fff;--
     width: calc(100% - 14px);
     max-width: calc(100% - 14px);
   }
+}
+
+html[data-site-contrast="high"] .town-stream :is(b,small),
+html[data-site-contrast="high"] .town-park :is(b,small),
+html[data-site-contrast="high"] .floating-report :is(span,small) {
+  color:var(--ink-soft);
 }
