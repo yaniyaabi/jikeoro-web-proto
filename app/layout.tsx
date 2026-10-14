@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "지켜路 | 우리 동네 보행안전 지도",
-    description: "걷다가 발견한 위험, 우리 동네의 더 나은 길이 됩니다.",
+    description: "걷다가 발견한 위험, 지켜로에 알려주세요.",
     type: "website",
     locale: "ko_KR",
     images: [{ url: "/og.png", width: 1744, height: 907, alt: "지켜路 우리 동네 보행안전 지도" }],
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "지켜路 | 우리 동네 보행안전 지도",
-    description: "걷다가 발견한 위험, 우리 동네의 더 나은 길이 됩니다.",
+    description: "걷다가 발견한 위험, 지켜로에 알려주세요.",
     images: ["/og.png"],
   },
 };

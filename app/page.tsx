@@ -828,7 +828,7 @@ export default function Home() {
           <h1>
             걷다가 발견한 위험,
             <br />
-            <span className="hero-line"><span>우리 동네의 더 나은 길</span>이 됩니다.</span>
+            <span className="hero-line"><span>지켜로에 알려주세요</span></span>
           </h1>
           <p className="hero-description">
             주민이 직접 기록한 사진과 목소리가 모여 고령자와 모두에게<br />
