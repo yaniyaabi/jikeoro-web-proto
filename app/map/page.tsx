@@ -7,6 +7,7 @@ import { SiteHeader } from "../components/site-header";
 import { SiteFooter } from "../components/site-footer";
 import { sitePath } from "../lib/site-path";
 import { hazardCategories, hazardFilters, hazardPinFiles, normalizeHazardCategory } from "../lib/hazard-categories";
+import { downloadReportMedia } from "../lib/supabase-browser";
 
 type MapReport = {
   id: string;
@@ -123,23 +124,7 @@ function geometryBounds(feature: MunicipalityFeature) {
 }
 
 async function readReportMedia(reportId: string) {
-  if (!("indexedDB" in window)) return [] as StoredReportMedia[];
-  return new Promise<StoredReportMedia[]>((resolve) => {
-    const request = window.indexedDB.open("jikeoro-media", 1);
-    request.onupgradeneeded = () => {
-      const database = request.result;
-      if (!database.objectStoreNames.contains("media")) database.createObjectStore("media", { keyPath: "id" });
-    };
-    request.onerror = () => resolve([]);
-    request.onsuccess = () => {
-      const database = request.result;
-      const transaction = database.transaction("media", "readonly");
-      const getAll = transaction.objectStore("media").getAll();
-      getAll.onsuccess = () => resolve((getAll.result as StoredReportMedia[]).filter((item) => item.reportId === reportId));
-      getAll.onerror = () => resolve([]);
-      transaction.oncomplete = () => database.close();
-    };
-  });
+  return downloadReportMedia(reportId) as Promise<StoredReportMedia[]>;
 }
 
 function ReportThumbnail({ report, onOpen }: { report: MapReport; onOpen: () => void }) {
@@ -148,13 +133,15 @@ function ReportThumbnail({ report, onOpen }: { report: MapReport; onOpen: () => 
   useEffect(() => {
     let disposed = false;
     let previewUrl = "";
-    readReportMedia(report.id).then((items) => {
-      if (disposed) return;
-      const item = items.find((candidate) => candidate.kind === "image" || candidate.kind === "video");
-      if (!item) return;
-      previewUrl = URL.createObjectURL(item.blob);
-      setMedia({ ...item, previewUrl });
-    });
+    readReportMedia(report.id)
+      .then((items) => {
+        if (disposed) return;
+        const item = items.find((candidate) => candidate.kind === "image" || candidate.kind === "video");
+        if (!item) return;
+        previewUrl = URL.createObjectURL(item.blob);
+        setMedia({ ...item, previewUrl });
+      })
+      .catch(() => undefined);
     return () => {
       disposed = true;
       if (previewUrl) URL.revokeObjectURL(previewUrl);
@@ -283,7 +270,7 @@ export default function RiskMapPage() {
       setMediaLoading(true);
       setSelectedMedia([]);
       setSelectedMediaIndex(0);
-      const items = await readReportMedia(selected.id);
+      const items = await readReportMedia(selected.id).catch(() => []);
       if (!disposed) {
         const previews = items.map((item) => ({ ...item, previewUrl: URL.createObjectURL(item.blob) }));
         previewUrls = previews.map((item) => item.previewUrl);

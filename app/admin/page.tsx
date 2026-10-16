@@ -7,6 +7,7 @@ import { HazardIllustration } from "../components/hazard-illustration";
 import { ReportLocationMap } from "../components/report-location-map";
 import { sitePath } from "../lib/site-path";
 import { formatRewardPhone, readRewardRequests, REWARD_REQUESTS_KEY, RewardRequest, writeRewardRequests } from "../lib/reward-requests";
+import { downloadReportMedia } from "../lib/supabase-browser";
 
 type ReportStatus = "received" | "review" | "action" | "completed";
 type StaffRole = "research_admin" | "agency_staff";
@@ -76,23 +77,7 @@ function formatReportLocation(report: Pick<AdminReport, "address" | "place_descr
 }
 
 async function readReportMedia(reportId: string) {
-  if (!("indexedDB" in window)) return [] as StoredReportMedia[];
-  return new Promise<StoredReportMedia[]>((resolve) => {
-    const request = window.indexedDB.open("jikeoro-media", 1);
-    request.onupgradeneeded = () => {
-      const database = request.result;
-      if (!database.objectStoreNames.contains("media")) database.createObjectStore("media", { keyPath: "id" });
-    };
-    request.onerror = () => resolve([]);
-    request.onsuccess = () => {
-      const database = request.result;
-      const transaction = database.transaction("media", "readonly");
-      const getAll = transaction.objectStore("media").getAll();
-      getAll.onsuccess = () => resolve((getAll.result as StoredReportMedia[]).filter((item) => item.reportId === reportId));
-      getAll.onerror = () => resolve([]);
-      transaction.oncomplete = () => database.close();
-    };
-  });
+  return downloadReportMedia(reportId) as Promise<StoredReportMedia[]>;
 }
 
 export default function AdminPage() {

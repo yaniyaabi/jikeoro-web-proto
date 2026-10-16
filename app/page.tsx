@@ -7,6 +7,7 @@ import { SiteFooter } from "./components/site-footer";
 import { HazardIllustration } from "./components/hazard-illustration";
 import { sitePath } from "./lib/site-path";
 import { hazardCategories, hazardDetails, hazardFilters, hazardIconFiles, hazardPinFiles, type HazardCategory } from "./lib/hazard-categories";
+import { uploadReportMedia } from "./lib/supabase-browser";
 
 type Hazard = {
   id: number;
@@ -128,32 +129,7 @@ function describeWeather(code: number) {
 }
 
 async function storeReportMedia(reportId: string, attachments: MediaAttachment[]) {
-  if (!("indexedDB" in window) || attachments.length === 0) return;
-  await new Promise<void>((resolve, reject) => {
-    const request = window.indexedDB.open("jikeoro-media", 1);
-    request.onupgradeneeded = () => {
-      const database = request.result;
-      if (!database.objectStoreNames.contains("media")) database.createObjectStore("media", { keyPath: "id" });
-    };
-    request.onerror = () => reject(request.error);
-    request.onsuccess = () => {
-      const database = request.result;
-      const transaction = database.transaction("media", "readwrite");
-      const store = transaction.objectStore("media");
-      attachments.forEach((attachment) => store.put({
-        id: `${reportId}-${attachment.id}`,
-        reportId,
-        kind: attachment.kind,
-        name: attachment.file.name,
-        type: attachment.file.type,
-        size: attachment.file.size,
-        blob: attachment.file,
-        createdAt: new Date().toISOString(),
-      }));
-      transaction.oncomplete = () => { database.close(); resolve(); };
-      transaction.onerror = () => { database.close(); reject(transaction.error); };
-    };
-  });
+  await uploadReportMedia(reportId, attachments);
 }
 
 function NeighborhoodIllustrationMap({ items, selectedId, onSelect }: { items: Hazard[]; selectedId?: number; onSelect?: (id: number) => void }) {
@@ -515,12 +491,7 @@ export default function Home() {
   }, []);
 
   const enterMyJikeoro = async () => {
-    const response = await fetch("/api/auth/demo", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ role: "member" }),
-    });
-    if (response.ok) window.location.href = sitePath("/my");
+    window.location.href = sitePath("/login/");
   };
 
   const chooseFilter = (nextFilter: (typeof filters)[number]) => {
@@ -533,6 +504,10 @@ export default function Home() {
   };
 
   const openReport = () => {
+    if (!isLoggedIn) {
+      window.location.href = sitePath("/login/");
+      return;
+    }
     attachments.forEach((attachment) => URL.revokeObjectURL(attachment.previewUrl));
     mediaRecorderRef.current?.stop();
     speechRecognitionRef.current?.stop();
@@ -811,7 +786,7 @@ export default function Home() {
     const saved = await response.json();
     if (saved.id && attachments.length > 0) {
       await storeReportMedia(saved.id, attachments).catch(() => {
-        setMediaError("기록은 접수됐지만 이 기기의 미디어 보관에 실패했어요.");
+        setMediaError("기록은 접수됐지만 사진·영상·음성 파일을 서버에 올리지 못했어요.");
       });
     }
     if (!isLoggedIn && saved.id) window.sessionStorage.setItem("jikeoro-pending-report-id", saved.id);

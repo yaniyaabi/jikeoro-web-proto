@@ -6,6 +6,7 @@ import { SiteFooter } from "../components/site-footer";
 import { sitePath } from "../lib/site-path";
 import { hazardDetails, normalizeHazardCategory } from "../lib/hazard-categories";
 import { REWARD_EXCHANGE_MINIMUM, readRewardRequests, RewardRequest, writeRewardRequests } from "../lib/reward-requests";
+import { downloadReportMedia } from "../lib/supabase-browser";
 
 type ReportStatus = "received" | "review" | "action" | "completed";
 type ActivityFilter = "all" | "active" | "completed";
@@ -91,48 +92,7 @@ function calculateParticipation(reports: UserReport[]) {
 }
 
 async function readReportMedia(reportId: string) {
-  if (!("indexedDB" in window)) return [] as StoredReportMedia[];
-  return new Promise<StoredReportMedia[]>((resolve) => {
-    const request = window.indexedDB.open("jikeoro-media", 1);
-    request.onupgradeneeded = () => {
-      const database = request.result;
-      if (!database.objectStoreNames.contains("media")) database.createObjectStore("media", { keyPath: "id" });
-    };
-    request.onerror = () => resolve([]);
-    request.onsuccess = () => {
-      const database = request.result;
-      const transaction = database.transaction("media", "readonly");
-      const getAll = transaction.objectStore("media").getAll();
-      getAll.onsuccess = () => resolve((getAll.result as StoredReportMedia[]).filter((item) => item.reportId === reportId));
-      getAll.onerror = () => resolve([]);
-      transaction.oncomplete = () => database.close();
-    };
-  });
-}
-
-async function deleteReportMedia(reportId: string) {
-  if (!("indexedDB" in window)) return;
-  await new Promise<void>((resolve) => {
-    const request = window.indexedDB.open("jikeoro-media", 1);
-    request.onupgradeneeded = () => {
-      const database = request.result;
-      if (!database.objectStoreNames.contains("media")) database.createObjectStore("media", { keyPath: "id" });
-    };
-    request.onerror = () => resolve();
-    request.onsuccess = () => {
-      const database = request.result;
-      const transaction = database.transaction("media", "readwrite");
-      const store = transaction.objectStore("media");
-      const getAllKeys = store.getAllKeys();
-      getAllKeys.onsuccess = () => {
-        getAllKeys.result.forEach((key) => {
-          if (String(key).startsWith(`${reportId}-`)) store.delete(key);
-        });
-      };
-      transaction.oncomplete = () => { database.close(); resolve(); };
-      transaction.onerror = () => { database.close(); resolve(); };
-    };
-  });
+  return downloadReportMedia(reportId) as Promise<StoredReportMedia[]>;
 }
 
 function describeWeather(code: number) {
@@ -393,7 +353,6 @@ export default function MyJikeoroPage() {
       setDeleting(false);
       return;
     }
-    await deleteReportMedia(String(selectedReport.id));
     setReports((current) => current.filter((report) => String(report.id) !== String(selectedReport.id)));
     setSelectedReport(null);
     setDetailMedia([]);
