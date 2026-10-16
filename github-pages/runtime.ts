@@ -1,6 +1,34 @@
 import { removeReportFiles, supabase } from "../app/lib/supabase-browser";
 
 const PAGES_PREFIX = "/jikeoro-web-proto";
+const LEGACY_CLEANUP_MARKER = "jikeoro-pages-legacy-data-cleaned-v1";
+
+function clearLegacyBrowserData() {
+  if (window.localStorage.getItem(LEGACY_CLEANUP_MARKER) === "complete") return;
+  const legacyKeys = [
+    "jikeoro-pages-reports",
+    "jikeoro-pages-role",
+    "jikeoro-pages-users",
+    "jikeoro-pages-staff-users",
+    "jikeoro-pages-user",
+    "jikeoro-demo-latest-report",
+    "jikeoro-pending-report-id",
+    "jikeoro-reward-requests-v1",
+    "jikeoro-reward-phone",
+    "jikeoro-map-likes",
+  ];
+  legacyKeys.forEach((key) => {
+    window.localStorage.removeItem(key);
+    window.sessionStorage.removeItem(key);
+  });
+
+  const request = window.indexedDB.deleteDatabase("jikeoro-media");
+  request.onsuccess = () => window.localStorage.setItem(LEGACY_CLEANUP_MARKER, "complete");
+  request.onerror = () => undefined;
+  request.onblocked = () => undefined;
+}
+
+clearLegacyBrowserData();
 
 type StaffRole = "research_admin" | "agency_staff";
 type SessionUser = {
