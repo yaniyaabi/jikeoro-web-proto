@@ -93,10 +93,10 @@ Deno.serve(async (request) => {
       .select("id,name,role,agency,created_at")
       .in("role", ["research_admin", "agency_staff"])
       .order("created_at", { ascending: true });
-    if (profilesError) return response({ error: "계정 목록을 불러오지 못했습니다." }, 400);
+    if (profilesError) return response({ error: `계정 목록을 불러오지 못했습니다. (${profilesError.message})` }, 400);
 
     const { data: usersData, error: usersError } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
-    if (usersError) return response({ error: "로그인 계정 정보를 불러오지 못했습니다." }, 400);
+    if (usersError) return response({ error: `로그인 계정 정보를 불러오지 못했습니다. (${usersError.message})` }, 400);
     const authUsers = new Map(usersData.users.map((user) => [user.id, user]));
     return response({
       accounts: (profiles ?? []).map((profile) => publicAccount(
