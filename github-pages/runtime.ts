@@ -95,7 +95,14 @@ function authMessage(message: string) {
 }
 
 async function manageStaff(body: Record<string, unknown>) {
-  const { data, error } = await supabase.functions.invoke("manage-staff", { body });
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData.session?.access_token;
+  if (!accessToken) return { data: { error: "로그인이 필요합니다." }, status: 401 };
+
+  const { data, error } = await supabase.functions.invoke("manage-staff", {
+    body,
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
   if (!error) return { data, status: body.action === "create" ? 201 : 200 };
 
   let message = "운영 계정 관리 요청을 처리하지 못했습니다.";
