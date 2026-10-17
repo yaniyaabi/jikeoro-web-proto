@@ -4,16 +4,16 @@ export type ResidentAvatarConfig = {
   hairColor: "espresso" | "walnut" | "amber" | "silver";
   top: "purple" | "yellow" | "mint" | "coral" | "blue";
   background: "pink" | "sky" | "lilac" | "lemon" | "mint";
-  accessory: "none" | "round" | "square" | "freckles";
+  accessory: "none" | "round" | "square" | "freckles" | "beard" | "mustache" | "cap";
 };
 
 export const DEFAULT_RESIDENT_AVATAR: ResidentAvatarConfig = {
-  skin: "peach",
-  hair: "wave",
-  hairColor: "walnut",
-  top: "purple",
-  background: "lemon",
-  accessory: "round",
+  skin: "deep",
+  hair: "short",
+  hairColor: "espresso",
+  top: "coral",
+  background: "pink",
+  accessory: "none",
 };
 
 const AVATAR_OPTIONS = {
@@ -22,7 +22,7 @@ const AVATAR_OPTIONS = {
   hairColor: ["espresso", "walnut", "amber", "silver"],
   top: ["purple", "yellow", "mint", "coral", "blue"],
   background: ["pink", "sky", "lilac", "lemon", "mint"],
-  accessory: ["none", "round", "square", "freckles"],
+  accessory: ["none", "round", "square", "freckles", "beard", "mustache", "cap"],
 } as const;
 
 export function normalizeResidentAvatar(value: unknown): ResidentAvatarConfig {

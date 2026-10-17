@@ -849,8 +849,8 @@ html[data-site-contrast="high"] :where(
 .avatar-builder{margin:0 0 4px;border:1px solid #d4dfd3;border-radius:18px;background:#f7faf4;padding:15px}
 .avatar-builder>legend{padding:0 7px;color:var(--ink);font-size:15px;font-weight:900}
 .avatar-picker>p{margin:2px 0 13px;color:#657970;font-size:13px;line-height:1.45}
-.avatar-preset-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
-.avatar-preset-grid>button{position:relative;min-width:0;border:2px solid transparent;border-radius:15px;background:transparent;padding:0;cursor:pointer;transition:transform .16s,border-color .16s,box-shadow .16s}
+.avatar-preset-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.avatar-preset-grid>button{position:relative;min-width:0;border:2px solid #e2e8e3;border-radius:15px;background:#fff;padding:0;cursor:pointer;transition:transform .16s,border-color .16s,box-shadow .16s}
 .avatar-preset-grid>button:hover{transform:translateY(-2px)}.avatar-preset-grid>button.selected{border-color:var(--ink);box-shadow:0 0 0 3px var(--mint)}
 .avatar-preset-grid .resident-avatar{border-radius:12px}
 .avatar-preset-grid>button>span{position:absolute;right:-4px;bottom:-4px;width:23px;height:23px;border:2px solid #fff;border-radius:50%;background:#fff;color:#62766e;display:grid;place-items:center;font-size:10px;font-weight:900;box-shadow:0 3px 8px rgba(16,45,42,.18)}

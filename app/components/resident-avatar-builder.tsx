@@ -4,16 +4,12 @@ import { ResidentAvatar } from "./resident-avatar";
 import type { ResidentAvatarConfig } from "../lib/resident-avatar";
 
 const RESIDENT_AVATARS: Array<{ name: string; config: ResidentAvatarConfig }> = [
-  { name: "동그란 안경 지킴이", config: { skin: "peach", hair: "wave", hairColor: "walnut", top: "purple", background: "lemon", accessory: "round" } },
-  { name: "짧은 머리 지킴이", config: { skin: "brown", hair: "short", hairColor: "espresso", top: "coral", background: "lilac", accessory: "none" } },
-  { name: "묶은 머리 지킴이", config: { skin: "deep", hair: "bun", hairColor: "espresso", top: "yellow", background: "mint", accessory: "round" } },
-  { name: "단발머리 지킴이", config: { skin: "sand", hair: "bob", hairColor: "walnut", top: "yellow", background: "lilac", accessory: "none" } },
-  { name: "히잡을 쓴 지킴이", config: { skin: "peach", hair: "hijab", hairColor: "walnut", top: "purple", background: "pink", accessory: "round" } },
-  { name: "은빛 머리 지킴이", config: { skin: "sand", hair: "short", hairColor: "silver", top: "coral", background: "sky", accessory: "square" } },
-  { name: "주근깨 지킴이", config: { skin: "sand", hair: "wave", hairColor: "amber", top: "mint", background: "lemon", accessory: "freckles" } },
-  { name: "네모 안경 지킴이", config: { skin: "deep", hair: "bob", hairColor: "espresso", top: "blue", background: "sky", accessory: "square" } },
-  { name: "민트 옷 지킴이", config: { skin: "brown", hair: "bun", hairColor: "walnut", top: "mint", background: "pink", accessory: "none" } },
-  { name: "밝은 머리 지킴이", config: { skin: "peach", hair: "bob", hairColor: "silver", top: "blue", background: "mint", accessory: "round" } },
+  { name: "씩씩한 지킴이", config: { skin: "deep", hair: "short", hairColor: "espresso", top: "coral", background: "pink", accessory: "none" } },
+  { name: "수염 난 지킴이", config: { skin: "sand", hair: "short", hairColor: "walnut", top: "blue", background: "sky", accessory: "beard" } },
+  { name: "주근깨 지킴이", config: { skin: "peach", hair: "bob", hairColor: "amber", top: "mint", background: "mint", accessory: "freckles" } },
+  { name: "안경 쓴 지킴이", config: { skin: "brown", hair: "bun", hairColor: "espresso", top: "purple", background: "lilac", accessory: "round" } },
+  { name: "모자 쓴 지킴이", config: { skin: "deep", hair: "short", hairColor: "espresso", top: "yellow", background: "lemon", accessory: "cap" } },
+  { name: "은빛 수염 지킴이", config: { skin: "sand", hair: "short", hairColor: "silver", top: "coral", background: "sky", accessory: "mustache" } },
 ];
 
 function isSameAvatar(left: ResidentAvatarConfig, right: ResidentAvatarConfig) {
@@ -39,4 +35,3 @@ export function ResidentAvatarBuilder({ value, onChange }: { value: ResidentAvat
     </fieldset>
   );
 }
-
