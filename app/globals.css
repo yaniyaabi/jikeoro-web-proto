@@ -839,39 +839,15 @@ html[data-site-contrast="high"] :where(
   border-color:var(--line);
 }
 
-/* 주민 계정은 가입할 때 만든 조합형 캐릭터를 모든 화면에서 공유합니다. */
+/* 모든 주민 계정은 지켜로 기본 캐릭터를 공유합니다. */
 .resident-avatar{display:block;width:100%;height:auto;overflow:visible}
-.avatar-wave{transform-box:fill-box;transform-origin:82% 82%}
-.resident-avatar.is-greeting .avatar-wave{animation:resident-wave 1.8s ease-in-out infinite}
-@keyframes resident-wave{0%,45%,100%{transform:rotate(0deg)}12%{transform:rotate(-9deg)}25%{transform:rotate(7deg)}36%{transform:rotate(-4deg)}}
-@media(prefers-reduced-motion:reduce){.resident-avatar.is-greeting .avatar-wave{animation:none}}
-
-.avatar-builder{margin:0 0 4px;border:1px solid #d4dfd3;border-radius:18px;background:#f7faf4;padding:15px}
-.avatar-builder>legend{padding:0 7px;color:var(--ink);font-size:15px;font-weight:900}
-.avatar-picker>p{margin:2px 0 13px;color:#657970;font-size:13px;line-height:1.45}
-.avatar-preset-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
-.avatar-preset-grid>button{position:relative;min-width:0;border:2px solid #e2e8e3;border-radius:15px;background:#fff;padding:0;cursor:pointer;transition:transform .16s,border-color .16s,box-shadow .16s}
-.avatar-preset-grid>button:hover{transform:translateY(-2px)}.avatar-preset-grid>button.selected{border-color:var(--ink);box-shadow:0 0 0 3px var(--mint)}
-.avatar-preset-grid .resident-avatar{border-radius:12px}
-.avatar-preset-grid>button>span{position:absolute;right:-4px;bottom:-4px;width:23px;height:23px;border:2px solid #fff;border-radius:50%;background:#fff;color:#62766e;display:grid;place-items:center;font-size:10px;font-weight:900;box-shadow:0 3px 8px rgba(16,45,42,.18)}
-.avatar-preset-grid>button.selected>span{background:var(--ink);color:var(--mint)}
-.avatar-builder-preview{display:grid;grid-template-columns:96px 1fr;align-items:center;gap:16px;margin-bottom:13px}
-.avatar-builder-preview>.resident-avatar{width:96px;border-radius:20px;box-shadow:0 8px 20px rgba(16,45,42,.12)}
-.avatar-builder-preview>div{display:flex;flex-direction:column;gap:5px}.avatar-builder-preview strong{font-size:17px}.avatar-builder-preview span{color:#667a72;font-size:13px;line-height:1.45}
-.avatar-builder-options{display:grid;gap:10px}
-.avatar-option-group{display:grid;grid-template-columns:72px 1fr;align-items:center;gap:8px}.avatar-option-group>span{font-size:12px;font-weight:900;color:#536b62}
-.avatar-option-group>div{display:flex;align-items:center;gap:7px;overflow-x:auto;padding:3px 2px;scrollbar-width:none}.avatar-option-group>div::-webkit-scrollbar{display:none}
-.avatar-option-group button{flex:0 0 auto;border:1px solid #bdcbbf;background:#fff;color:var(--ink);cursor:pointer;transition:transform .16s,border-color .16s,box-shadow .16s}
-.avatar-option-group button:hover{transform:translateY(-1px)}.avatar-option-group button.selected{border-color:var(--ink);box-shadow:0 0 0 2px var(--mint)}
-.avatar-swatch{width:30px;height:30px;border-radius:50%;padding:4px}.avatar-swatch>span{display:block;width:100%;height:100%;border-radius:50%;background:var(--swatch)}
-.avatar-choice{min-height:34px;border-radius:999px;padding:6px 10px;font-size:11px;font-weight:850;white-space:nowrap}
 
 .account-button>.resident-avatar{width:40px;height:40px;border-radius:50%;flex:0 0 auto}
 .mobile-member-link>.resident-avatar{width:34px;height:34px;border-radius:10px;flex:0 0 auto}.mobile-member-link>span{margin-right:auto}
 
 .member-intro{display:grid;grid-template-columns:minmax(0,1fr) 190px minmax(310px,.62fr);align-items:center}
 .member-greeting-copy>p:last-child{max-width:560px;margin:18px 0 0;color:#5b7169;font-size:16px;line-height:1.6}
-.member-character-greeting{position:relative;align-self:end}.member-character-greeting>.resident-avatar{width:180px;filter:drop-shadow(0 16px 17px rgba(16,45,42,.12))}.member-character-greeting>span{position:absolute;right:-12px;top:1px;border:1px solid #d7e1d4;border-radius:999px;background:#fff;padding:8px 11px;font-size:13px;font-weight:900;box-shadow:0 6px 16px rgba(16,45,42,.08)}
+.member-character-greeting{position:relative;align-self:end}.member-character-greeting>.resident-avatar{width:180px;filter:drop-shadow(0 16px 17px rgba(16,45,42,.12))}
 .member-profile>.resident-avatar{width:54px;height:54px;border-radius:15px}
 
 /* 운영 계정은 캐릭터 대신 기존 역할 표식을 사용합니다. */
@@ -883,10 +859,9 @@ html[data-site-contrast="high"] :where(
   .member-intro{grid-template-columns:minmax(0,1fr) 160px}.member-character-greeting>.resident-avatar{width:150px}.member-profile{grid-column:1/-1;width:min(440px,100%);margin-top:8px}
 }
 @media(max-width:720px){
-  .avatar-builder{padding:13px 11px}.avatar-picker>p{font-size:12px}.avatar-preset-grid{gap:7px}.avatar-preset-grid>button{border-radius:12px}.avatar-preset-grid .resident-avatar{border-radius:9px}.avatar-preset-grid>button>span{width:20px;height:20px;font-size:9px}
-  .member-intro{display:grid;grid-template-columns:minmax(0,1fr) 116px;align-items:end;gap:14px}.member-greeting-copy h1{font-size:34px}.member-greeting-copy>p:last-child{font-size:14px;margin-top:12px}.member-character-greeting>.resident-avatar{width:116px}.member-character-greeting>span{right:-3px;top:-12px;padding:6px 8px;font-size:10px}.member-profile{grid-column:1/-1;margin-top:7px}.member-profile>.resident-avatar{width:50px;height:50px}
+  .member-intro{display:grid;grid-template-columns:minmax(0,1fr) 116px;align-items:end;gap:14px}.member-greeting-copy h1{font-size:34px}.member-greeting-copy>p:last-child{font-size:14px;margin-top:12px}.member-character-greeting>.resident-avatar{width:116px}.member-profile{grid-column:1/-1;margin-top:7px}.member-profile>.resident-avatar{width:50px;height:50px}
 }
-@media(max-width:390px){.member-intro{grid-template-columns:minmax(0,1fr) 98px;gap:8px}.member-character-greeting>.resident-avatar{width:98px}.member-greeting-copy h1{font-size:31px!important}.member-greeting-copy>p:last-child{font-size:13px}.avatar-builder-preview strong{font-size:15px}.avatar-builder-preview span{font-size:12px}}
+@media(max-width:390px){.member-intro{grid-template-columns:minmax(0,1fr) 98px;gap:8px}.member-character-greeting>.resident-avatar{width:98px}.member-greeting-copy h1{font-size:31px!important}.member-greeting-copy>p:last-child{font-size:13px}}
 html[data-site-contrast="high"] :where(
   .site-accessibility button,.header-cta,.account-button,.risk-map-filters button,
   .map-like-button,.hazard-detail-options button,.guide-navigation button,

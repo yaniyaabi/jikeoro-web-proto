@@ -57,7 +57,7 @@ test("member credentials are handled by Supabase Auth instead of browser storage
   assert.doesNotMatch(runtime, /window\.localStorage\.setItem\([^\n]*password/);
 });
 
-test("resident avatars are created at signup, persisted in profiles, and reused in member screens", async () => {
+test("all resident screens reuse the fixed Jikeoro mascot without an avatar picker", async () => {
   const runtime = await readFile(runtimeUrl, "utf8");
   const loginPage = await readFile(loginPageUrl, "utf8");
   const myPage = await readFile(myPageUrl, "utf8");
@@ -65,15 +65,13 @@ test("resident avatars are created at signup, persisted in profiles, and reused 
   const avatarComponent = await readFile(avatarComponentUrl, "utf8");
   const migration = await readFile(avatarMigrationUrl, "utf8");
 
-  assert.match(loginPage, /ResidentAvatarBuilder/);
-  assert.match(await readFile(new URL("../app/components/resident-avatar-builder.tsx", import.meta.url), "utf8"), /RESIDENT_AVATARS[\s\S]*role="radiogroup"/);
-  assert.match(loginPage, /avatar: mode === "signup" \? avatar/);
+  assert.doesNotMatch(loginPage, /ResidentAvatarBuilder|주민 캐릭터 선택|role="radiogroup"/);
   assert.match(runtime, /select\("name,role,agency,avatar"\)/);
   assert.match(runtime, /data: \{ name, avatar \}/);
   assert.match(myPage, /member-character-greeting/);
-  assert.match(myPage, /greeting label=/);
+  assert.doesNotMatch(myPage, /안녕하세요!/);
   assert.match(siteHeader, /ResidentAvatar config=\{sessionAvatar\}/);
-  assert.match(avatarComponent, /viewBox="0 0 160 160"/);
+  assert.match(avatarComponent, /jikeoro-brand-v6\.png/);
   assert.match(migration, /add column if not exists avatar jsonb/);
   assert.match(migration, /new\.raw_user_meta_data -> 'avatar'/);
 });
