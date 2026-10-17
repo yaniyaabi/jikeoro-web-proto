@@ -6,6 +6,9 @@ const runtimeUrl = new URL("../github-pages/runtime.ts", import.meta.url);
 const myPageUrl = new URL("../app/my/page.tsx", import.meta.url);
 const siteHeaderUrl = new URL("../app/components/site-header.tsx", import.meta.url);
 const manageStaffUrl = new URL("../supabase/functions/manage-staff/index.ts", import.meta.url);
+const loginPageUrl = new URL("../app/login/page.tsx", import.meta.url);
+const avatarComponentUrl = new URL("../app/components/resident-avatar.tsx", import.meta.url);
+const avatarMigrationUrl = new URL("../supabase/migrations/202610170002_member_avatars.sql", import.meta.url);
 
 test("GitHub Pages authentication uses the shared Supabase session", async () => {
   const runtime = await readFile(runtimeUrl, "utf8");
@@ -52,6 +55,27 @@ test("member credentials are handled by Supabase Auth instead of browser storage
   assert.match(runtime, /supabase\.auth\.signInWithPassword/);
   assert.doesNotMatch(runtime, /passwordHash/);
   assert.doesNotMatch(runtime, /window\.localStorage\.setItem\([^\n]*password/);
+});
+
+test("resident avatars are created at signup, persisted in profiles, and reused in member screens", async () => {
+  const runtime = await readFile(runtimeUrl, "utf8");
+  const loginPage = await readFile(loginPageUrl, "utf8");
+  const myPage = await readFile(myPageUrl, "utf8");
+  const siteHeader = await readFile(siteHeaderUrl, "utf8");
+  const avatarComponent = await readFile(avatarComponentUrl, "utf8");
+  const migration = await readFile(avatarMigrationUrl, "utf8");
+
+  assert.match(loginPage, /ResidentAvatarBuilder/);
+  assert.match(await readFile(new URL("../app/components/resident-avatar-builder.tsx", import.meta.url), "utf8"), /RESIDENT_AVATARS[\s\S]*role="radiogroup"/);
+  assert.match(loginPage, /avatar: mode === "signup" \? avatar/);
+  assert.match(runtime, /select\("name,role,agency,avatar"\)/);
+  assert.match(runtime, /data: \{ name, avatar \}/);
+  assert.match(myPage, /member-character-greeting/);
+  assert.match(myPage, /greeting label=/);
+  assert.match(siteHeader, /ResidentAvatar config=\{sessionAvatar\}/);
+  assert.match(avatarComponent, /viewBox="0 0 160 160"/);
+  assert.match(migration, /add column if not exists avatar jsonb/);
+  assert.match(migration, /new\.raw_user_meta_data -> 'avatar'/);
 });
 
 test("member participation starts empty and is derived from that member's reports", async () => {

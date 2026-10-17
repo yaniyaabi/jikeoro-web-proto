@@ -3,7 +3,9 @@
 import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { SiteHeader } from "../components/site-header";
 import { SiteFooter } from "../components/site-footer";
+import { ResidentAvatar } from "../components/resident-avatar";
 import { sitePath } from "../lib/site-path";
+import { DEFAULT_RESIDENT_AVATAR, type ResidentAvatarConfig } from "../lib/resident-avatar";
 import { hazardDetails, normalizeHazardCategory } from "../lib/hazard-categories";
 import { REWARD_EXCHANGE_MINIMUM, readRewardRequests, RewardRequest, writeRewardRequests } from "../lib/reward-requests";
 import { downloadReportMedia } from "../lib/supabase-browser";
@@ -153,6 +155,7 @@ export default function MyJikeoroPage() {
   const [memberName, setMemberName] = useState("김지킴");
   const [memberEmail, setMemberEmail] = useState("member@jikeoro.local");
   const [memberId, setMemberId] = useState("member-web");
+  const [memberAvatar, setMemberAvatar] = useState<ResidentAvatarConfig>(DEFAULT_RESIDENT_AVATAR);
   const [reports, setReports] = useState<UserReport[]>(userReports);
   const [activityFilter, setActivityFilter] = useState<ActivityFilter>("all");
   const [selectedReport, setSelectedReport] = useState<UserReport | null>(null);
@@ -194,6 +197,7 @@ export default function MyJikeoroPage() {
         if (session.user?.name) setMemberName(session.user.name);
         if (session.user?.email) setMemberEmail(session.user.email);
         if (session.user?.id) setMemberId(String(session.user.id));
+        if (session.user?.avatar) setMemberAvatar(session.user.avatar);
 
         const pendingReportId = window.sessionStorage.getItem("jikeoro-pending-report-id");
         if (pendingReportId) {
@@ -370,12 +374,14 @@ export default function MyJikeoroPage() {
 
       <section className="member-section standalone" id="my-jikeoro">
         <div className="member-intro">
-          <div>
+          <div className="member-greeting-copy">
             <p className="eyebrow">MY JIKEORO</p>
-            <h1>{memberName}님의 기록이<br />동네를 바꾸고 있어요.</h1>
+            <h1>{memberName}님,<br />오늘도 반가워요!</h1>
+            <p>나의 기록이 우리 동네를 더 안전하게 바꾸고 있어요.</p>
           </div>
+          <div className="member-character-greeting"><ResidentAvatar config={memberAvatar} greeting label={`${memberName}님의 인사하는 캐릭터`} /><span>안녕하세요!</span></div>
           <div className="member-profile">
-            <span className="profile-avatar">{memberName.slice(0, 1)}</span>
+            <ResidentAvatar config={memberAvatar} label={`${memberName}님의 캐릭터`} />
             <div><strong>{memberName}</strong><small>우리 동네 주민 · 동네지킴이 Lv.{participation.level}</small></div>
             <button type="button" onClick={logout}>로그아웃</button>
           </div>

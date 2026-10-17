@@ -1,4 +1,5 @@
 import { removeReportFiles, supabase, SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from "../app/lib/supabase-browser";
+import { normalizeResidentAvatar, type ResidentAvatarConfig } from "../app/lib/resident-avatar";
 
 const PAGES_PREFIX = "/jikeoro-web-proto";
 const LEGACY_KEY_CLEANUP_MARKER = "jikeoro-pages-legacy-keys-cleaned-v1";
@@ -41,6 +42,7 @@ type SessionUser = {
   email: string;
   role: "member" | StaffRole;
   agency: string | null;
+  avatar: ResidentAvatarConfig | null;
 };
 
 type ReportRow = {
@@ -123,7 +125,7 @@ async function currentUser(): Promise<SessionUser | null> {
   if (!authUser) return null;
   const { data: profile } = await supabase
     .from("profiles")
-    .select("name,role,agency")
+    .select("name,role,agency,avatar")
     .eq("id", authUser.id)
     .maybeSingle();
   const role = profile?.role === "research_admin" || profile?.role === "agency_staff" ? profile.role : "member";
@@ -133,6 +135,7 @@ async function currentUser(): Promise<SessionUser | null> {
     email: authUser.email ?? "",
     role,
     agency: profile?.agency ?? null,
+    avatar: role === "member" ? normalizeResidentAvatar(profile?.avatar ?? authUser.user_metadata?.avatar) : null,
   };
 }
 
@@ -176,8 +179,9 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     const name = String(body.name ?? "").trim();
     const email = String(body.email ?? "").trim().toLowerCase();
     const password = String(body.password ?? "");
+    const avatar = normalizeResidentAvatar(body.avatar);
     if (name.length < 2 || !email.includes("@") || password.length < 8) return json({ error: "이름, 이메일, 8자 이상의 비밀번호를 확인해주세요." }, 400);
-    const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { name } } });
+    const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { name, avatar } } });
     if (error) return json({ error: authMessage(error.message) }, 400);
     if (!data.session) return json({ error: "회원가입은 완료됐지만 바로 로그인하지 못했어요. 이메일 확인 설정을 점검해주세요." }, 409);
     return json({ ok: true, user: await currentUser() }, 201);

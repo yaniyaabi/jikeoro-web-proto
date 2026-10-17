@@ -3,6 +3,8 @@
 import { FormEvent, useEffect, useState } from "react";
 import { SiteFooter } from "../components/site-footer";
 import { AccessibilityTools } from "../components/site-header";
+import { ResidentAvatarBuilder } from "../components/resident-avatar-builder";
+import { DEFAULT_RESIDENT_AVATAR, type ResidentAvatarConfig } from "../lib/resident-avatar";
 import { sitePath } from "../lib/site-path";
 
 type AuthMode = "login" | "signup";
@@ -16,6 +18,7 @@ export default function MemberLoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [avatar, setAvatar] = useState<ResidentAvatarConfig>(DEFAULT_RESIDENT_AVATAR);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -63,7 +66,7 @@ export default function MemberLoginPage() {
     const response = await fetch(mode === "signup" ? "/api/auth/register" : "/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: name.trim(), email: normalizedEmail, password }),
+      body: JSON.stringify({ name: name.trim(), email: normalizedEmail, password, avatar: mode === "signup" ? avatar : undefined }),
     }).catch(() => null);
     setLoading(false);
     if (!response?.ok) {
@@ -106,10 +109,11 @@ export default function MemberLoginPage() {
             <div className="member-auth-card-heading">
               <span>{mode === "login" ? "다시 만나 반가워요" : "지켜路와 함께해요"}</span>
               <h2>{mode === "login" ? "내 기록을 확인하세요." : "새 계정을 만들어보세요."}</h2>
-              <p>{mode === "login" ? "가입한 이메일과 비밀번호를 입력해주세요." : "이름, 이메일과 비밀번호만 입력하면 바로 시작할 수 있어요."}</p>
+              <p>{mode === "login" ? "가입한 이메일과 비밀번호를 입력해주세요." : "마음에 드는 캐릭터를 고르고 주민 계정을 시작해보세요."}</p>
             </div>
 
             <form className="member-auth-form" onSubmit={submit}>
+              {mode === "signup" && <ResidentAvatarBuilder value={avatar} onChange={setAvatar} />}
               {mode === "signup" && <label><span>이름</span><input type="text" value={name} onChange={(event) => setName(event.target.value)} autoComplete="name" placeholder="예: 김지킴" /></label>}
               <label><span>이메일</span><input type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" placeholder="name@example.com" /></label>
               <label>

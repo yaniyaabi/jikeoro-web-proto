@@ -260,7 +260,7 @@ export default function AdminPage() {
       <SiteHeader active="admin" inner />
 
       <section className="admin-main">
-        <div className="admin-context-bar"><span className="admin-console-label">{user?.role === "research_admin" ? "관리자 콘솔" : "기관 콘솔"}</span><div className="admin-account"><span>{user?.role === "research_admin" ? "研" : "官"}</span><div><b>{user?.name}</b><small>{user?.role === "research_admin" ? "연구원 관리자" : user?.agency}</small></div><button onClick={logout}>로그아웃</button></div></div>
+        <div className="admin-context-bar"><span className="admin-console-label">{user?.role === "research_admin" ? "관리자 콘솔" : "기관 콘솔"}</span><div className="admin-account"><span className={user?.role === "agency_staff" ? "agency" : ""}>{user?.role === "research_admin" ? "研" : "官"}</span><div><b>{user?.name}</b><small>{user?.role === "research_admin" ? "연구원 관리자" : user?.agency}</small></div><button onClick={logout}>로그아웃</button></div></div>
         <div className="admin-title-row">
           <div><p className="eyebrow">{view === "reports" ? "REPORT OPERATIONS" : view === "accounts" ? "ACCESS & PEOPLE" : "REWARD OPERATIONS"}</p><h1>{view === "reports" ? (user?.role === "research_admin" ? <>전국 보행위험<br />처리 현황</> : <>우리 기관 보행위험<br />처리 현황</>) : view === "accounts" ? <>운영 계정과<br />권한 관리</> : <>온누리상품권<br />신청 관리</>}</h1></div>
         </div>

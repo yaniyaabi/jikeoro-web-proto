@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ResidentAvatar } from "./resident-avatar";
+import { DEFAULT_RESIDENT_AVATAR, type ResidentAvatarConfig } from "../lib/resident-avatar";
 import { sitePath } from "../lib/site-path";
 
 type HeaderSection = "home" | "map" | "my" | "admin";
@@ -67,6 +69,7 @@ export function AccessibilityTools() {
 export function SiteHeader({ active, inner = false }: { active: HeaderSection; inner?: boolean }) {
   const [sessionRole, setSessionRole] = useState<string | null>(null);
   const [sessionName, setSessionName] = useState("김지킴");
+  const [sessionAvatar, setSessionAvatar] = useState<ResidentAvatarConfig>(DEFAULT_RESIDENT_AVATAR);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -75,6 +78,7 @@ export function SiteHeader({ active, inner = false }: { active: HeaderSection; i
       .then((data) => {
         setSessionRole(data.authenticated ? data.user?.role ?? null : null);
         if (data.authenticated && data.user?.name) setSessionName(data.user.name);
+        if (data.authenticated && data.user?.role === "member" && data.user?.avatar) setSessionAvatar(data.user.avatar);
       })
       .catch(() => setSessionRole(null));
   }, []);
@@ -116,7 +120,7 @@ export function SiteHeader({ active, inner = false }: { active: HeaderSection; i
         <AccessibilityTools />
         <a className="header-cta" href={sitePath("/?report=1")}>위험요소 기록하기</a>
         {sessionRole === "member" ? (
-          <a className="account-button" href={sitePath("/my/")} aria-label="내 지켜로 활동 보기"><span>{sessionName.slice(0, 1)}</span><b>{sessionName}</b></a>
+          <a className="account-button" href={sitePath("/my/")} aria-label="내 지켜로 활동 보기"><ResidentAvatar config={sessionAvatar} label={`${sessionName}님의 캐릭터`} /><b>{sessionName}</b></a>
         ) : sessionRole === "research_admin" ? (
           <a className="login-button" href={sitePath("/admin/")}>관리자</a>
         ) : sessionRole === "agency_staff" ? (
@@ -135,7 +139,7 @@ export function SiteHeader({ active, inner = false }: { active: HeaderSection; i
         <a className={active === "home" ? "active" : ""} href={sitePath("/")} onClick={closeMobileMenu}><span>홈</span><b>→</b></a>
         <a className={active === "map" ? "active" : ""} href={sitePath("/map/")} onClick={closeMobileMenu}><span>위험지도</span><b>→</b></a>
         <a className="report" href={sitePath("/?report=1")} onClick={closeMobileMenu}><span>위험요소 기록하기</span><b>＋</b></a>
-        {sessionRole === "member" && <a className={active === "my" ? "active" : ""} href={sitePath("/my/")} onClick={closeMobileMenu}><span>내 기록 · {sessionName}</span><b>→</b></a>}
+        {sessionRole === "member" && <a className={`mobile-member-link${active === "my" ? " active" : ""}`} href={sitePath("/my/")} onClick={closeMobileMenu}><ResidentAvatar config={sessionAvatar} label="" /><span>내 기록 · {sessionName}</span><b>→</b></a>}
         {sessionRole === "research_admin" && <a className={active === "admin" ? "active" : ""} href={sitePath("/admin/")} onClick={closeMobileMenu}><span>관리자 콘솔</span><b>→</b></a>}
         {sessionRole === "agency_staff" && <a className={active === "admin" ? "active" : ""} href={sitePath("/admin/")} onClick={closeMobileMenu}><span>기관 콘솔</span><b>→</b></a>}
         {!sessionRole && <a href={sitePath("/login/")} onClick={closeMobileMenu}><span>로그인 · 회원가입</span><b>→</b></a>}
