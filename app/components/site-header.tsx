@@ -120,7 +120,7 @@ export function SiteHeader({ active, inner = false }: { active: HeaderSection; i
         <AccessibilityTools />
         <a className="header-cta" href={sitePath("/?report=1")}>위험요소 기록하기</a>
         {sessionRole === "member" ? (
-          <a className="account-button" href={sitePath("/my/")} aria-label="내 지켜로 활동 보기"><ResidentAvatar config={sessionAvatar} label={`${sessionName}님의 캐릭터`} /><b>{sessionName}</b></a>
+          <a className="account-button" href={sitePath("/my/")} aria-label="내 지켜로 활동 보기"><b>{sessionName}</b></a>
         ) : sessionRole === "research_admin" ? (
           <a className="login-button" href={sitePath("/admin/")}>관리자</a>
         ) : sessionRole === "agency_staff" ? (
