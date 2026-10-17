@@ -124,8 +124,9 @@ export default function AdminPage() {
     if (user?.role !== "research_admin") return;
     fetch("/api/admin/accounts")
       .then(async (response) => {
-        if (!response.ok) throw new Error("계정 목록을 불러오지 못했어요.");
-        return response.json();
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "계정 목록을 불러오지 못했어요.");
+        return data;
       })
       .then((data) => setAccounts(data.accounts ?? []))
       .catch((error) => setAccountNotice(error instanceof Error ? error.message : "계정 목록을 불러오지 못했어요."));
