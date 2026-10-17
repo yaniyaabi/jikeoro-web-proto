@@ -1,4 +1,4 @@
-import { removeReportFiles, supabase } from "../app/lib/supabase-browser";
+import { removeReportFiles, supabase, SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from "../app/lib/supabase-browser";
 
 const PAGES_PREFIX = "/jikeoro-web-proto";
 const LEGACY_KEY_CLEANUP_MARKER = "jikeoro-pages-legacy-keys-cleaned-v1";
@@ -99,25 +99,22 @@ async function manageStaff(body: Record<string, unknown>) {
   const accessToken = sessionData.session?.access_token;
   if (!accessToken) return { data: { error: "로그인이 필요합니다." }, status: 401 };
 
-  const { data, error } = await supabase.functions.invoke("manage-staff", {
-    body,
-    headers: { Authorization: `Bearer ${accessToken}` },
+  const result = await fetch(`${SUPABASE_URL}/functions/v1/manage-staff`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      apikey: SUPABASE_PUBLISHABLE_KEY,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
   });
-  if (!error) return { data, status: body.action === "create" ? 201 : 200 };
-
-  let message = "운영 계정 관리 요청을 처리하지 못했습니다.";
-  let status = 400;
-  const context = (error as { context?: Response }).context;
-  if (context) {
-    status = context.status || status;
-    try {
-      const payload = await context.json() as { error?: string };
-      if (payload.error) message = payload.error;
-    } catch {
-      // Supabase Functions errors do not always include a JSON response body.
-    }
+  let data: { error?: string } & Record<string, unknown> = {};
+  try {
+    data = await result.json() as typeof data;
+  } catch {
+    data = { error: "운영 계정 관리 요청을 처리하지 못했습니다." };
   }
-  return { data: { error: message }, status };
+  return { data, status: result.status };
 }
 
 async function currentUser(): Promise<SessionUser | null> {

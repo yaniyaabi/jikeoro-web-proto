@@ -25,7 +25,8 @@ test("research administrators can create staff accounts with role-based access",
 
   assert.match(runtime, /\/api\/auth\/admin-login/);
   assert.match(runtime, /\/api\/admin\/accounts/);
-  assert.match(runtime, /supabase\.functions\.invoke\("manage-staff"/);
+  assert.match(runtime, /functions\/v1\/manage-staff/);
+  assert.match(runtime, /Authorization: `Bearer \$\{accessToken\}`/);
   assert.match(adminPage, /계정·권한 관리/);
   assert.match(adminPage, /로그인 이메일/);
   assert.match(adminPage, /초기 비밀번호/);

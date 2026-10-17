@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL ?? "https://opgzkvecdkfqdvbmecja.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "sb_publishable__21K9olI2G4YBCc_YFX82g_yvNPOi6w";
+export const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL ?? "https://opgzkvecdkfqdvbmecja.supabase.co";
+export const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "sb_publishable__21K9olI2G4YBCc_YFX82g_yvNPOi6w";
 const capturedFetch = globalThis.fetch.bind(globalThis);
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
