@@ -94,6 +94,25 @@ function authMessage(message: string) {
   return "로그인 정보를 처리하지 못했어요. 잠시 후 다시 시도해주세요.";
 }
 
+async function manageStaff(body: Record<string, unknown>) {
+  const { data, error } = await supabase.functions.invoke("manage-staff", { body });
+  if (!error) return { data, status: body.action === "create" ? 201 : 200 };
+
+  let message = "운영 계정 관리 요청을 처리하지 못했습니다.";
+  let status = 400;
+  const context = (error as { context?: Response }).context;
+  if (context) {
+    status = context.status || status;
+    try {
+      const payload = await context.json() as { error?: string };
+      if (payload.error) message = payload.error;
+    } catch {
+      // Supabase Functions errors do not always include a JSON response body.
+    }
+  }
+  return { data: { error: message }, status };
+}
+
 async function currentUser(): Promise<SessionUser | null> {
   const { data: sessionData } = await supabase.auth.getSession();
   const authUser = sessionData.session?.user;
@@ -302,23 +321,18 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   }
 
   if (url.pathname === "/api/admin/accounts" && method === "GET") {
-    const user = await currentUser();
-    if (user?.role !== "research_admin") return json({ error: "연구원 관리자만 계정을 확인할 수 있습니다." }, 403);
-    const { data, error } = await supabase.from("profiles").select("id,name,role,agency,created_at").neq("role", "member");
-    if (error) return json({ error: "계정 목록을 불러오지 못했어요." }, 400);
-    return json({ accounts: (data ?? []).map((profile) => ({
-      id: profile.id,
-      name: profile.name,
-      loginId: "Supabase 계정",
-      role: profile.role,
-      agency: profile.agency ?? "",
-      active: true,
-      createdAt: profile.created_at,
-    })) });
+    const result = await manageStaff({ action: "list" });
+    return json(result.data, result.status);
   }
 
-  if (url.pathname.startsWith("/api/admin/accounts")) {
-    return json({ error: "운영 계정 생성과 권한 변경은 Supabase 관리자 화면에서 진행해주세요." }, 501);
+  if (url.pathname === "/api/admin/accounts" && method === "POST") {
+    const result = await manageStaff({ action: "create", ...body });
+    return json(result.data, result.status);
+  }
+
+  if (url.pathname === "/api/admin/accounts" && method === "PATCH") {
+    const result = await manageStaff({ action: "update", ...body });
+    return json(result.data, result.status);
   }
 
   return json({ error: "지원하지 않는 API입니다." }, 404);

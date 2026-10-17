@@ -49,6 +49,16 @@ VITE_SUPABASE_PUBLISHABLE_KEY=YOUR_PUBLISHABLE_KEY
 
 `sb_secret_...` 또는 `service_role` 키는 브라우저 코드나 GitHub 저장소에 넣으면 안 됩니다.
 
+### 운영 계정 관리 함수
+
+운영 콘솔의 계정 생성·권한 변경·사용 중지는 `supabase/functions/manage-staff` Edge Function이 처리합니다. 이 함수는 호출자의 Supabase 세션을 확인하고 `profiles.role = 'research_admin'`인 사용자만 관리자 API를 사용할 수 있게 합니다.
+
+```bash
+supabase functions deploy manage-staff --project-ref YOUR_PROJECT_REF
+```
+
+`SUPABASE_URL`과 `SUPABASE_SERVICE_ROLE_KEY`는 Supabase Edge Function의 기본 비밀 값으로 제공되며, 프런트엔드 환경변수나 저장소에는 추가하지 않습니다.
+
 ## GitHub Desktop으로 올리기
 
 1. GitHub Desktop에서 **File → Add local repository**를 선택합니다.
