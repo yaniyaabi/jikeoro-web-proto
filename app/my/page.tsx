@@ -379,7 +379,6 @@ export default function MyJikeoroPage() {
             <h1>{memberName}님,<br />오늘도 반가워요!</h1>
             <p>나의 기록이 우리 동네를 더 안전하게 바꾸고 있어요.</p>
           </div>
-          <div className="member-character-greeting"><ResidentAvatar config={memberAvatar} label="지켜로 주민 캐릭터" /></div>
           <div className="member-profile">
             <ResidentAvatar config={memberAvatar} label={`${memberName}님의 캐릭터`} />
             <div><strong>{memberName}</strong><small>우리 동네 주민 · 동네지킴이 Lv.{participation.level}</small></div>
