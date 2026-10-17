@@ -842,7 +842,7 @@ html[data-site-contrast="high"] :where(
 /* 모든 주민 계정은 지켜로 기본 캐릭터를 공유합니다. */
 .resident-avatar{display:block;width:100%;height:auto;overflow:visible}
 
-.account-button>.resident-avatar{width:40px;height:40px;border-radius:50%;flex:0 0 auto}
+.account-button>.resident-avatar{width:20px;height:20px;border-radius:50%;flex:0 0 auto}
 .mobile-member-link>.resident-avatar{width:34px;height:34px;border-radius:10px;flex:0 0 auto}.mobile-member-link>span{margin-right:auto}
 
 .member-intro{display:grid;grid-template-columns:minmax(0,1fr) minmax(310px,.62fr);align-items:center;gap:35px}
