@@ -56,18 +56,22 @@ Deno.serve(async (request) => {
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
   const authorization = request.headers.get("Authorization") ?? "";
-  if (!supabaseUrl || !serviceRoleKey) return response({ error: "관리자 함수 설정이 완료되지 않았습니다." }, 500);
+  if (!supabaseUrl || !serviceRoleKey || !anonKey) return response({ error: "관리자 함수 설정이 완료되지 않았습니다." }, 500);
   if (!authorization.startsWith("Bearer ")) return response({ error: "로그인이 필요합니다." }, 401);
 
   const admin = createClient(supabaseUrl, serviceRoleKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
-  const token = authorization.slice("Bearer ".length);
-  const { data: authData, error: authError } = await admin.auth.getUser(token);
+  const caller = createClient(supabaseUrl, anonKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+    global: { headers: { Authorization: authorization } },
+  });
+  const { data: authData, error: authError } = await caller.auth.getUser();
   if (authError || !authData.user) return response({ error: "로그인 세션을 확인하지 못했습니다." }, 401);
 
-  const { data: callerProfile, error: callerError } = await admin
+  const { data: callerProfile, error: callerError } = await caller
     .from("profiles")
     .select("id,role")
     .eq("id", authData.user.id)
