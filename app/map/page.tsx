@@ -129,12 +129,20 @@ async function readReportMedia(reportId: string) {
 }
 
 function ReportThumbnail({ report, onOpen }: { report: MapReport; onOpen: () => void }) {
+  const [attempt, setAttempt] = useState(0);
   const [failedId, setFailedId] = useState<string | null>(null);
+  const retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (retryTimer.current) clearTimeout(retryTimer.current); }, []);
   if (report.mediaCount === 0 || failedId === report.id) return null;
+
+  function retryPreview() {
+    if (attempt >= 2) { setFailedId(report.id); return; }
+    retryTimer.current = setTimeout(() => setAttempt((value) => value + 1), 1000 * (attempt + 1));
+  }
 
   return (
     <button className="map-inline-thumb" type="button" onClick={onOpen} aria-label={`${report.title} 사진 미리보기`}>
-      <img src={publicReportPreviewUrl(report.id)} alt="" loading="lazy" decoding="async" onError={() => setFailedId(report.id)} />
+      <img src={`${publicReportPreviewUrl(report.id)}&retry=${attempt}`} alt="" loading="lazy" decoding="async" onError={retryPreview} />
     </button>
   );
 }
