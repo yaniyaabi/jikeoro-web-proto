@@ -1,0 +1,2 @@
+[functions.map-report-preview]
+verify_jwt = false

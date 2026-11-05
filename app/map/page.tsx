@@ -7,7 +7,7 @@ import { SiteHeader } from "../components/site-header";
 import { SiteFooter } from "../components/site-footer";
 import { sitePath } from "../lib/site-path";
 import { hazardCategories, hazardFilters, hazardPinFiles, normalizeHazardCategory } from "../lib/hazard-categories";
-import { downloadReportMedia } from "../lib/supabase-browser";
+import { downloadReportMedia, downloadPublicReportPreview, publicReportPreviewUrl } from "../lib/supabase-browser";
 
 type MapReport = {
   id: string;
@@ -124,37 +124,17 @@ function geometryBounds(feature: MunicipalityFeature) {
 }
 
 async function readReportMedia(reportId: string) {
-  return downloadReportMedia(reportId) as Promise<StoredReportMedia[]>;
+  const originals = await downloadReportMedia(reportId).catch(() => []);
+  return originals.length ? originals : downloadPublicReportPreview(reportId);
 }
 
 function ReportThumbnail({ report, onOpen }: { report: MapReport; onOpen: () => void }) {
-  const [media, setMedia] = useState<PreviewMedia | null>(null);
-
-  useEffect(() => {
-    let disposed = false;
-    let previewUrl = "";
-    readReportMedia(report.id)
-      .then((items) => {
-        if (disposed) return;
-        const item = items.find((candidate) => candidate.kind === "image" || candidate.kind === "video");
-        if (!item) return;
-        previewUrl = URL.createObjectURL(item.blob);
-        setMedia({ ...item, previewUrl });
-      })
-      .catch(() => undefined);
-    return () => {
-      disposed = true;
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
-    };
-  }, [report.id]);
-
-  if (!media) return null;
+  const [failedId, setFailedId] = useState<string | null>(null);
+  if (report.mediaCount === 0 || failedId === report.id) return null;
 
   return (
-    <button className="map-inline-thumb" type="button" onClick={onOpen} aria-label={`${report.title} 사진 또는 영상 크게 보기`}>
-      {media?.kind === "image" && <img src={media.previewUrl} alt="" />}
-      {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-      {media?.kind === "video" && <video src={media.previewUrl} muted preload="metadata" />}
+    <button className="map-inline-thumb" type="button" onClick={onOpen} aria-label={`${report.title} 사진 미리보기`}>
+      <img src={publicReportPreviewUrl(report.id)} alt="" loading="lazy" decoding="async" onError={() => setFailedId(report.id)} />
     </button>
   );
 }

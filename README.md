@@ -59,6 +59,14 @@ supabase functions deploy manage-staff --project-ref YOUR_PROJECT_REF
 
 `SUPABASE_URL`과 `SUPABASE_SERVICE_ROLE_KEY`는 Supabase Edge Function의 기본 비밀 값으로 제공되며, 프런트엔드 환경변수나 저장소에는 추가하지 않습니다.
 
+## 공개 지도 사진 미리보기
+
+`202611050001_map_photo_previews.sql`을 적용한 뒤 `supabase functions deploy map-report-preview --project-ref YOUR_PROJECT_REF`로 배포합니다. `supabase/config.toml`의 이 함수만 `verify_jwt = false`입니다. 원본 버킷·테이블의 공개 권한은 변경하지 않습니다.
+
+함수는 공개 지도에 올라온 제보의 사진 하나를 최대 280×208 JPEG로 축소하고 EXIF/GPS 메타데이터를 제거합니다. 방문자에게 원본 경로·작성자 정보·영상·음성은 반환하지 않습니다. 원본 한 장은 최대 20MB까지 처리하며, 누락되거나 지원하지 않는 파일은 다음 사진으로 넘어갑니다. 미리보기는 5분 동안 브라우저에 캐시됩니다.
+
+함수 검증: `deno test --config supabase/functions/map-report-preview/deno.json --allow-env --allow-read supabase/functions/map-report-preview/index_test.ts`
+
 ## GitHub Desktop으로 올리기
 
 1. GitHub Desktop에서 **File → Add local repository**를 선택합니다.
