@@ -35,6 +35,7 @@ Deno.test("public preview rejects arbitrary paths and unsupported methods before
   assert((await handler(new Request("https://example.test/?reportId=../../private"))).status === 400, "Invalid ID accepted");
   assert((await handler(new Request(`https://example.test/?reportId=${id}`, { method: "POST" }))).status === 405, "POST accepted");
   assert((await handler(new Request(`https://example.test/?reportId=${id}&view=original`))).status === 400, "Arbitrary original mode accepted");
+  assert((await handler(new Request(`https://example.test/?reportId=${id}&view=detail`))).status === 400, "Removed enlargement mode accepted");
   assert(calls === before, "Invalid input queried private data");
 });
 
@@ -53,16 +54,6 @@ Deno.test("only map reports are eligible, and broken photos do not hide a valid 
     assert(!image.getProfile("exif"), "EXIF metadata exposed");
   });
   assert(bytes.length < photo.length, "Preview was not reduced");
-  const detail = await handler(new Request(`https://example.test/?reportId=${id}&view=detail`));
-  assert(detail.status === 200, "Detail image was not available");
-  const detailBytes = new Uint8Array(await detail.arrayBuffer());
-  ImageMagick.read(detailBytes, (image) => {
-    assert(image.width > 280 && image.width <= 1920 && image.height <= 1920, "Detail reused the thumbnail or exceeded its bounds");
-    assert(!image.getProfile("exif"), "Detail exposed EXIF metadata");
-  });
-  const thumbnailAgain = await handler(new Request(`https://example.test/?reportId=${id}`));
-  const thumbnailBytes = new Uint8Array(await thumbnailAgain.arrayBuffer());
-  assert(thumbnailBytes.length === bytes.length && thumbnailBytes.every((byte, index) => byte === bytes[index]), "Detail polluted the thumbnail cache");
   eligible = false;
   assert((await handler(new Request(`https://example.test/?reportId=${id}`))).status === 404, "Cached deleted report remained accessible");
   globalThis.fetch = realFetch;

@@ -91,15 +91,8 @@ export async function downloadReportMedia(reportId: string): Promise<SupabaseMed
   return results.flatMap((result) => result.status === "fulfilled" ? [result.value] : []);
 }
 
-export function publicReportPreviewUrl(reportId: string, view: "thumbnail" | "detail" = "thumbnail") {
-  return `${SUPABASE_URL}/functions/v1/map-report-preview?reportId=${encodeURIComponent(reportId)}&view=${view}`;
-}
-
-export async function downloadPublicReportPreview(reportId: string, view: "thumbnail" | "detail" = "thumbnail", signal?: AbortSignal): Promise<SupabaseMedia[]> {
-  const response = await capturedFetch(publicReportPreviewUrl(reportId, view), { signal });
-  if (!response.ok) return [];
-  const blob = await response.blob();
-  return [{ id: `${reportId}-preview`, reportId, kind: "image", name: "사진 미리보기", type: blob.type, size: blob.size, blob }];
+export function publicReportPreviewUrl(reportId: string) {
+  return `${SUPABASE_URL}/functions/v1/map-report-preview?reportId=${encodeURIComponent(reportId)}`;
 }
 
 export async function removeReportFiles(reportId: string) {

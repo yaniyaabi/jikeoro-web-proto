@@ -63,7 +63,7 @@ supabase functions deploy manage-staff --project-ref YOUR_PROJECT_REF
 
 `202611050001_map_photo_previews.sql`을 적용한 뒤 `supabase functions deploy map-report-preview --project-ref YOUR_PROJECT_REF`로 배포합니다. `supabase/config.toml`의 이 함수만 `verify_jwt = false`입니다. 원본 버킷·테이블의 공개 권한은 변경하지 않습니다.
 
-함수는 공개 지도에 올라온 제보의 사진 하나를 목록용 최대 280×208 JPEG와 확대용 긴 변 최대 1,920픽셀 JPEG로 따로 만듭니다. 확대용 사진은 클릭해 창을 열 때만 요청하며 원본보다 키우지 않습니다. 두 크기는 캐시도 분리하고 EXIF/GPS 메타데이터를 제거합니다. 방문자에게 원본 경로·작성자 정보·영상·음성은 반환하지 않습니다. 원본 한 장은 최대 20MB까지 처리하며, 누락되거나 지원하지 않는 파일은 다음 사진으로 넘어갑니다. 미리보기는 5분 동안 브라우저에 캐시됩니다.
+함수는 공개 지도에 올라온 제보의 사진 하나를 목록용 최대 280×208 JPEG로 축소하고 EXIF/GPS 메타데이터를 제거합니다. 지도에는 작은 사진만 표시하며 클릭 확대 기능과 고해상도 공개 경로는 제공하지 않습니다. 방문자에게 원본 경로·작성자 정보·영상·음성은 반환하지 않습니다. 원본 한 장은 최대 20MB까지 처리하며, 누락되거나 지원하지 않는 파일은 다음 사진으로 넘어갑니다. 미리보기는 5분 동안 브라우저에 캐시됩니다.
 
 함수 검증: `deno test --config supabase/functions/map-report-preview/deno.json --allow-env --allow-read supabase/functions/map-report-preview/index_test.ts`
 

@@ -7,7 +7,7 @@ import { SiteHeader } from "../components/site-header";
 import { SiteFooter } from "../components/site-footer";
 import { sitePath } from "../lib/site-path";
 import { hazardCategories, hazardFilters, hazardPinFiles, normalizeHazardCategory } from "../lib/hazard-categories";
-import { downloadReportMedia, downloadPublicReportPreview, publicReportPreviewUrl } from "../lib/supabase-browser";
+import { publicReportPreviewUrl } from "../lib/supabase-browser";
 
 type MapReport = {
   id: string;
@@ -24,16 +24,6 @@ type MapReport = {
   mediaCount?: number;
 };
 
-type StoredReportMedia = {
-  id: string;
-  reportId: string;
-  kind: "image" | "video" | "audio";
-  name: string;
-  type: string;
-  blob: Blob;
-};
-
-type PreviewMedia = StoredReportMedia & { previewUrl: string };
 type LikeEntry = { count: number; liked: boolean };
 type LikeStore = Record<string, LikeEntry>;
 type ProjectedBoundary = { width: number; height: number; selectedPath: string };
@@ -123,21 +113,7 @@ function geometryBounds(feature: MunicipalityFeature) {
   );
 }
 
-async function readReportMedia(reportId: string, signal: AbortSignal) {
-  const originals = await downloadReportMedia(reportId).catch(() => []);
-  if (originals.length) return originals;
-  for (let attempt = 0; attempt < 3; attempt++) {
-    signal.throwIfAborted();
-    const photos = await downloadPublicReportPreview(reportId, "detail", signal).catch((error) => {
-      if (signal.aborted) throw error;
-      return [];
-    });
-    if (photos.length) return photos;
-  }
-  throw new Error("사진을 불러오지 못했어요. 잠시 후 다시 눌러주세요.");
-}
-
-function ReportThumbnail({ report, onOpen }: { report: MapReport; onOpen: () => void }) {
+function ReportThumbnail({ report }: { report: MapReport }) {
   const [attempt, setAttempt] = useState(0);
   const [failedId, setFailedId] = useState<string | null>(null);
   const retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -150,9 +126,9 @@ function ReportThumbnail({ report, onOpen }: { report: MapReport; onOpen: () => 
   }
 
   return (
-    <button className="map-inline-thumb" type="button" onClick={onOpen} aria-label={`${report.title} 사진 미리보기`}>
-      <img src={`${publicReportPreviewUrl(report.id)}&retry=${attempt}`} alt="" loading="lazy" decoding="async" onError={retryPreview} />
-    </button>
+    <span className="map-inline-thumb">
+      <img src={`${publicReportPreviewUrl(report.id)}&retry=${attempt}`} alt={`${report.title} 사진 미리보기`} loading="lazy" decoding="async" onError={retryPreview} />
+    </span>
   );
 }
 
@@ -187,10 +163,6 @@ export default function RiskMapPage() {
   const [municipality, setMunicipality] = useState("");
   const [appliedMunicipality, setAppliedMunicipality] = useState("");
   const [projectedBoundary, setProjectedBoundary] = useState<ProjectedBoundary | null>(null);
-  const [selectedMedia, setSelectedMedia] = useState<PreviewMedia[]>([]);
-  const [selectedMediaIndex, setSelectedMediaIndex] = useState(0);
-  const [mediaLoading, setMediaLoading] = useState(false);
-  const [mediaError, setMediaError] = useState("");
   const [likes, setLikes] = useState<LikeStore>(() => {
     if (typeof window === "undefined") return {};
     try {
@@ -199,7 +171,6 @@ export default function RiskMapPage() {
       return {};
     }
   });
-  const [detailOpen, setDetailOpen] = useState(false);
 
   useEffect(() => {
     fetch("/api/map/reports")
@@ -258,35 +229,6 @@ export default function RiskMapPage() {
     [categoryFilteredReports, selectedBoundary],
   );
   const selected = filteredReports.find((report) => report.id === selectedId) ?? filteredReports[0] ?? null;
-
-  useEffect(() => {
-    if (!detailOpen || !selected?.id) return;
-    let disposed = false;
-    const controller = new AbortController();
-    let previewUrls: string[] = [];
-    Promise.resolve().then(async () => {
-      if (disposed) return;
-      setMediaLoading(true);
-      setMediaError("");
-      setSelectedMedia([]);
-      setSelectedMediaIndex(0);
-      const items = await readReportMedia(selected.id, controller.signal).catch(() => {
-        if (!disposed) setMediaError("사진을 불러오지 못했어요. 잠시 후 다시 눌러주세요.");
-        return [];
-      });
-      if (!disposed) {
-        const previews = items.map((item) => ({ ...item, previewUrl: URL.createObjectURL(item.blob) }));
-        previewUrls = previews.map((item) => item.previewUrl);
-        setSelectedMedia(previews);
-      }
-      if (!disposed) setMediaLoading(false);
-    });
-    return () => {
-      disposed = true;
-      controller.abort();
-      previewUrls.forEach((url) => URL.revokeObjectURL(url));
-    };
-  }, [detailOpen, selected?.id]);
 
   useEffect(() => {
     if (!mapElementRef.current || mapRef.current) return;
@@ -486,15 +428,6 @@ export default function RiskMapPage() {
     mapRef.current?.flyTo({ center: [report.longitude, report.latitude], zoom: 16.8, duration: 850, essential: true });
   };
 
-  const openReportMedia = (report: MapReport) => {
-    setSelectedMedia([]);
-    setSelectedMediaIndex(0);
-    setMediaLoading(true);
-    setMediaError("");
-    setSelectedId(report.id);
-    setDetailOpen(true);
-  };
-
   const toggleLike = (reportId: string) => {
     setLikes((current) => {
       const entry = current[reportId] ?? { count: 0, liked: false };
@@ -522,8 +455,6 @@ export default function RiskMapPage() {
   };
 
   const todayCount = reports.filter((report) => new Date(report.createdAt).toDateString() === new Date().toDateString()).length;
-  const visualMedia = selectedMedia.filter((item) => item.kind === "image" || item.kind === "video");
-  const activeMedia = visualMedia[selectedMediaIndex] ?? visualMedia[0] ?? null;
   const provinceChartMode = !selectedBoundary && mapZoom < PROVINCE_CHART_MAX_ZOOM;
 
   return (
@@ -631,7 +562,7 @@ export default function RiskMapPage() {
                     </span>
                   </button>
                   <div className="map-inline-actions">
-                    <ReportThumbnail report={report} onOpen={() => openReportMedia(report)} />
+                    <ReportThumbnail report={report} />
                     <button className={`map-inline-like${reportLike.liked ? " liked" : ""}`} type="button" onClick={() => toggleLike(report.id)} aria-pressed={reportLike.liked}><span aria-hidden="true">{reportLike.liked ? "♥" : "♡"}</span><b>{reportLike.count}</b></button>
                   </div>
                 </article>
@@ -641,21 +572,6 @@ export default function RiskMapPage() {
         </aside>
       </section>
 
-      {detailOpen && selected && (
-        <div className="map-detail-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setDetailOpen(false); }}>
-          <section className="map-detail-modal media-only" role="dialog" aria-modal="true" aria-label={`${selected.title} 첨부 자료 크게 보기`}>
-            <button className="map-detail-close" type="button" onClick={() => setDetailOpen(false)} aria-label="상세 내용 닫기">×</button>
-            <div className="map-detail-media" aria-label="선택한 기록의 첨부 자료">
-              {mediaLoading && <p className="map-media-empty">첨부 자료를 불러오는 중이에요.</p>}
-              {!mediaLoading && mediaError && <p className="map-media-empty" role="alert">{mediaError}</p>}
-              {!mediaLoading && activeMedia?.kind === "image" && <img src={activeMedia.previewUrl} alt={`${selected.title} 현장 사진`} />}
-              {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-              {!mediaLoading && activeMedia?.kind === "video" && <video src={activeMedia.previewUrl} controls preload="metadata" aria-label={`${selected.title} 현장 영상`} />}
-              {visualMedia.length > 1 && <div className="map-media-thumbnails">{visualMedia.map((item, index) => <button key={item.id} type="button" className={selectedMediaIndex === index ? "active" : ""} onClick={() => setSelectedMediaIndex(index)}>{item.kind === "image" ? "사진" : "영상"} {index + 1}</button>)}</div>}
-            </div>
-          </section>
-        </div>
-      )}
     </main>
     <SiteFooter />
     </>
