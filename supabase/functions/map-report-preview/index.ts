@@ -13,7 +13,7 @@ const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE
 let ready: Promise<void> | undefined;
 const previews = new Map<string, Uint8Array>();
 
-async function resize(bytes: Uint8Array): Promise<Uint8Array> {
+async function resize(bytes: Uint8Array, detail: boolean): Promise<Uint8Array> {
   ready ??= (async () => {
     const wasm = await Deno.readFile(new URL(import.meta.resolve("npm:@imagemagick/magick-wasm@0.0.46/magick.wasm")));
     await initializeImageMagick(wasm);
@@ -21,10 +21,10 @@ async function resize(bytes: Uint8Array): Promise<Uint8Array> {
   await ready;
   return ImageMagick.read(bytes, (image) => {
     image.autoOrient();
-    const scale = Math.min(1, 280 / image.width, 208 / image.height);
+    const scale = Math.min(1, (detail ? 1920 : 280) / image.width, (detail ? 1920 : 208) / image.height);
     image.resize(Math.max(1, Math.round(image.width * scale)), Math.max(1, Math.round(image.height * scale)));
     image.strip(); // Includes EXIF/GPS metadata.
-    image.quality = 75;
+    image.quality = detail ? 88 : 75;
     return image.write(MagickFormat.Jpeg, (data) => Uint8Array.from(data));
   });
 }
@@ -36,7 +36,10 @@ function empty(status = 404) {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: cors });
   if (req.method !== "GET") return empty(405);
-  const reportId = new URL(req.url).searchParams.get("reportId") ?? "";
+  const params = new URL(req.url).searchParams;
+  const reportId = params.get("reportId") ?? "";
+  const view = params.get("view") ?? "thumbnail";
+  if (view !== "thumbnail" && view !== "detail") return empty(400);
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(reportId)) return empty(400);
 
   try {
@@ -46,14 +49,15 @@ Deno.serve(async (req) => {
     for (const item of media ?? []) {
       // Bound downloads; a missing/unsupported attachment must not hide the next photo.
       if (item.size_bytes > 20 * 1024 * 1024) continue;
-      let preview = previews.get(item.id);
+      const cacheKey = `${item.id}:${view}`;
+      let preview = previews.get(cacheKey);
       if (!preview) {
         try {
           const { data: blob, error: downloadError } = await admin.storage.from("report-media").download(item.storage_path);
           if (downloadError || !blob || blob.size > 20 * 1024 * 1024) continue;
-          preview = await resize(new Uint8Array(await blob.arrayBuffer()));
+          preview = await resize(new Uint8Array(await blob.arrayBuffer()), view === "detail");
           if (previews.size >= 32) previews.delete(previews.keys().next().value!);
-          previews.set(item.id, preview);
+          previews.set(cacheKey, preview);
         } catch (error) {
           console.warn("Map preview could not be generated:", error instanceof Error ? error.message : "unknown error");
           continue;

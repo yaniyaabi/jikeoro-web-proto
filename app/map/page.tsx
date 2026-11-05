@@ -123,9 +123,18 @@ function geometryBounds(feature: MunicipalityFeature) {
   );
 }
 
-async function readReportMedia(reportId: string) {
+async function readReportMedia(reportId: string, signal: AbortSignal) {
   const originals = await downloadReportMedia(reportId).catch(() => []);
-  return originals.length ? originals : downloadPublicReportPreview(reportId);
+  if (originals.length) return originals;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    signal.throwIfAborted();
+    const photos = await downloadPublicReportPreview(reportId, "detail", signal).catch((error) => {
+      if (signal.aborted) throw error;
+      return [];
+    });
+    if (photos.length) return photos;
+  }
+  throw new Error("사진을 불러오지 못했어요. 잠시 후 다시 눌러주세요.");
 }
 
 function ReportThumbnail({ report, onOpen }: { report: MapReport; onOpen: () => void }) {
@@ -181,6 +190,7 @@ export default function RiskMapPage() {
   const [selectedMedia, setSelectedMedia] = useState<PreviewMedia[]>([]);
   const [selectedMediaIndex, setSelectedMediaIndex] = useState(0);
   const [mediaLoading, setMediaLoading] = useState(false);
+  const [mediaError, setMediaError] = useState("");
   const [likes, setLikes] = useState<LikeStore>(() => {
     if (typeof window === "undefined") return {};
     try {
@@ -250,15 +260,20 @@ export default function RiskMapPage() {
   const selected = filteredReports.find((report) => report.id === selectedId) ?? filteredReports[0] ?? null;
 
   useEffect(() => {
-    if (!selected?.id) return;
+    if (!detailOpen || !selected?.id) return;
     let disposed = false;
+    const controller = new AbortController();
     let previewUrls: string[] = [];
     Promise.resolve().then(async () => {
       if (disposed) return;
       setMediaLoading(true);
+      setMediaError("");
       setSelectedMedia([]);
       setSelectedMediaIndex(0);
-      const items = await readReportMedia(selected.id).catch(() => []);
+      const items = await readReportMedia(selected.id, controller.signal).catch(() => {
+        if (!disposed) setMediaError("사진을 불러오지 못했어요. 잠시 후 다시 눌러주세요.");
+        return [];
+      });
       if (!disposed) {
         const previews = items.map((item) => ({ ...item, previewUrl: URL.createObjectURL(item.blob) }));
         previewUrls = previews.map((item) => item.previewUrl);
@@ -268,9 +283,10 @@ export default function RiskMapPage() {
     });
     return () => {
       disposed = true;
+      controller.abort();
       previewUrls.forEach((url) => URL.revokeObjectURL(url));
     };
-  }, [selected?.id]);
+  }, [detailOpen, selected?.id]);
 
   useEffect(() => {
     if (!mapElementRef.current || mapRef.current) return;
@@ -471,12 +487,11 @@ export default function RiskMapPage() {
   };
 
   const openReportMedia = (report: MapReport) => {
-    if (selectedId !== report.id) {
-      setSelectedMedia([]);
-      setSelectedMediaIndex(0);
-      setMediaLoading(true);
-      setSelectedId(report.id);
-    }
+    setSelectedMedia([]);
+    setSelectedMediaIndex(0);
+    setMediaLoading(true);
+    setMediaError("");
+    setSelectedId(report.id);
     setDetailOpen(true);
   };
 
@@ -626,12 +641,13 @@ export default function RiskMapPage() {
         </aside>
       </section>
 
-      {detailOpen && selected && (mediaLoading || activeMedia) && (
+      {detailOpen && selected && (
         <div className="map-detail-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setDetailOpen(false); }}>
           <section className="map-detail-modal media-only" role="dialog" aria-modal="true" aria-label={`${selected.title} 첨부 자료 크게 보기`}>
             <button className="map-detail-close" type="button" onClick={() => setDetailOpen(false)} aria-label="상세 내용 닫기">×</button>
             <div className="map-detail-media" aria-label="선택한 기록의 첨부 자료">
               {mediaLoading && <p className="map-media-empty">첨부 자료를 불러오는 중이에요.</p>}
+              {!mediaLoading && mediaError && <p className="map-media-empty" role="alert">{mediaError}</p>}
               {!mediaLoading && activeMedia?.kind === "image" && <img src={activeMedia.previewUrl} alt={`${selected.title} 현장 사진`} />}
               {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
               {!mediaLoading && activeMedia?.kind === "video" && <video src={activeMedia.previewUrl} controls preload="metadata" aria-label={`${selected.title} 현장 영상`} />}
