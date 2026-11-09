@@ -72,7 +72,7 @@ test("all resident screens reuse the fixed Jikeoro mascot without an avatar pick
   assert.match(myPage, /member-profile[\s\S]*ResidentAvatar/);
   assert.doesNotMatch(myPage, /안녕하세요!/);
   assert.match(siteHeader, /ResidentAvatar config=\{sessionAvatar\}/);
-  assert.match(avatarComponent, /jikeoro-brand-v6\.png/);
+  assert.match(avatarComponent, /jikeoro-logo-3d-v8\.png/);
   assert.match(migration, /add column if not exists avatar jsonb/);
   assert.match(migration, /new\.raw_user_meta_data -> 'avatar'/);
 });

@@ -11,6 +11,6 @@ export function ResidentAvatar({
   label?: string;
 }) {
   return (
-    <img className="resident-avatar" src={sitePath("/jikeoro-brand-v6.png")} alt={label} />
+    <img className="resident-avatar" src={sitePath("/jikeoro-logo-3d-v8.png")} alt={label} />
   );
 }
