@@ -871,16 +871,17 @@ html[data-site-contrast="high"] :where(
 html[data-site-contrast="high"] :where(.leaflet-hazard-marker,.naver-risk-marker,.map-pin) {
   border-color:var(--ink);
 }
-html[data-site-contrast="high"] :where(.marker-yellow,.index-yellow) {
-  background:#795400!important;
+/* MapLibre pins use transparent images. Apply these fills only to solid markers and badges. */
+html[data-site-contrast="high"] :where(.marker-yellow:not(.free-risk-marker),.index-yellow) {
+  background-color:#795400!important;
   color:#fff!important;
 }
-html[data-site-contrast="high"] :where(.marker-mint,.index-mint) {
-  background:#176a3b!important;
+html[data-site-contrast="high"] :where(.marker-mint:not(.free-risk-marker),.index-mint) {
+  background-color:#176a3b!important;
   color:#fff!important;
 }
-html[data-site-contrast="high"] :where(.marker-plum,.index-plum) {
-  background:#604872!important;
+html[data-site-contrast="high"] :where(.marker-plum:not(.free-risk-marker),.index-plum) {
+  background-color:#604872!important;
   color:#fff!important;
 }
 
