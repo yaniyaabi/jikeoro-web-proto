@@ -359,6 +359,7 @@ export default function RiskMapPage() {
       element.setAttribute("aria-label", `${safeType} 위험요소`);
       element.addEventListener("click", () => {
         setSelectedId(report.id);
+        document.getElementById(`map-report-${report.id}`)?.scrollIntoView({ block: "nearest", inline: "nearest" });
         map.flyTo({ center: [report.longitude, report.latitude], zoom: 16.8, duration: 850, essential: true });
       });
       const marker = new maplibregl.Marker({ element, anchor: "bottom" })
@@ -550,7 +551,7 @@ export default function RiskMapPage() {
             {filteredReports.map((report, index) => {
               const reportLike = likes[report.id] ?? { count: 0, liked: false };
               return (
-                <article key={report.id} className={`risk-report-item${selected?.id === report.id ? " selected" : ""}`}>
+                <article id={`map-report-${report.id}`} key={report.id} className={`risk-report-item${selected?.id === report.id ? " selected" : ""}`}>
                   <button className="risk-report-select" type="button" onClick={() => selectReport(report)}>
                     <span className={`report-index index-${toneByType[report.type] ?? "navy"}`}>{index + 1}</span>
                     <span className="report-list-copy">
