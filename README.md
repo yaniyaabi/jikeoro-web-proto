@@ -1,90 +1,25 @@
-# 지켜路 — 우리 동네 보행안전 지도
+# 지켜로 로컬 서버 연결 버전
 
-전국의 주민이 보행 중 발견한 우리 동네 위험요소를 위치정보와 함께 기록하고, 연구진과 담당 기관이 대응 현황을 이어갈 수 있도록 만든 1차년도 웹 프로토타입입니다.
+회원·제보·첨부파일·처리 상태는 연구실 Node.js/PostgreSQL/NAS 서버를 사용합니다. 실행 코드에는 Supabase SDK, 프로젝트 URL, 원격 Edge Function 호출이 없습니다.
 
-## 현재 구현 범위
+- Node.js 24 이상에서 `npm ci`, `npm test`, `npm run build`를 실행합니다.
+- 로컬 API: `http://127.0.0.1:3001`. 개발 서버는 127.0.0.1에만 바인딩하며 `/api` 요청을 로컬 API로 전달합니다.
+- `VITE_API_BASE_URL`을 비워 두면 현재 화면과 같은 서버의 `/api`를 사용합니다.
+- 서버에 배포할 기본 경로는 `/web/`입니다. GitHub Pages 배포에서는 워크플로가 기존 저장소 경로를 설정합니다.
+- GitHub Pages를 전환하려면 Actions 변수 `JIKEORO_API_BASE_URL`에 공개 HTTPS 연구실 서버 주소를 설정합니다. 설정 없이 새 화면을 게시하지 않습니다.
+- 서버 설치·DB/NAS·계정·권한·알림 안내는 [server/README.md](server/README.md)를 참고합니다.
+- 이전 클라우드의 회원·제보·파일은 설치만으로 이전되지 않습니다. 기존 자료를 보존하고 이전을 확인한 뒤 외부 접속 주소와 공개 앱·홈페이지를 전환합니다.
+- 실행 의존성 감사에서는 발견된 취약점이 없습니다. 빌드 전용 picomatch ReDoS 경고에는 아직 수정판이 없어 신뢰한 소스의 루프백 개발/빌드에만 사용합니다. 빌드 도구는 연구실 배포 ZIP에 포함하지 않습니다.
 
-- PC·모바일 반응형 메인 화면
-- 로그인 사용자 제보와 GPS 또는 직접 위치 입력
-- 로그인 후 참여 미션, 내 기록과 대응 단계 확인
-- 10,000P부터 온누리상품권 등 지역상품권 교환을 안내하는 리워드 프로토타입
-- 연구진·담당 기관용 관리자 화면
-- GPS가 포함된 기록만 모아 보는 별도 무료 현황지도
-- 앱과 공유하는 Supabase 기반 사용자·제보·처리상태·첨부파일 저장
+서버 권한·업로드·알림 검증은 서버의 `npm test`로 별도로 실행합니다. 기존 클라우드 함수 테스트는 로컬 API 통합 테스트로 대체되었습니다.
 
-사진·영상·음성 파일은 비공개 Supabase Storage에 저장되며, 제보 작성자와 운영진만 원본 파일을 조회할 수 있습니다.
+## 웹·앱 함께 전환
 
-## VS Code에서 실행하기
+두 저장소의 변경을 함께 검증하고 배포해야 합니다. 현재 공개 페이지는 이 변경을 main에 반영하기 전까지 이전 서버를 사용합니다.
 
-Node.js 22 이상이 필요합니다.
+1. 연구실 서버·Docker·Cloudflare Tunnel을 켜 둡니다. 현재 터널 주소를 두 저장소의 Actions 변수 `JIKEORO_API_BASE_URL`에 동일하게 저장합니다.
+2. 웹·앱 PR의 검사 결과를 모두 확인한 뒤 같은 전환 시간에 반영합니다. 배포 전 서버·DB·NAS와 GitHub Pages의 업로드 허용 설정을 자동 확인합니다.
+3. 두 Pages 배포가 모두 끝난 뒤 웹과 설치 앱을 다시 엽니다. 이전 로그인은 새 서버에서 다시 로그인해야 합니다. 기존 가입 정보와 이전한 제보·사진을 확인하고, 새 제보가 두 화면에 함께 보이는지 확인합니다.
+4. 알림은 로그인한 기기에서 새 서버에 다시 등록해야 합니다. 기존 Supabase 알림 작업은 실제 전환 시 별도로 중지해야 하며, 이 코드 변경만으로 기존 서버 작업이나 데이터가 삭제되지는 않습니다.
 
-1. ZIP 파일을 압축 해제합니다.
-2. VS Code에서 압축을 푼 `jikeoro-web` 폴더를 엽니다.
-3. VS Code 터미널에서 아래 명령을 실행합니다.
-
-```bash
-npm install
-npm run dev
-```
-
-터미널에 표시된 로컬 주소를 브라우저에서 열면 됩니다. 기본 포트가 사용 중이면 3001, 3002처럼 사용 가능한 주소가 자동으로 표시됩니다.
-
-주요 파일:
-
-- `app/page.tsx`: 첫 화면
-- `app/map/page.tsx`: GPS 위험요소 현황지도
-- `app/my/page.tsx`: 로그인 사용자 화면
-- `app/admin/page.tsx`: 관리자 화면
-- `app/globals.css`: 전체 디자인과 반응형 스타일
-- `supabase/migrations/202610160001_initial_jikeoro.sql`: Supabase 데이터베이스·권한·저장소 구조
-
-## Supabase 연결
-
-기본 프로젝트 설정은 코드에 포함되어 있어 GitHub Pages에서도 바로 연결됩니다. 다른 Supabase 프로젝트를 사용할 때는 `.env.example`을 참고해 아래 값을 설정합니다.
-
-```bash
-VITE_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
-VITE_SUPABASE_PUBLISHABLE_KEY=YOUR_PUBLISHABLE_KEY
-```
-
-`sb_secret_...` 또는 `service_role` 키는 브라우저 코드나 GitHub 저장소에 넣으면 안 됩니다.
-
-### 운영 계정 관리 함수
-
-운영 콘솔의 계정 생성·권한 변경·사용 중지는 `supabase/functions/manage-staff` Edge Function이 처리합니다. 이 함수는 호출자의 Supabase 세션을 확인하고 `profiles.role = 'research_admin'`인 사용자만 관리자 API를 사용할 수 있게 합니다.
-
-```bash
-supabase functions deploy manage-staff --project-ref YOUR_PROJECT_REF
-```
-
-`SUPABASE_URL`과 `SUPABASE_SERVICE_ROLE_KEY`는 Supabase Edge Function의 기본 비밀 값으로 제공되며, 프런트엔드 환경변수나 저장소에는 추가하지 않습니다.
-
-## 공개 지도 사진 미리보기
-
-`202611050001_map_photo_previews.sql`을 적용한 뒤 `supabase functions deploy map-report-preview --project-ref YOUR_PROJECT_REF`로 배포합니다. `supabase/config.toml`의 이 함수만 `verify_jwt = false`입니다. 원본 버킷·테이블의 공개 권한은 변경하지 않습니다.
-
-함수는 공개 지도에 올라온 제보의 사진 하나를 목록용 최대 280×208 JPEG로 축소하고 EXIF/GPS 메타데이터를 제거합니다. 지도에는 작은 사진만 표시하며 클릭 확대 기능과 고해상도 공개 경로는 제공하지 않습니다. 방문자에게 원본 경로·작성자 정보·영상·음성은 반환하지 않습니다. 원본 한 장은 최대 20MB까지 처리하며, 누락되거나 지원하지 않는 파일은 다음 사진으로 넘어갑니다. 미리보기는 5분 동안 브라우저에 캐시됩니다.
-
-함수 검증: `deno test --config supabase/functions/map-report-preview/deno.json --allow-env --allow-read supabase/functions/map-report-preview/index_test.ts`
-
-## GitHub Desktop으로 올리기
-
-1. GitHub Desktop에서 **File → Add local repository**를 선택합니다.
-2. 압축을 푼 `jikeoro-web` 폴더를 선택합니다.
-3. 저장소가 없다는 안내가 나오면 **create a repository**를 선택합니다.
-4. 저장소 이름을 확인하고 **Create repository**를 누릅니다.
-5. 첫 커밋을 만든 뒤 **Publish repository**로 GitHub에 올립니다.
-
-`node_modules`, 빌드 결과, 로컬 데이터와 환경변수는 `.gitignore`에 포함되어 GitHub에 올라가지 않습니다.
-
-## 확인 명령
-
-```bash
-npm run build
-```
-
-## 다음 개발 단계
-
-- 상품권 제휴 정책과 교환 API 연결
-- 전국 단위 주민참여 연구용 개인정보·위치정보 동의 절차 반영
-- 관리자 통계와 연구 데이터 내보내기
+Quick Tunnel을 다시 실행하면 서버 주소가 바뀔 수 있습니다. 그때는 서버 공개 주소 설정과 두 저장소의 Actions 변수를 새 주소로 맞추고 두 페이지를 다시 배포합니다. 이용자가 여는 github.io 주소는 유지됩니다.

@@ -1,0 +1,9 @@
+node_modules/
+*.env
+first-admin.txt
+push-keys.json
+storage.json
+*.dump
+*.backup
+data/
+public/

@@ -7,8 +7,8 @@ import { ResidentAvatar } from "../components/resident-avatar";
 import { sitePath } from "../lib/site-path";
 import { DEFAULT_RESIDENT_AVATAR, type ResidentAvatarConfig } from "../lib/resident-avatar";
 import { hazardDetails, normalizeHazardCategory } from "../lib/hazard-categories";
-import { REWARD_EXCHANGE_MINIMUM, readRewardRequests, RewardRequest, writeRewardRequests } from "../lib/reward-requests";
-import { downloadReportMedia } from "../lib/supabase-browser";
+import { REWARD_EXCHANGE_MINIMUM, createRewardRequest, refreshRewardRequests, RewardRequest } from "../lib/reward-requests";
+import { downloadReportMedia } from "../lib/media-client";
 
 type ReportStatus = "received" | "review" | "action" | "completed";
 type ActivityFilter = "all" | "active" | "completed";
@@ -164,6 +164,7 @@ export default function MyJikeoroPage() {
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
   const [rewardFormOpen, setRewardFormOpen] = useState(false);
+  const [rewardSubmitting, setRewardSubmitting] = useState(false);
   const [rewardPhone, setRewardPhone] = useState("");
   const [rewardFormError, setRewardFormError] = useState("");
   const [rewardRequests, setRewardRequests] = useState<RewardRequest[]>([]);
@@ -252,11 +253,14 @@ export default function MyJikeoroPage() {
   }, []);
 
   useEffect(() => {
-    const refresh = () => setRewardRequests(readRewardRequests());
+    if (!authReady) { setRewardRequests([]); return; }
+    let active=true;
+    const refresh=()=>{ void refreshRewardRequests().then(items=>{if(active)setRewardRequests(items);}).catch(()=>{if(active)setRewardRequests([]);}); };
     refresh();
-    window.addEventListener("storage", refresh);
-    return () => window.removeEventListener("storage", refresh);
-  }, []);
+    const timer=window.setInterval(refresh,30000);
+    window.addEventListener('jikeoro-session-change',refresh);
+    return ()=>{active=false;window.clearInterval(timer);window.removeEventListener('jikeoro-session-change',refresh);};
+  }, [authReady, memberId]);
 
   useEffect(() => {
     if (!selectedReport) return;
@@ -309,36 +313,21 @@ export default function MyJikeoroPage() {
     setRewardFormOpen(true);
   };
 
-  const submitRewardForm = (event: FormEvent<HTMLFormElement>) => {
+  const submitRewardForm = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const normalizedPhone = rewardPhone.replace(/\D/g, "");
-    if (normalizedPhone.length < 10 || normalizedPhone.length > 11) {
-      setRewardFormError("휴대전화 번호를 정확히 입력해주세요.");
-      return;
-    }
-    if (participation.points - myRewardRequests.length * REWARD_EXCHANGE_MINIMUM < REWARD_EXCHANGE_MINIMUM) {
-      setRewardFormError("교환 가능한 마일리지를 다시 확인해주세요.");
-      return;
-    }
-    const nextRequest: RewardRequest = {
-      id: `reward-${crypto.randomUUID()}`,
-      applicantId: memberId,
-      name: memberName,
-      email: memberEmail,
-      phone: normalizedPhone,
-      points: participation.points,
-      exchangePoints: REWARD_EXCHANGE_MINIMUM,
-      source: "web",
-      status: "pending",
-      requestedAt: new Date().toISOString(),
-      sentAt: null,
-    };
-    const nextRequests = [nextRequest, ...readRewardRequests()];
-    writeRewardRequests(nextRequests);
-    setRewardRequests(nextRequests);
-    window.localStorage.setItem("jikeoro-reward-phone", rewardPhone.trim());
-    setRewardRequestNotice("상품권 교환 신청이 접수됐어요. 담당자가 확인 후 휴대전화로 발송합니다.");
-    setRewardFormOpen(false);
+    if (rewardSubmitting) return;
+    const phone=rewardPhone.replace(/\D/g,'');
+    if(phone.length<10 || phone.length>11) {setRewardFormError('휴대전화 번호를 확인해주세요.');return;}
+    setRewardSubmitting(true);
+    setRewardFormError('');
+    try {
+      setRewardRequests(await createRewardRequest(phone,'web'));
+      window.localStorage.setItem('jikeoro-reward-phone',rewardPhone.trim());
+      setRewardRequestNotice('상품권 교환 신청이 접수됐어요. 담당자가 확인 후 휴대전화로 발송합니다.');
+      setRewardFormOpen(false);
+    } catch(error) {
+      setRewardFormError(error instanceof Error?error.message:'교환 신청을 처리하지 못했습니다.');
+    } finally {setRewardSubmitting(false);}
   };
 
   const deleteSelectedReport = async () => {

@@ -7,7 +7,8 @@ import { SiteFooter } from "./components/site-footer";
 import { HazardIllustration } from "./components/hazard-illustration";
 import { sitePath } from "./lib/site-path";
 import { hazardCategories, hazardDetails, hazardFilters, hazardIconFiles, hazardPinFiles, type HazardCategory } from "./lib/hazard-categories";
-import { uploadReportMedia } from "./lib/supabase-browser";
+import { apiFetch, apiJson, jsonBody, uploadMedia } from "./lib/api-client";
+import { createSubmissionState, submitWithAttachments } from "./lib/report-submission";
 
 type Hazard = {
   id: number;
@@ -128,9 +129,6 @@ function describeWeather(code: number) {
   return { icon: "◌", label: "날씨" };
 }
 
-async function storeReportMedia(reportId: string, attachments: MediaAttachment[]) {
-  await uploadReportMedia(reportId, attachments);
-}
 
 function NeighborhoodIllustrationMap({ items, selectedId, onSelect }: { items: Hazard[]; selectedId?: number; onSelect?: (id: number) => void }) {
   return (
@@ -221,7 +219,7 @@ function LocationPickerMap({ point, onChange, editable, confirmed }: {
           zoom: 17,
           minZoom: 7,
           maxZoom: 19,
-          attributionControl: true,
+          attributionControl: {},
         });
         map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
         if (!editableRef.current) {
@@ -395,6 +393,7 @@ export default function Home() {
   const [dictationMessage, setDictationMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const submissionRef = useRef(createSubmissionState());
   const [attachments, setAttachments] = useState<MediaAttachment[]>([]);
   const [mediaError, setMediaError] = useState("");
   const [isRecording, setIsRecording] = useState(false);
@@ -504,6 +503,7 @@ export default function Home() {
   };
 
   const openReport = () => {
+    if (submissionRef.current.busy) return;
     if (!isLoggedIn) {
       window.location.href = sitePath("/login/");
       return;
@@ -545,6 +545,7 @@ export default function Home() {
   };
 
   const closeReport = () => {
+    if (submissionRef.current.busy) return;
     if (mediaRecorderRef.current?.state === "recording") mediaRecorderRef.current.stop();
     speechRecognitionRef.current?.stop();
     mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
@@ -557,9 +558,9 @@ export default function Home() {
     const selectedFiles = Array.from(event.target.files ?? []);
     event.target.value = "";
     if (selectedFiles.length === 0) return;
-    const oversized = selectedFiles.find((file) => file.size > 80 * 1024 * 1024);
+    const oversized = selectedFiles.find((file) => file.size > 50 * 1024 * 1024);
     if (oversized) {
-      setMediaError("파일 한 개의 크기는 80MB 이하로 선택해주세요.");
+      setMediaError("파일 한 개의 크기는 50MB 이하로 선택해주세요.");
       return;
     }
     setMediaError("");
@@ -743,6 +744,7 @@ export default function Home() {
 
   const submitReport = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (submissionRef.current.busy) return;
     const hasGps = locationChoice === "gps" && gpsStatus === "success" && gpsPoint && locationConfirmed;
     const hasManualLocation = locationChoice === "manual" && placeDescription.trim();
     if (!hasGps && !hasManualLocation) {
@@ -755,10 +757,8 @@ export default function Home() {
     }
     setIsSubmitting(true);
     setSubmitError("");
-    const response = await fetch("/api/reports", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+    try {
+      const savedId = await submitWithAttachments(submissionRef.current, {
         category: reportType,
         subcategory: reportDetail,
         title: reportDescription.trim() || `${reportType} 위험요소를 발견했어요`,
@@ -770,27 +770,20 @@ export default function Home() {
         placeDescription: locationChoice === "manual" ? placeDescription : "",
         observedAt: new Date().toISOString(),
         weather: weatherSnapshot,
-        media: attachments.map((attachment) => ({
-          kind: attachment.kind,
-          name: attachment.file.name,
-          type: attachment.file.type,
-          size: attachment.file.size,
-        })),
-      }),
-    }).catch(() => null);
-    setIsSubmitting(false);
-    if (!response?.ok) {
-      setSubmitError("기록을 저장하지 못했어요. 잠시 후 다시 시도해주세요.");
-      return;
-    }
-    const saved = await response.json();
-    if (saved.id && attachments.length > 0) {
-      await storeReportMedia(saved.id, attachments).catch(() => {
-        setMediaError("기록은 접수됐지만 사진·영상·음성 파일을 서버에 올리지 못했어요.");
+      }, attachments, {
+        createId: () => crypto.randomUUID(),
+        save: (payload) => apiJson<{ id: string }>("/api/reports", jsonBody(payload)),
+        upload: (id, attachment) => uploadMedia(id, attachment.file, attachment.file.name, attachment.kind, attachment.id),
+        remove: async (id) => {
+          const response = await apiFetch("/api/reports", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id }) });
+          if (!response.ok && response.status !== 404) throw new Error("저장 상태를 확인하지 못했습니다.");
+        },
       });
-    }
-    if (!isLoggedIn && saved.id) window.sessionStorage.setItem("jikeoro-pending-report-id", saved.id);
-    setReportStep(5);
+      if (!isLoggedIn) window.sessionStorage.setItem("jikeoro-pending-report-id", savedId);
+      setReportStep(5);
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : "기록을 저장하지 못했어요. 잠시 후 다시 시도해주세요.");
+    } finally { setIsSubmitting(false); }
   };
 
   return (
@@ -917,7 +910,7 @@ export default function Home() {
               <span><b>3</b> 홈 화면에 추가</span>
             </div>
           </div>
-          <a className="app-download-button" href="https://yaniyaabi.github.io/jikeoro-senior-app-proto/" target="_blank" rel="noreferrer">
+          <a className="app-download-button" href={import.meta.env.VITE_APP_URL ?? "/app/"} target="_blank" rel="noreferrer">
             <span className="app-download-button-icon" aria-hidden="true">
               <img src={sitePath("/jikeoro-logo-3d-v8.png")} alt="" />
             </span>
@@ -1212,7 +1205,7 @@ export default function Home() {
                 {consentValidation && <p className="location-validation" role="alert">{consentValidation}</p>}
                 {submitError && <p className="location-validation" role="alert">{submitError}</p>}
                 <div className="modal-navigation">
-                  <button className="modal-secondary" type="button" onClick={() => setReportStep(3)}>← 이전</button>
+                  <button className="modal-secondary" type="button" disabled={isSubmitting || submissionRef.current.pendingId !== null} onClick={() => setReportStep(3)}>← 이전</button>
                   <button className="modal-primary" type="submit" disabled={isSubmitting || !hasResearchConsent}>{isSubmitting ? "저장하고 있어요" : "제보 완료하기"} <span>→</span></button>
                 </div>
               </form>

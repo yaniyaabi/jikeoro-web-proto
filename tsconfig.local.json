@@ -1,0 +1,21 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "vite-env.d.ts",
+    "github-pages/**/*.tsx",
+    "github-pages/runtime.ts",
+    "app/page.tsx",
+    "app/components/**/*.tsx",
+    "app/map/**/*.tsx",
+    "app/my/**/*.tsx",
+    "app/login/**/*.tsx",
+    "app/admin/**/*.tsx",
+    "app/lib/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "app/api",
+    "db",
+    "worker"
+  ]
+}

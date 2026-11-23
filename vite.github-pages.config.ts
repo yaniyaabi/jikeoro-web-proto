@@ -7,7 +7,8 @@ const projectRoot = fileURLToPath(new URL("./", import.meta.url));
 
 export default defineConfig({
   root,
-  base: "/jikeoro-web-proto/",
+  base: process.env.VITE_SITE_BASE ?? "/web/",
+  server: { host: '127.0.0.1', port: 5173, proxy: { '/api': { target: 'http://127.0.0.1:3001', changeOrigin: true, headers: { Origin: 'http://127.0.0.1:3001' } } } },
   publicDir: fileURLToPath(new URL("./public", import.meta.url)),
   plugins: [react()],
   build: {

@@ -1,0 +1,28 @@
+{
+  "name": "jikeoro-lab-backend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "start": "node --env-file=api.env server.cjs",
+    "setup": "node --env-file=db.env setup.cjs",
+    "test": "node --test tests/*.test.cjs"
+  },
+  "dependencies": {
+    "bcryptjs": "3.0.3",
+    "express": "5.3.0",
+    "express-rate-limit": "8.7.4",
+    "file-type": "22.3.0",
+    "heic-decode": "2.1.0",
+    "helmet": "8.3.0",
+    "pg": "8.23.1",
+    "sharp": "0.35.5",
+    "web-push": "4.0.0"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.5.16"
+  }
+}
