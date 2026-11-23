@@ -11,8 +11,9 @@ const {adminRoutes}=require('./lib/admin.cjs');
 const {mediaService}=require('./lib/media.cjs');
 const {reminderService}=require('./lib/reminders.cjs');
 const {loadConfig}=require('./lib/config.cjs');
+const {createReportCsvExporter}=require('./lib/report-csv.cjs');
 
-function createApp({pool,config,sendPush,disableRateLimit=false}) {
+function createApp({pool,config,sendPush,disableRateLimit=false,reportCsv}) {
   const app=express();
   app.disable('x-powered-by');
   app.set('trust proxy','loopback');
@@ -36,6 +37,12 @@ function createApp({pool,config,sendPush,disableRateLimit=false}) {
   });
   app.use(express.json({limit:'256kb',strict:true}));
   app.use('/api',(req,res,next)=>{res.set('Cache-Control','no-store');next();});
+  if(reportCsv) app.use('/api',(req,res,next)=>{
+    if(['POST','PATCH','DELETE','PUT'].includes(req.method)) res.once('finish',()=>{
+      if(res.statusCode>=200 && res.statusCode<300) reportCsv.schedule();
+    });
+    next();
+  });
   if(!disableRateLimit) app.use('/api',rateLimit({windowMs:60000,limit:300,standardHeaders:'draft-8',legacyHeaders:false,message:{error:'요청이 많습니다. 잠시 후 다시 시도해주세요.'}}));
   app.get('/health',async(req,res)=>{
     let database=false,nas=false;
@@ -70,15 +77,17 @@ async function main() {
   pool.on('error',()=>console.error('Database connection interrupted.'));
   try {await pool.query('SELECT version FROM jikeoro.schema_versions WHERE version=1');}
   catch(error) {await pool.end();throw error;}
-  const service=createApp({pool,config});
+  const reportCsv=createReportCsvExporter(pool,config.storage,{publicDir:config.publicDir});
+  const service=createApp({pool,config,reportCsv});
   const server=service.app.listen(config.port,'127.0.0.1',()=>{
     console.log(`Jikeoro website: http://127.0.0.1:${config.port}/web/`);
     console.log(`Jikeoro app: http://127.0.0.1:${config.port}/app/`);
     console.log('Keep this window and Docker Desktop running.');
+    reportCsv.start();
   });
   server.requestTimeout=5*60*1000;
   server.headersTimeout=15000;
-  server.on('error',async(error)=>{console.error(error.code==='EADDRINUSE'?'Port 3001 is in use. Stop the previous server with Ctrl+C.':'Could not start server.');await pool.end();process.exitCode=1;});
+  server.on('error',async(error)=>{console.error(error.code==='EADDRINUSE'?'Port 3001 is in use. Stop the previous server with Ctrl+C.':'Could not start server.');await reportCsv.stop();await pool.end();process.exitCode=1;});
   const runMaintenance=async()=>{
     await service.cleanup().catch(()=>{});
     await pool.query('DELETE FROM jikeoro.sessions WHERE expires_at<=now()').catch(()=>{});
@@ -87,7 +96,7 @@ async function main() {
   const scheduler=setInterval(()=>service.runReminders().catch(()=>{}),30000);
   maintenance.unref();scheduler.unref();
   void runMaintenance();
-  const stop=()=>{clearInterval(maintenance);clearInterval(scheduler);server.close(async()=>{await pool.end();});server.closeIdleConnections();};
+  const stop=()=>{clearInterval(maintenance);clearInterval(scheduler);server.close(async()=>{await reportCsv.stop();await pool.end();});server.closeIdleConnections();};
   process.once('SIGINT',stop);process.once('SIGTERM',stop);
 }
 if(require.main===module) main().catch(()=>{console.error('Server setup is incomplete. Run install-server.cmd first and keep Docker running.');process.exitCode=1;});
