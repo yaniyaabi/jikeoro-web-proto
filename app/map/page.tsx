@@ -7,7 +7,7 @@ import { SiteHeader } from "../components/site-header";
 import { SiteFooter } from "../components/site-footer";
 import { sitePath } from "../lib/site-path";
 import { hazardCategories, hazardFilters, hazardPinFiles, normalizeHazardCategory } from "../lib/hazard-categories";
-import { publicReportPreviewUrl } from "../lib/supabase-browser";
+import { publicReportPreviewUrl } from "../lib/media-client";
 
 type MapReport = {
   id: string;
@@ -127,7 +127,7 @@ function ReportThumbnail({ report }: { report: MapReport }) {
 
   return (
     <span className="map-inline-thumb">
-      <img src={`${publicReportPreviewUrl(report.id)}&retry=${attempt}`} alt={`${report.title} 사진 미리보기`} loading="lazy" decoding="async" onError={retryPreview} />
+      <img src={`${publicReportPreviewUrl(report.id)}?retry=${attempt}`} alt={`${report.title} 사진 미리보기`} loading="lazy" decoding="async" onError={retryPreview} />
     </span>
   );
 }
@@ -257,7 +257,7 @@ export default function RiskMapPage() {
           zoom: 6.5,
           minZoom: 5,
           maxZoom: 19,
-          attributionControl: true,
+          attributionControl: {},
         });
         map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
         map.on("load", () => {

@@ -6,8 +6,8 @@ import { SiteFooter } from "../components/site-footer";
 import { HazardIllustration } from "../components/hazard-illustration";
 import { ReportLocationMap } from "../components/report-location-map";
 import { sitePath } from "../lib/site-path";
-import { formatRewardPhone, readRewardRequests, REWARD_REQUESTS_KEY, RewardRequest, writeRewardRequests } from "../lib/reward-requests";
-import { downloadReportMedia } from "../lib/supabase-browser";
+import { formatRewardPhone, refreshRewardRequests, markRewardSent, RewardRequest } from "../lib/reward-requests";
+import { downloadReportMedia } from "../lib/media-client";
 
 type ReportStatus = "received" | "review" | "action" | "completed";
 type StaffRole = "research_admin" | "agency_staff";
@@ -133,14 +133,12 @@ export default function AdminPage() {
   }, [user?.role]);
 
   useEffect(() => {
-    if (user?.role !== "research_admin") return;
-    const refresh = () => setRewardRequests(readRewardRequests());
+    if(user?.role!=='research_admin')return;
+    let active=true;
+    const refresh=()=>{void refreshRewardRequests(true).then(items=>{if(active)setRewardRequests(items);}).catch(()=>{if(active)setRewardRequests([]);});};
     refresh();
-    const handleStorage = (event: StorageEvent) => {
-      if (!event.key || event.key === REWARD_REQUESTS_KEY) refresh();
-    };
-    window.addEventListener("storage", handleStorage);
-    return () => window.removeEventListener("storage", handleStorage);
+    const timer=window.setInterval(refresh,30000);
+    return ()=>{active=false;window.clearInterval(timer);};
   }, [user?.role]);
 
   const filteredReports = useMemo(() => filter === "all" ? reports : reports.filter((report) => report.status === filter), [filter, reports]);
@@ -240,13 +238,11 @@ export default function AdminPage() {
     setAccountNotice(`${data.account.name}님의 권한을 저장했습니다.`);
   };
 
-  const markRewardSent = (requestId: string) => {
-    const nextRequests = rewardRequests.map((request) => request.id === requestId
-      ? { ...request, status: "sent" as const, sentAt: new Date().toISOString() }
-      : request);
-    writeRewardRequests(nextRequests);
-    setRewardRequests(nextRequests);
-    setRewardNotice("상품권 발송 완료로 처리했습니다.");
+  const markRewardSentInServer = async (requestId:string) => {
+    try {
+      setRewardRequests(await markRewardSent(requestId));
+      setRewardNotice('상품권 발송 완료로 처리했습니다.');
+    } catch(error) {setRewardNotice(error instanceof Error?error.message:'처리하지 못했습니다.');}
   };
 
   if (!ready) return <main className="member-page auth-loading">관리자 기록을 불러오고 있어요.</main>;
@@ -380,7 +376,7 @@ export default function AdminPage() {
               <div className="admin-reward-phone"><small>발송 휴대전화</small><a href={`tel:${request.phone}`}>{formatRewardPhone(request.phone)}</a></div>
               <div className="admin-reward-points"><small>신청 마일리지</small><strong>{request.exchangePoints.toLocaleString()}P</strong></div>
               <time dateTime={request.requestedAt}>{new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium", timeStyle: "short" }).format(new Date(request.requestedAt))}</time>
-              <button type="button" disabled={request.status === "sent"} onClick={() => markRewardSent(request.id)}>{request.status === "sent" ? "발송 처리됨" : "발송 완료 처리"}</button>
+              <button type="button" disabled={request.status === "sent"} onClick={() => markRewardSentInServer(request.id)}>{request.status === "sent" ? "발송 처리됨" : "발송 완료 처리"}</button>
             </article>)}
             {!rewardRequests.length && <p className="admin-reward-empty">아직 접수된 상품권 교환 신청이 없습니다.</p>}
           </div>
