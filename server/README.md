@@ -73,4 +73,4 @@ UTF-8 BOM 형식으로 Excel에서 한글을 읽을 수 있습니다. 이 파일
 
 `GET /api/map/reports`는 `likeCount`, `likedByMe`, `hasPhotoPreview`를 반환합니다. `GET /api/map/likes`는 가벼운 합계와 본인 상태만 반환하며 지도는 15초마다, 화면 복귀·로그인 변경 때 갱신합니다. 영상·음성의 `preview_path`가 남아 있어도 실제 `kind=image`인 사진만 지도 미리보기 대상으로 표시합니다.
 
-기존 브라우저의 `jikeoro-map-likes` 값은 사용자 식별과 서버 검증 정보가 없어 새 DB로 가져오지 않습니다. 최초 적용 시 `map-likes-migration.sql`로 표와 실행 계정 권한을 추가해야 합니다. 준비한 NAS 업데이트는 DB 백업과 코드 검증 후 DB 트랜잭션 안에서 적용하며, 기존 파일·CSV·100MB 설정을 보존합니다.
+기존 브라우저의 `jikeoro-map-likes` 값은 사용자 식별과 서버 검증 정보가 없어 새 DB로 가져오지 않습니다. 최초 적용 시 `map-likes-migration.sql`로 표와 실행 계정 권한을 추가해야 합니다. 준비한 NAS 업데이트는 DB 백업과 코드 검증 후 Docker 내부의 psql로 SQL을 단일 트랜잭션에 적용하며, 기존 파일·CSV·100MB 설정을 보존합니다. 마이그레이션이 실패하면 이전 서버 코드를 복원합니다. 설치 단계·완료 여부·오류 코드는 NAS 업데이트 폴더의 `map-likes-install-status.json`에 기록하며 비밀번호나 사용자 데이터는 기록하지 않습니다.
