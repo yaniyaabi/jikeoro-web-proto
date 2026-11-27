@@ -8,6 +8,7 @@ import { SiteFooter } from "../components/site-footer";
 import { sitePath } from "../lib/site-path";
 import { hazardCategories, hazardFilters, hazardPinFiles, normalizeHazardCategory } from "../lib/hazard-categories";
 import { publicReportPreviewUrl } from "../lib/media-client";
+import { apiJson, jsonBody } from "../lib/api-client";
 
 type MapReport = {
   id: string;
@@ -22,10 +23,12 @@ type MapReport = {
   status: "received" | "review" | "action" | "completed";
   createdAt: string;
   mediaCount?: number;
+  hasPhotoPreview?: boolean;
+  likeCount: number;
+  likedByMe: boolean;
 };
 
-type LikeEntry = { count: number; liked: boolean };
-type LikeStore = Record<string, LikeEntry>;
+type LikeTotal = { id: string; likeCount: number; likedByMe: boolean };
 type ProjectedBoundary = { width: number; height: number; selectedPath: string };
 type MunicipalityProperties = {
   code: string;
@@ -39,7 +42,6 @@ const categories = hazardFilters;
 const toneByType: Record<string, string> = { 인도: "coral", 횡단보도: "yellow", 조도: "navy", "날씨 관련 위험": "mint", 기타: "plum" };
 const colorByType: Record<string, string> = { 인도: "#ff654f", 횡단보도: "#e0a515", 조도: "#163f47", "날씨 관련 위험": "#4d9d68", 기타: "#816b91" };
 const statusText: Record<MapReport["status"], string> = { received: "접수", review: "현장 검토", action: "조치 진행", completed: "개선 완료" };
-const LIKES_KEY = "jikeoro-map-likes";
 const PROVINCE_CHART_MAX_ZOOM = 8.2;
 const KOREA_VIEW_BOUNDS: [[number, number], [number, number]] = [[124.2, 32.6], [132.2, 39.1]];
 const provinceNames: Record<string, string> = {
@@ -116,18 +118,20 @@ function geometryBounds(feature: MunicipalityFeature) {
 function ReportThumbnail({ report }: { report: MapReport }) {
   const [attempt, setAttempt] = useState(0);
   const [failedId, setFailedId] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
   const retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (retryTimer.current) clearTimeout(retryTimer.current); }, []);
-  if (report.mediaCount === 0 || failedId === report.id) return null;
+  if (report.hasPhotoPreview !== true || failedId === report.id) return null;
 
   function retryPreview() {
+    setLoaded(false);
     if (attempt >= 2) { setFailedId(report.id); return; }
     retryTimer.current = setTimeout(() => setAttempt((value) => value + 1), 1000 * (attempt + 1));
   }
 
   return (
     <span className="map-inline-thumb">
-      <img src={`${publicReportPreviewUrl(report.id)}?retry=${attempt}`} alt={`${report.title} 사진 미리보기`} loading="lazy" decoding="async" onError={retryPreview} />
+      <img src={`${publicReportPreviewUrl(report.id)}?retry=${attempt}`} alt={`${report.title} 사진 미리보기`} loading="lazy" decoding="async" style={{ visibility: loaded ? "visible" : "hidden" }} onLoad={() => setLoaded(true)} onError={retryPreview} />
     </span>
   );
 }
@@ -163,25 +167,59 @@ export default function RiskMapPage() {
   const [municipality, setMunicipality] = useState("");
   const [appliedMunicipality, setAppliedMunicipality] = useState("");
   const [projectedBoundary, setProjectedBoundary] = useState<ProjectedBoundary | null>(null);
-  const [likes, setLikes] = useState<LikeStore>(() => {
-    if (typeof window === "undefined") return {};
-    try {
-      return JSON.parse(window.localStorage.getItem(LIKES_KEY) ?? "{}");
-    } catch {
-      return {};
-    }
-  });
+  const [authenticated, setAuthenticated] = useState(false);
+  const [likeBusyId, setLikeBusyId] = useState<string | null>(null);
+  const [likeError, setLikeError] = useState("");
+  const likeBusyRef = useRef(false);
+  const likeEpoch = useRef(0);
+  const refreshLikeTotals = useRef<() => Promise<void>>(async () => {});
 
   useEffect(() => {
-    fetch("/api/map/reports")
-      .then((response) => response.ok ? response.json() : Promise.reject(new Error("data")))
-      .then((data) => {
-        const next = ((data.reports ?? []) as MapReport[]).map((report) => ({ ...report, type: normalizeHazardCategory(report.type) }));
-        setReports(next);
-        setSelectedId(next[0]?.id ?? null);
-      })
-      .catch(() => setDataError("현황 데이터를 불러오지 못했어요."))
-      .finally(() => setLoading(false));
+    let active = true, fullLoading = false;
+    let fullController: AbortController | null = null;
+    const loadFull = async () => {
+      const epoch = ++likeEpoch.current;
+      fullController?.abort();
+      const controller = new AbortController(); fullController = controller; fullLoading = true;
+      try {
+        const data = await apiJson<{authenticated:boolean;reports:MapReport[]}>("/api/map/reports", {signal:controller.signal});
+        if (!active || epoch !== likeEpoch.current) return;
+        const next = data.reports.map(report => ({...report,type:normalizeHazardCategory(report.type)}));
+        setReports(next);setAuthenticated(data.authenticated);setDataError("");
+        setSelectedId(previous => previous && next.some(report => report.id === previous) ? previous : next[0]?.id ?? null);
+      } catch {
+        if(active && !controller.signal.aborted && epoch === likeEpoch.current) setDataError("현황 데이터를 불러오지 못했어요.");
+      } finally {
+        if(fullController === controller) fullLoading = false;
+        if(active && epoch === likeEpoch.current) setLoading(false);
+      }
+    };
+    const loadCounts = async () => {
+      if(!active || fullLoading || document.hidden || likeBusyRef.current) return;
+      const epoch = ++likeEpoch.current;
+      try {
+        const data = await apiJson<{authenticated:boolean;likes:LikeTotal[]}>("/api/map/likes");
+        if(!active || epoch !== likeEpoch.current || likeBusyRef.current) return;
+        const byId = new Map(data.likes.map(item => [item.id,item]));
+        setReports(current => current.map(report => ({...report,...(byId.get(report.id) ?? {})})));
+        setAuthenticated(data.authenticated);setLikeError("");
+      } catch { if(active && epoch === likeEpoch.current) setLikeError("좋아요 개수를 갱신하지 못했어요. 잠시 후 다시 확인할게요."); }
+    };
+    const authChanged = () => {
+      setAuthenticated(false);setReports(current=>current.map(report=>({...report,likedByMe:false})));
+      void loadFull();
+    };
+    const storageChanged = (event:StorageEvent) => {if(event.key === null || event.key === "jikeoro-local-session-v1") authChanged();};
+    refreshLikeTotals.current = loadCounts;
+    void loadFull();
+    const timer = window.setInterval(() => { void loadCounts(); },15000);
+    window.addEventListener("focus",loadCounts);document.addEventListener("visibilitychange",loadCounts);
+    window.addEventListener("jikeoro-session-change",authChanged);window.addEventListener("storage",storageChanged);
+    return () => {
+      active=false;++likeEpoch.current;fullController?.abort();window.clearInterval(timer);refreshLikeTotals.current=async()=>{};
+      window.removeEventListener("focus",loadCounts);document.removeEventListener("visibilitychange",loadCounts);
+      window.removeEventListener("jikeoro-session-change",authChanged);window.removeEventListener("storage",storageChanged);
+    };
   }, []);
 
   useEffect(() => {
@@ -429,16 +467,18 @@ export default function RiskMapPage() {
     mapRef.current?.flyTo({ center: [report.longitude, report.latitude], zoom: 16.8, duration: 850, essential: true });
   };
 
-  const toggleLike = (reportId: string) => {
-    setLikes((current) => {
-      const entry = current[reportId] ?? { count: 0, liked: false };
-      const next = {
-        ...current,
-        [reportId]: { count: Math.max(0, entry.count + (entry.liked ? -1 : 1)), liked: !entry.liked },
-      };
-      window.localStorage.setItem(LIKES_KEY, JSON.stringify(next));
-      return next;
-    });
+  const toggleLike = async (report: MapReport) => {
+    if(!authenticated || likeBusyRef.current) return;
+    likeBusyRef.current=true;setLikeBusyId(report.id);setLikeError("");
+    const epoch=++likeEpoch.current;
+    try {
+      const result=await apiJson<LikeTotal>(`/api/map/reports/${encodeURIComponent(report.id)}/like`,jsonBody({liked:!report.likedByMe}));
+      if(epoch === likeEpoch.current) setReports(current=>current.map(item=>item.id===report.id?{...item,...result}:item));
+    } catch(error) {
+      if(epoch === likeEpoch.current) setLikeError(error instanceof Error?error.message:"좋아요를 저장하지 못했어요.");
+    } finally {
+      likeBusyRef.current=false;setLikeBusyId(null);void refreshLikeTotals.current();
+    }
   };
 
   const applyRegion = () => {
@@ -544,12 +584,13 @@ export default function RiskMapPage() {
               <button key={category} className={filter === category ? "active" : ""} onClick={() => setFilter(category)} aria-pressed={filter === category}>{category}</button>
             ))}
           </div>
+          {likeError && <p className="risk-list-message error" role="alert">{likeError}</p>}
           <div className="risk-report-list">
             {loading && <p className="risk-list-message">위치 기록을 불러오는 중이에요.</p>}
             {!loading && dataError && <p className="risk-list-message error">{dataError}</p>}
             {!loading && !dataError && !filteredReports.length && <p className="risk-list-message">{selectedBoundary ? `${selectedBoundary.properties.name}에 등록된 GPS 기록이 아직 없어요.` : "이 유형으로 등록된 GPS 기록이 아직 없어요."}</p>}
             {filteredReports.map((report, index) => {
-              const reportLike = likes[report.id] ?? { count: 0, liked: false };
+              const reportLike = {count:report.likeCount ?? 0,liked:Boolean(report.likedByMe)};
               return (
                 <article id={`map-report-${report.id}`} key={report.id} className={`risk-report-item${selected?.id === report.id ? " selected" : ""}`}>
                   <button className="risk-report-select" type="button" onClick={() => selectReport(report)}>
@@ -564,7 +605,7 @@ export default function RiskMapPage() {
                   </button>
                   <div className="map-inline-actions">
                     <ReportThumbnail report={report} />
-                    <button className={`map-inline-like${reportLike.liked ? " liked" : ""}`} type="button" onClick={() => toggleLike(report.id)} aria-pressed={reportLike.liked}><span aria-hidden="true">{reportLike.liked ? "♥" : "♡"}</span><b>{reportLike.count}</b></button>
+                    <button className={`map-inline-like${reportLike.liked ? " liked" : ""}`} type="button" disabled={!authenticated || likeBusyId !== null} onClick={() => void toggleLike(report)} aria-pressed={reportLike.liked} aria-busy={likeBusyId === report.id} title={authenticated ? (reportLike.liked ? "좋아요 취소" : "좋아요") : "로그인 후 좋아요를 누를 수 있어요"} aria-label={`좋아요 ${reportLike.count}개. ${authenticated ? (reportLike.liked ? "좋아요 취소" : "좋아요 누르기") : "로그인 후 누를 수 있어요"}`}><span aria-hidden="true">{reportLike.liked ? "♥" : "♡"}</span><b>{reportLike.count}</b></button>
                   </div>
                 </article>
               );

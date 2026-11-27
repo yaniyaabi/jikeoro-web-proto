@@ -1427,3 +1427,7 @@ html[data-site-contrast="high"] .floating-report :is(span,small) {
     line-height:1.3;
   }
 }
+
+/* Logged-out visitors can read totals while the action remains disabled. */
+.map-inline-like:disabled{opacity:1;cursor:default}
+.map-inline-like[aria-busy="true"]{opacity:.65}
