@@ -91,7 +91,7 @@ export default function MemberLoginPage() {
             <h1>나의 기록이<br />우리 동네를 바꿉니다.</h1>
             <p>회원으로 참여하면 내가 남긴 위험 기록과 담당기관의 답변, 개선 과정을 한곳에서 확인할 수 있어요.</p>
             <ol>
-              <li><span>1</span><b>쉽게 기록하고</b><small>사진·영상·음성으로 현장을 남겨요.</small></li>
+              <li><span>1</span><b>쉽게 기록하고</b><small>사진·영상·글로 현장을 남겨요.</small></li>
               <li><span>2</span><b>처리 과정을 보고</b><small>접수부터 개선 완료까지 확인해요.</small></li>
               <li><span>3</span><b>더 안전한 길을 만들어요</b><small>주민의 경험이 보행환경 연구에 활용돼요.</small></li>
             </ol>

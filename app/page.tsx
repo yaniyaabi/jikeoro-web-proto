@@ -1,6 +1,6 @@
 "use client";
-import { VideoCapture } from "./components/VideoCapture";
-import { MAX_FILE_BYTES, uploadLimitMessage } from "./lib/media-policy";
+import "./components/media-guidance.css";
+import { MAX_FILE_BYTES, uploadLimitMessage, VIDEO_RECORDING_GUIDANCE, VIDEO_SIZE_GUIDANCE } from "./lib/media-policy";
 
 import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import type { Map as MapLibreMap } from "maplibre-gl";
@@ -274,8 +274,8 @@ const reportGuideSteps = [
   },
   {
     title: "위험한 이유를 알려주세요",
-    description: "위험 종류를 고른 뒤 글, 말하기, 현장음 중 편한 방법으로 설명합니다.",
-    details: ["인도·횡단보도·조도·날씨 관련 위험·기타 중 하나를 고릅니다.", "‘말로 글쓰기’를 누르면 말한 내용이 글자로 바뀝니다.", "필요하면 현장의 소리도 따로 녹음할 수 있습니다."],
+    description: "위험 종류를 고른 뒤 글쓰기나 말로 글쓰기로 설명합니다.",
+    details: ["인도·횡단보도·조도·날씨 관련 위험·기타 중 하나를 고릅니다.", "‘말로 글쓰기’를 누르면 말한 내용이 글자로 바뀝니다."],
   },
   {
     title: "위치를 확인해요",
@@ -341,7 +341,6 @@ function ReportGuidePreview({ step }: { step: number }) {
           <div className="guide-type-options"><b>인도</b><span>횡단보도</span><span>조도</span><span>날씨 관련 위험</span><span>기타</span></div>
           <div className="guide-description-head"><b>설명 <small>선택</small></b><span><i aria-hidden="true">▰</i> 말로 글쓰기</span></div>
           <div className="guide-textarea">예: 보도블록 높이 차이 때문에 발이 걸릴 것 같아요.</div>
-          <div className="guide-voice-options"><span>● 현장음 녹음</span></div>
           <div className="guide-next-button">위치 입력하기 <b>→</b></div>
         </>
       )}
@@ -397,15 +396,9 @@ export default function Home() {
   const [submitError, setSubmitError] = useState("");
   const submissionRef = useRef(createSubmissionState());
   const [attachments, setAttachments] = useState<MediaAttachment[]>([]);
-  const [videoCaptureOpen,setVideoCaptureOpen]=useState(false);
-  const [mediaNotice,setMediaNotice]=useState("");
   const [mediaError, setMediaError] = useState("");
-  const [isRecording, setIsRecording] = useState(false);
-  const [recordingSeconds, setRecordingSeconds] = useState(0);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const mediaStreamRef = useRef<MediaStream | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
   const attachmentsRef = useRef<MediaAttachment[]>([]);
+  const videoCameraRef = useRef<HTMLInputElement>(null);
   const speechRecognitionRef = useRef<SpeechRecognitionLike | null>(null);
 
   const filteredHazards = useMemo(
@@ -432,10 +425,7 @@ export default function Home() {
     }
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        if (mediaRecorderRef.current?.state === "recording") mediaRecorderRef.current.stop();
         speechRecognitionRef.current?.stop();
-        mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
-        setIsRecording(false);
         setIsDictating(false);
         setReportOpen(false);
       }
@@ -443,12 +433,6 @@ export default function Home() {
     window.addEventListener("keydown", closeOnEscape);
     return () => window.removeEventListener("keydown", closeOnEscape);
   }, []);
-
-  useEffect(() => {
-    if (!isRecording) return;
-    const timer = window.setInterval(() => setRecordingSeconds((seconds) => seconds + 1), 1000);
-    return () => window.clearInterval(timer);
-  }, [isRecording]);
 
   useEffect(() => { attachmentsRef.current = attachments; }, [attachments]);
 
@@ -487,9 +471,7 @@ export default function Home() {
   }, [gpsPoint, gpsStatus, locationChoice]);
 
   useEffect(() => () => {
-    mediaRecorderRef.current?.stop();
     speechRecognitionRef.current?.stop();
-    mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
     attachmentsRef.current.forEach((attachment) => URL.revokeObjectURL(attachment.previewUrl));
   }, []);
 
@@ -513,15 +495,9 @@ export default function Home() {
       return;
     }
     attachments.forEach((attachment) => URL.revokeObjectURL(attachment.previewUrl));
-    mediaRecorderRef.current?.stop();
     speechRecognitionRef.current?.stop();
-    mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
-    mediaRecorderRef.current = null;
-    mediaStreamRef.current = null;
     setAttachments([]);
     setMediaError("");
-    setIsRecording(false);
-    setRecordingSeconds(0);
     setReportStep(1);
     setLocationChoice(null);
     setGpsStatus("idle");
@@ -550,10 +526,7 @@ export default function Home() {
 
   const closeReport = () => {
     if (submissionRef.current.busy) return;
-    if (mediaRecorderRef.current?.state === "recording") mediaRecorderRef.current.stop();
     speechRecognitionRef.current?.stop();
-    mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
-    setIsRecording(false);
     setIsDictating(false);
     setReportOpen(false);
   };
@@ -576,7 +549,7 @@ export default function Home() {
         file,
         previewUrl: URL.createObjectURL(file),
       }));
-      if (selectedFiles.length > available) setMediaError("사진·영상·음성은 모두 합쳐 5개까지 넣을 수 있어요.");
+      if (selectedFiles.length > available) setMediaError("사진·영상은 모두 합쳐 5개까지 넣을 수 있어요.");
       return [...current, ...next];
     });
   };
@@ -587,47 +560,6 @@ export default function Home() {
       if (target) URL.revokeObjectURL(target.previewUrl);
       return current.filter((attachment) => attachment.id !== id);
     });
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current?.state === "recording") mediaRecorderRef.current.stop();
-  };
-
-  const startRecording = async () => {
-    if (!navigator.mediaDevices?.getUserMedia || !("MediaRecorder" in window)) {
-      setMediaError("이 브라우저에서는 음성 녹음을 사용할 수 없어요. 녹음 파일을 선택해주세요.");
-      return;
-    }
-    if (attachments.length >= 5) {
-      setMediaError("사진·영상·음성은 모두 합쳐 5개까지 넣을 수 있어요.");
-      return;
-    }
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
-      mediaStreamRef.current = stream;
-      mediaRecorderRef.current = recorder;
-      audioChunksRef.current = [];
-      recorder.ondataavailable = (event) => { if (event.data.size > 0) audioChunksRef.current.push(event.data); };
-      recorder.onstop = () => {
-        const mimeType = recorder.mimeType || "audio/webm";
-        const blob = new Blob(audioChunksRef.current, { type: mimeType });
-        const extension = mimeType.includes("mp4") ? "m4a" : "webm";
-        const file = new File([blob], `현장음성-${Date.now()}.${extension}`, { type: mimeType });
-        const attachment: MediaAttachment = { id: crypto.randomUUID(), kind: "audio", file, previewUrl: URL.createObjectURL(file) };
-        setAttachments((current) => [...current, attachment].slice(0, 5));
-        stream.getTracks().forEach((track) => track.stop());
-        mediaStreamRef.current = null;
-        mediaRecorderRef.current = null;
-        setIsRecording(false);
-      };
-      setMediaError("");
-      setRecordingSeconds(0);
-      setIsRecording(true);
-      recorder.start();
-    } catch {
-      setMediaError("마이크 권한이 필요해요. 권한을 허용하거나 녹음 파일을 선택해주세요.");
-    }
   };
 
   const toggleDictation = () => {
@@ -651,7 +583,6 @@ export default function Home() {
       return;
     }
 
-    if (isRecording) stopRecording();
     const recognition = new recognitionConstructor();
     recognition.lang = "ko-KR";
     recognition.interimResults = false;
@@ -678,7 +609,6 @@ export default function Home() {
       return;
     }
     speechRecognitionRef.current?.stop();
-    if (isRecording) stopRecording();
     setStepTwoValidation("");
     setReportTime(new Date().toISOString());
     setReportStep(3);
@@ -963,7 +893,7 @@ export default function Home() {
               <p>{selected.detail}</p>
               <dl>
                 <div><dt>날씨</dt><dd>{selected.type === "날씨 관련 위험" ? "비 · 4°C" : "맑음 · 27°C"}</dd></div>
-                <div><dt>기록</dt><dd>사진 + 음성</dd></div>
+                <div><dt>기록</dt><dd>사진 + 글</dd></div>
               </dl>
               <button className="panel-button" onClick={openReport}>나도 기록 남기기 <span>→</span></button>
             </div>
@@ -981,7 +911,7 @@ export default function Home() {
         <div className="project-metrics">
           <div><strong>전국</strong><span>우리 동네<br />참여 생활권</span></div>
           <div><strong>60<span>초</span></strong><span>목표 기록<br />완료 시간</span></div>
-          <div><strong>4<span>종</span></strong><span>참여 방식<br />사진·음성·영상·텍스트</span></div>
+          <div><strong>3<span>종</span></strong><span>참여 방식<br />사진·영상·텍스트</span></div>
           <p>※ 수치는 1차년도 프로토타입의 초기 설계 목표이며 시범운영 결과에 따라 조정됩니다.</p>
         </div>
       </section>
@@ -1010,12 +940,13 @@ export default function Home() {
                     <MediaOptionVisual kind="video" />
                   </label>
                 </div>
+                <input ref={videoCameraRef} className="jk-native-capture" type="file" accept="video/*" capture="environment" onChange={(event)=>addFiles(event,"video")} />
                 <button type="button" className="jk-video-open" onClick={()=>{
                   if(attachments.length>=5){setMediaError("첨부파일은 모두 합쳐 5개까지 넣을 수 있어요.");return;}
-                  setMediaError("");setMediaNotice("");setVideoCaptureOpen(true);
+                  setMediaError("");videoCameraRef.current?.click();
                 }}>지금 영상 촬영하기</button>
-                <p className="jk-media-note">사진·영상·음성은 파일 한 개당 최대 100MB까지 첨부할 수 있어요.</p>
-                {mediaNotice && <p className="jk-media-note" role="status">{mediaNotice}</p>}
+                <p className="jk-media-note">사진·영상은 파일 한 개당 최대 100MB까지 첨부할 수 있어요.</p>
+                <div className="jk-video-guidance"><strong>{VIDEO_RECORDING_GUIDANCE}</strong><p>{VIDEO_SIZE_GUIDANCE}</p></div>
                 {attachments.some((attachment) => attachment.kind !== "audio") && (
                   <div className="media-preview-list" aria-label="선택한 사진과 영상">
                     {attachments.filter((attachment) => attachment.kind !== "audio").map((attachment) => (
@@ -1069,19 +1000,6 @@ export default function Home() {
                     placeholder="예: 보도블록 높이 차이 때문에 발이 걸릴 것 같아요."
                     rows={4}
                   />
-                </div>
-                <div className="voice-recorder step-two-recorder">
-                  <div>
-                    <strong>현장음 녹음</strong>
-                    <small>{isRecording ? `${Math.floor(recordingSeconds / 60)}:${String(recordingSeconds % 60).padStart(2, "0")} 녹음 중` : "현장의 소리를 별도 파일로 남길 수 있어요."}</small>
-                  </div>
-                  <button className={`report-audio-action ${isRecording ? "recording" : ""}`} type="button" onClick={isRecording ? stopRecording : startRecording}>
-                    <span aria-hidden="true">{isRecording ? "■" : "●"}</span>{isRecording ? "녹음 끝내기" : "현장음 녹음"}
-                  </button>
-                  <label className="audio-file-button report-audio-action">
-                    <input type="file" accept="audio/*" onChange={(event) => addFiles(event, "audio")} />
-                    녹음 파일 선택
-                  </label>
                 </div>
                 {attachments.some((attachment) => attachment.kind === "audio") && (
                   <div className="media-preview-list audio-preview-list" aria-label="선택한 음성">
@@ -1232,11 +1150,6 @@ export default function Home() {
           </section>
         </div>
       )}
-      {videoCaptureOpen && reportOpen && reportStep===1 && <VideoCapture onClose={()=>setVideoCaptureOpen(false)} onCapture={(file,automatic)=>{
-        setVideoCaptureOpen(false);
-        setAttachments(current=>current.length>=5?current:[...current,{id:crypto.randomUUID(),kind:"video",file,previewUrl:URL.createObjectURL(file)}]);
-        setMediaNotice(automatic?"100MB를 넘지 않도록 촬영을 자동 종료하고 영상을 첨부했어요.":"촬영한 영상을 첨부했어요.");
-      }} />}
     </main>
   );
 }
