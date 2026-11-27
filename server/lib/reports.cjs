@@ -46,7 +46,8 @@ function memberReport(row) {
   return { id:row.id,type:row.category,subcategory:row.subcategory,title:row.title,description:row.description,
     place:location(row),latitude:row.latitude,longitude:row.longitude,accuracy:row.accuracy,status:row.status,
     response:row.response,department:row.assigned_agency || '지켜로 운영팀',createdAt:row.created_at,
-    observedAt:row.observed_at || row.created_at,weather:row.weather,mediaCount:Number(row.media_count || 0),points:100 };
+    observedAt:row.observed_at || row.created_at,weather:row.weather,mediaCount:Number(row.media_count || 0),points:100,
+    hasPhotoPreview:Boolean(row.has_photo_preview),likeCount:Number(row.like_count || 0),likedByMe:Boolean(row.liked_by_me) };
 }
 async function findReport(pool,user,id,{ownerOnly=false}={}) {
   uuid(id);
@@ -56,13 +57,35 @@ async function findReport(pool,user,id,{ownerOnly=false}={}) {
   return report;
 }
 const mediaSummary = `(SELECT COUNT(*)::integer FROM jikeoro.media m WHERE m.report_id=r.id) AS media_count`;
+const mapLikesSummary = `(SELECT COUNT(*)::integer FROM jikeoro.report_likes l WHERE l.report_id=r.id) AS like_count,
+  EXISTS(SELECT 1 FROM jikeoro.report_likes l WHERE l.report_id=r.id AND l.user_id=$1::uuid) AS liked_by_me`;
+const likeState = row => ({id:row.id,likeCount:Number(row.like_count),likedByMe:Boolean(row.liked_by_me)});
 function reportsRoutes(pool,storage,cleanupFiles) {
   const router = express.Router();
   router.get('/map/reports',async (req,res) => {
     const result = await pool.query(`SELECT r.id,r.category,r.subcategory,r.title,r.description,r.latitude,r.longitude,r.accuracy,
-      r.address,r.place_description,r.status,r.created_at,r.updated_at,r.observed_at,r.response,r.assigned_agency,r.weather,${mediaSummary}
-      FROM jikeoro.reports r WHERE latitude IS NOT NULL ORDER BY created_at DESC LIMIT 5000`);
-    res.json({reports:result.rows.map(memberReport)});
+      r.address,r.place_description,r.status,r.created_at,r.updated_at,r.observed_at,r.response,r.assigned_agency,r.weather,${mediaSummary},${mapLikesSummary},
+      EXISTS(SELECT 1 FROM jikeoro.media m WHERE m.report_id=r.id AND m.kind='image' AND m.preview_path IS NOT NULL) AS has_photo_preview
+      FROM jikeoro.reports r WHERE latitude IS NOT NULL ORDER BY created_at DESC LIMIT 5000`,[req.user?.id || null]);
+    res.json({authenticated:Boolean(req.user),reports:result.rows.map(memberReport)});
+  });
+  router.get('/map/likes',async(req,res)=>{
+    const result=await pool.query(`SELECT r.id,${mapLikesSummary} FROM jikeoro.reports r
+      WHERE r.latitude IS NOT NULL ORDER BY r.created_at DESC LIMIT 5000`,[req.user?.id || null]);
+    res.json({authenticated:Boolean(req.user),likes:result.rows.map(likeState)});
+  });
+  router.post('/map/reports/:id/like',requireUser,async(req,res)=>{
+    const id=uuid(req.params.id);
+    assert(typeof req.body.liked==='boolean',400,'좋아요 상태를 확인해주세요.');
+    const result=await transaction(pool,async client=>{
+      // Serialize changes to one report so returned counts include concurrent users.
+      const found=await client.query('SELECT id FROM jikeoro.reports WHERE id=$1 AND latitude IS NOT NULL FOR UPDATE',[id]);
+      assert(found.rows.length,404,'공개 지도에서 확인할 수 없는 제보입니다.');
+      if(req.body.liked)await client.query('INSERT INTO jikeoro.report_likes(report_id,user_id) VALUES($1,$2) ON CONFLICT DO NOTHING',[id,req.user.id]);
+      else await client.query('DELETE FROM jikeoro.report_likes WHERE report_id=$1 AND user_id=$2',[id,req.user.id]);
+      return (await client.query(`SELECT r.id,${mapLikesSummary} FROM jikeoro.reports r WHERE r.id=$2`,[req.user.id,id])).rows[0];
+    });
+    res.json(likeState(result));
   });
   router.get('/reports',requireUser,async (req,res) => {
     const result = await pool.query(`SELECT r.*,${mediaSummary} FROM jikeoro.reports r WHERE user_id=$1 ORDER BY created_at DESC LIMIT 5000`,[req.user.id]);

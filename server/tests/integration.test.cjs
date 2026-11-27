@@ -151,6 +151,48 @@ test('agency permissions follow assignment and cannot change another agency or e
   assert.equal((await pool.query('SELECT COUNT(*)::integer AS n FROM jikeoro.report_history WHERE report_id=$1',[reportId])).rows[0].n,3);
 });
 
+test('map likes require login, aggregate users, survive sessions and are idempotent across retries',async()=>{
+  const route=`/api/map/reports/${reportId}/like`;
+  const initial=await (await request('/api/map/reports')).json();
+  assert.equal(initial.authenticated,false);assert.equal(initial.reports.find(r=>r.id===reportId).likeCount,0);
+  assert.equal((await request(route,{method:'POST',body:{liked:true}})).status,401);
+  assert.equal((await request(route,{token:member.accessToken,method:'POST',body:{liked:'yes'}})).status,400);
+  const first=await (await request(route,{token:member.accessToken,method:'POST',body:{liked:true,userId:other.user.id}})).json();
+  assert.equal(first.likeCount,1);assert.equal(first.likedByMe,true);
+  const stored=(await pool.query('SELECT user_id FROM jikeoro.report_likes WHERE report_id=$1',[reportId])).rows;
+  assert.equal(stored[0].user_id,member.user.id);
+  const secondSession=await login('member@example.com');
+  assert.equal((await (await request(route,{token:secondSession.accessToken,method:'POST',body:{liked:true}})).json()).likeCount,1);
+  const counts=await (await request('/api/map/likes')).json();
+  assert.equal(counts.authenticated,false);assert.deepEqual(counts.likes.find(r=>r.id===reportId),{id:reportId,likeCount:1,likedByMe:false});
+  const theirs=await (await request('/api/map/likes',{token:other.accessToken})).json();assert.equal(theirs.likes.find(r=>r.id===reportId).likedByMe,false);
+  await Promise.all([request(route,{token:other.accessToken,method:'POST',body:{liked:true}}),request(route,{token:secondSession.accessToken,method:'POST',body:{liked:true}})]);
+  assert.equal((await (await request('/api/map/likes')).json()).likes.find(r=>r.id===reportId).likeCount,2);
+  for(let i=0;i<2;i++)assert.equal((await (await request(route,{token:member.accessToken,method:'POST',body:{liked:false}})).json()).likeCount,1);
+  const otherSession=await login('other@example.com');
+  const afterLogin=await (await request('/api/map/reports',{token:otherSession.accessToken})).json();
+  assert.equal(afterLogin.authenticated,true);assert.equal(afterLogin.reports.find(r=>r.id===reportId).likedByMe,true);
+  for(const row of afterLogin.reports){assert.equal(row.user_id,undefined);assert.equal(row.email,undefined);}
+});
+
+test('map advertises previews only for actual photos, hides private locations and cleans likes with report deletion',async()=>{
+  let map=await(await request('/api/map/reports')).json();assert.equal(map.reports.find(r=>r.id===reportId).hasPhotoPreview,true);
+  for(const kind of ['video','audio']) {
+    const created=await request('/api/reports',{token:member.accessToken,method:'POST',body:payload()});const id=(await created.json()).id;
+    await pool.query('INSERT INTO jikeoro.media(report_id,kind,original_name,mime_type,size_bytes,storage_path,preview_path) VALUES($1,$2,$3,$4,50,$5,$6)',[id,kind,'test.'+kind,kind==='video'?'video/mp4':'audio/mpeg',`reports/${id}/test`,kind==='video'?`previews/${id}/legacy-video.jpg`:null]);
+    map=await(await request('/api/map/reports')).json();const row=map.reports.find(r=>r.id===id);
+    assert.equal(row.mediaCount,1);assert.equal(row.hasPhotoPreview,false);
+    assert.equal((await request(`/api/map/reports/${id}/preview`)).status,404);
+    assert.equal((await request(`/api/map/reports/${id}/like`,{token:member.accessToken,method:'POST',body:{liked:true}})).status,200);
+    assert.equal((await request('/api/reports',{token:member.accessToken,method:'DELETE',body:{id}})).status,200);
+    assert.equal((await pool.query('SELECT COUNT(*)::integer AS n FROM jikeoro.report_likes WHERE report_id=$1',[id])).rows[0].n,0);
+  }
+  const hidden=await request('/api/reports',{token:member.accessToken,method:'POST',body:payload({latitude:null,longitude:null,address:'직접 적은 위치'})});const id=(await hidden.json()).id;
+  assert.equal((await request(`/api/map/reports/${id}/like`,{token:member.accessToken,method:'POST',body:{liked:true}})).status,404);
+  assert.ok(!(await(await request('/api/map/likes')).json()).likes.some(r=>r.id===id));
+  await request('/api/reports',{token:member.accessToken,method:'DELETE',body:{id}});
+});
+
 test('rewards use database points and one pending request, not client-supplied amounts',async()=>{
   assert.equal((await request('/api/rewards',{token:member.accessToken,method:'POST',body:{phone:'01012345678',points:999999}})).status,400);
   for(let i=0;i<4;i++)assert.equal((await request('/api/reports',{token:member.accessToken,method:'POST',body:payload()})).status,201);
