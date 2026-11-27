@@ -17,5 +17,8 @@
     "app/api",
     "db",
     "worker"
-  ]
+  ],
+  "compilerOptions": {
+    "allowImportingTsExtensions": true
+  }
 }

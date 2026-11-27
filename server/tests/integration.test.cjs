@@ -113,6 +113,24 @@ test('uploads persist despite NAS rename locks, deduplicate retry IDs, deny othe
   assert.ok(metadata.width<=280 && metadata.height<=208);assert.equal(metadata.exif,undefined);
 });
 
+test('100MB upload policy accepts videos larger than 50MB and rejects oversized requests before storing',async()=>{
+  assert.equal(require('../lib/media.cjs').MAX_BYTES,100_000_000);
+  assert.equal((await (await request('/api/media/limits')).json()).maxFileBytes,100_000_000);
+  const created=await request('/api/reports',{token:member.accessToken,method:'POST',body:payload()});
+  const id=(await created.json()).id;
+  const oversized=await new Promise((resolve,reject)=>{
+    const req=require('node:http').request(base+`/api/reports/${id}/media`,{method:'POST',headers:{Authorization:`Bearer ${member.accessToken}`,'Content-Length':'100000001','X-Media-Kind':'video'}},res=>{res.resume();resolve(res.statusCode);});
+    req.on('error',reject);req.end();
+  });
+  assert.equal(oversized,413);
+  const video=Buffer.alloc(60_000_000);
+  video.writeUInt32BE(24,0);video.write('ftyp',4);video.write('mp42',8);video.write('mp42',16);video.write('isom',20);
+  const uploaded=await request(`/api/reports/${id}/media`,{token:member.accessToken,method:'POST',body:video,headers:{'Content-Type':'video/mp4','X-Media-Kind':'video','X-File-Name':'test-video.mp4'}});
+  assert.equal(uploaded.status,201,await uploaded.clone().text());
+  assert.equal((await uploaded.json()).media.size_bytes,60_000_000);
+  assert.equal((await request('/api/reports',{token:member.accessToken,method:'DELETE',body:{id}})).status,200);
+});
+
 test('invalid files are rejected and staged files removed; unprivileged uploads and deletion fail',async()=>{
   const response=await request(`/api/reports/${reportId}/media`,{token:member.accessToken,method:'POST',body:Buffer.from('<script>bad</script>'),headers:{'Content-Type':'image/jpeg','X-Media-Kind':'image'}});
   assert.equal(response.status,415);

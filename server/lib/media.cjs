@@ -14,7 +14,7 @@ const { transaction } = require('./database.cjs');
 const { findReport } = require('./reports.cjs');
 sharp.concurrency(2);
 sharp.cache({files:0});
-const MAX_BYTES = 50*1024*1024;
+const MAX_BYTES = 100_000_000;
 const ALLOWED = new Set(['image/jpeg','image/png','image/webp','image/gif','image/heic','image/heif','image/avif','video/mp4','video/quicktime','video/webm','audio/mpeg','audio/mp4','audio/aac','audio/wav','audio/vnd.wave','audio/ogg','audio/opus','audio/webm','video/ogg']);
 
 function safeFile(root,relative) {
@@ -78,10 +78,11 @@ function mediaService(pool,storage) {
     } finally { cleaning = false; }
   }
   const router = express.Router();
+  router.get('/media/limits',(req,res)=>res.json({maxFileBytes:MAX_BYTES,maxFileMB:100}));
   router.post('/reports/:id/media',requireUser,async (req,res) => {
     const reportId = uuid(req.params.id);
     await findReport(pool,req.user,reportId,{ownerOnly:true});
-    assert(!req.get('content-length') || Number(req.get('content-length')) <= MAX_BYTES,413,'파일은 한 개당 50MB까지 올릴 수 있습니다.');
+    assert(!req.get('content-length') || Number(req.get('content-length')) <= MAX_BYTES,413,'파일은 한 개당 100MB까지 올릴 수 있습니다. 더 짧은 영상이나 작은 파일을 선택해주세요.');
     const kind = req.get('x-media-kind');
     assert(['image','video','audio'].includes(kind),400,'파일 종류를 확인해주세요.');
     let originalName;
@@ -107,7 +108,7 @@ function mediaService(pool,storage) {
       let size = 0;
       const counter = new Transform({transform(chunk,encoding,done) {
         size += chunk.length;
-        done(size > MAX_BYTES ? new HttpError(413,'파일은 한 개당 50MB까지 올릴 수 있습니다.') : null,chunk);
+        done(size > MAX_BYTES ? new HttpError(413,'파일은 한 개당 100MB까지 올릴 수 있습니다. 더 짧은 영상이나 작은 파일을 선택해주세요.') : null,chunk);
       }});
       await pipeline(req,counter,createWriteStream(staged,{flags:'wx'}));
       assert(size>0,400,'빈 파일은 올릴 수 없습니다.');

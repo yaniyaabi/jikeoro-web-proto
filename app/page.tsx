@@ -1,4 +1,6 @@
 "use client";
+import { VideoCapture } from "./components/VideoCapture";
+import { MAX_FILE_BYTES, uploadLimitMessage } from "./lib/media-policy";
 
 import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import type { Map as MapLibreMap } from "maplibre-gl";
@@ -395,6 +397,8 @@ export default function Home() {
   const [submitError, setSubmitError] = useState("");
   const submissionRef = useRef(createSubmissionState());
   const [attachments, setAttachments] = useState<MediaAttachment[]>([]);
+  const [videoCaptureOpen,setVideoCaptureOpen]=useState(false);
+  const [mediaNotice,setMediaNotice]=useState("");
   const [mediaError, setMediaError] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
@@ -558,9 +562,9 @@ export default function Home() {
     const selectedFiles = Array.from(event.target.files ?? []);
     event.target.value = "";
     if (selectedFiles.length === 0) return;
-    const oversized = selectedFiles.find((file) => file.size > 50 * 1024 * 1024);
+    const oversized = selectedFiles.find((file) => file.size > MAX_FILE_BYTES);
     if (oversized) {
-      setMediaError("파일 한 개의 크기는 50MB 이하로 선택해주세요.");
+      setMediaError(uploadLimitMessage(oversized,kind));
       return;
     }
     setMediaError("");
@@ -1006,6 +1010,12 @@ export default function Home() {
                     <MediaOptionVisual kind="video" />
                   </label>
                 </div>
+                <button type="button" className="jk-video-open" onClick={()=>{
+                  if(attachments.length>=5){setMediaError("첨부파일은 모두 합쳐 5개까지 넣을 수 있어요.");return;}
+                  setMediaError("");setMediaNotice("");setVideoCaptureOpen(true);
+                }}>지금 영상 촬영하기</button>
+                <p className="jk-media-note">사진·영상·음성은 파일 한 개당 최대 100MB까지 첨부할 수 있어요.</p>
+                {mediaNotice && <p className="jk-media-note" role="status">{mediaNotice}</p>}
                 {attachments.some((attachment) => attachment.kind !== "audio") && (
                   <div className="media-preview-list" aria-label="선택한 사진과 영상">
                     {attachments.filter((attachment) => attachment.kind !== "audio").map((attachment) => (
@@ -1013,7 +1023,7 @@ export default function Home() {
                         {attachment.kind === "image" && <img src={attachment.previewUrl} alt="선택한 현장 사진 미리보기" />}
                         {/* 사용자가 방금 선택한 원본 영상의 미리보기이며 자막 파일은 아직 존재하지 않습니다. */}
                         {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-                        {attachment.kind === "video" && <video src={attachment.previewUrl} controls preload="metadata" aria-label="선택한 현장 영상 미리보기" />}
+                        {attachment.kind === "video" && <video src={attachment.previewUrl} controls preload="none" playsInline aria-label="선택한 현장 영상 미리보기" />}
                         <div><strong>{attachment.kind === "image" ? "사진" : "영상"}</strong><small>{attachment.file.name}</small></div>
                         <button type="button" onClick={() => removeAttachment(attachment.id)} aria-label={`${attachment.file.name} 삭제`}>×</button>
                       </article>
@@ -1222,6 +1232,11 @@ export default function Home() {
           </section>
         </div>
       )}
+      {videoCaptureOpen && reportOpen && reportStep===1 && <VideoCapture onClose={()=>setVideoCaptureOpen(false)} onCapture={(file,automatic)=>{
+        setVideoCaptureOpen(false);
+        setAttachments(current=>current.length>=5?current:[...current,{id:crypto.randomUUID(),kind:"video",file,previewUrl:URL.createObjectURL(file)}]);
+        setMediaNotice(automatic?"100MB를 넘지 않도록 촬영을 자동 종료하고 영상을 첨부했어요.":"촬영한 영상을 첨부했어요.");
+      }} />}
     </main>
   );
 }
